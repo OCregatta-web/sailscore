@@ -1,3 +1,4 @@
+import PrintView from "./pages/PrintView";
 import { useState, useEffect, createContext, useContext } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -55,10 +56,11 @@ export default function App() {
   );
 
   const pageMap = {
-    dashboard: <Dashboard />,
-    fleet: <FleetManager seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
-    race: <RaceEntry seriesId={page.params.seriesId} seriesName={page.params.seriesName} raceId={page.params.raceId} />,
-    standings: <Standings seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
+  dashboard: <Dashboard />,
+  fleet: <FleetManager seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
+  race: <RaceEntry seriesId={page.params.seriesId} seriesName={page.params.seriesName} raceId={page.params.raceId} />,
+  standings: <Standings seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
+  print: <PrintView seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
   };
 
   return (

@@ -55,6 +55,9 @@ export default function Standings({ seriesId, seriesName }) {
         </div>
         <div className="header-actions">
           <button className="btn-secondary" onClick={() => navigate("race", { seriesId, seriesName })}>← Race Entry</button>
+          <button className="btn-secondary" onClick={() => navigate("print", { seriesId, seriesName })}>
+             🖨 Print
+          </button>
           {!noRaces && (
             <button className="btn-primary" onClick={exportCSV} disabled={exporting}>
               {exporting ? "Exporting..." : "⬇ Export CSV"}

@@ -3,6 +3,8 @@ import { useAuth } from "../App";
 import { api } from "../api";
 import Modal from "../components/Modal";
 
+const FLEET_OPTIONS = ["1-Design", "FS", "NFS", "Distance", "Cruising", "Multihull"];
+
 export default function FleetManager({ seriesId, seriesName }) {
   const { user, navigate } = useAuth();
   const [boats, setBoats] = useState([]);
@@ -12,6 +14,7 @@ export default function FleetManager({ seriesId, seriesName }) {
   const [form, setForm] = useState({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: "NFS" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [sortDir, setSortDir] = useState("asc"); // per fleet sort direction
 
   const load = () =>
     api.get(`/series/${seriesId}/boats`, user.token).then(setBoats).finally(() => setLoading(false));
@@ -60,6 +63,28 @@ export default function FleetManager({ seriesId, seriesName }) {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  const toggleSort = () => setSortDir(d => d === "asc" ? "desc" : "asc");
+
+  // Group boats by fleet, preserving fleet order
+  const fleetGroups = boats.reduce((groups, boat) => {
+    const fleet = boat.fleet || "NFS";
+    if (!groups[fleet]) groups[fleet] = [];
+    groups[fleet].push(boat);
+    return groups;
+  }, {});
+
+  // Sort each fleet by PHRF rating
+  Object.keys(fleetGroups).forEach(fleet => {
+    fleetGroups[fleet].sort((a, b) =>
+      sortDir === "asc"
+        ? a.phrf_rating - b.phrf_rating
+        : b.phrf_rating - a.phrf_rating
+    );
+  });
+
+  const totalBoats = boats.length;
+  const fleetNames = Object.keys(fleetGroups);
+
   return (
     <div className="page">
       <div className="page-header">
@@ -84,47 +109,81 @@ export default function FleetManager({ seriesId, seriesName }) {
           <button className="btn-primary" onClick={openNew}>Add First Boat</button>
         </div>
       ) : (
-        <div className="table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Sail #</th>
-                <th>Boat Name</th>
-                <th>Skipper</th>
-                <th className="num-col">Fleet</th>
-                <th className="num-col">PHRF Rating</th>
-                <th className="num-col">ToT Factor</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {boats.sort((a, b) => a.phrf_rating - b.phrf_rating).map(b => {
-                const factor = (650 / (650 + b.phrf_rating)).toFixed(4);
-                return (
-                  <tr key={b.id}>
-                    <td><span className="sail-num">{b.sail_number}</span></td>
-                    <td className="boat-name-cell">{b.boat_name}</td>
-                    <td>{b.skipper}</td>
-                    <td className="num-col">{b.fleet || "NFS"}</td>
-                    <td className="num-col">
-                      <span className={`rating-badge ${b.phrf_rating < 0 ? "fast" : b.phrf_rating > 150 ? "slow" : ""}`}>
-                        {b.phrf_rating}
-                      </span>
-                    </td>
-                    <td className="num-col mono">{factor}</td>
-                    <td className="actions-cell">
-                      <button className="btn-ghost-sm" onClick={() => openEdit(b)}>Edit</button>
-                      <button className="btn-ghost-sm danger" onClick={() => deleteBoat(b.id)}>Remove</button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          <div className="table-footer">
-            {boats.length} boat{boats.length !== 1 ? "s" : ""} registered
+        <>
+          {/* Summary bar */}
+          <div className="fleet-summary-bar">
+            <div className="fleet-summary-chips">
+              <span className="meta-chip">⛵ {totalBoats} boat{totalBoats !== 1 ? "s" : ""} total</span>
+              {fleetNames.map(f => (
+                <span key={f} className="meta-chip fleet-chip">
+                  {f}: {fleetGroups[f].length}
+                </span>
+              ))}
+            </div>
+            <button className="btn-sort" onClick={toggleSort}>
+              PHRF {sortDir === "asc" ? "↑ Low → High" : "↓ High → Low"}
+            </button>
           </div>
-        </div>
+
+          {/* One table per fleet */}
+          {fleetNames.map(fleetName => (
+            <div key={fleetName} className="fleet-table-block">
+              <div className="fleet-table-header">
+                <div className="fleet-table-title">
+                  <span className="fleet-table-name">{fleetName}</span>
+                  <span className="fleet-table-count">{fleetGroups[fleetName].length} boat{fleetGroups[fleetName].length !== 1 ? "s" : ""}</span>
+                </div>
+                <button className="btn-primary btn-sm" onClick={() => {
+                  setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: fleetName });
+                  setEditBoat(null);
+                  setError("");
+                  setShowModal(true);
+                }}>
+                  + Add to {fleetName}
+                </button>
+              </div>
+
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sail #</th>
+                      <th>Boat Name</th>
+                      <th>Skipper</th>
+                      <th className="num-col" style={{ cursor: "pointer" }} onClick={toggleSort}>
+                        PHRF Rating {sortDir === "asc" ? "↑" : "↓"}
+                      </th>
+                      <th className="num-col">ToT Factor</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fleetGroups[fleetName].map((b, idx) => {
+                      const factor = (650 / (650 + b.phrf_rating)).toFixed(4);
+                      return (
+                        <tr key={b.id} className={idx === 0 ? "top-rated" : ""}>
+                          <td><span className="sail-num">{b.sail_number}</span></td>
+                          <td className="boat-name-cell">{b.boat_name}</td>
+                          <td>{b.skipper}</td>
+                          <td className="num-col">
+                            <span className={`rating-badge ${b.phrf_rating < 0 ? "fast" : b.phrf_rating > 150 ? "slow" : ""}`}>
+                              {b.phrf_rating}
+                            </span>
+                          </td>
+                          <td className="num-col mono">{factor}</td>
+                          <td className="actions-cell">
+                            <button className="btn-ghost-sm" onClick={() => openEdit(b)}>Edit</button>
+                            <button className="btn-ghost-sm danger" onClick={() => deleteBoat(b.id)}>Remove</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+        </>
       )}
 
       {showModal && (
@@ -151,12 +210,7 @@ export default function FleetManager({ seriesId, seriesName }) {
             <div className="field">
               <label>Fleet</label>
               <select value={form.fleet} onChange={set("fleet")}>
-                <option value="1-Design">1-Design</option>
-                <option value="FS">FS (Flying Sail)</option>
-                <option value="NFS">NFS (Non-Flying Sail)</option>
-                <option value="Distance">Distance</option>
-                <option value="NFS2">NFS2</option>
-                <option value="FS2">FS2</option>
+                {FLEET_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
             {form.phrf_rating !== "" && (
