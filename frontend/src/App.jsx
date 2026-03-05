@@ -1,3 +1,5 @@
+import Register from "./pages/Register";
+import Registrations from "./pages/Registrations";
 import PrintView from "./pages/PrintView";
 import { useState, useEffect, createContext, useContext } from "react";
 import Login from "./pages/Login";
@@ -49,14 +51,20 @@ export default function App() {
     </div>
   );
 
-  if (!user) return (
-    <AuthContext.Provider value={{ user, login, logout, navigate }}>
-      <Login />
-    </AuthContext.Provider>
-  );
+  // Public registration page — no login required
+if (window.location.pathname === "/register") {
+  return <Register />;
+}
+
+if (!user) return (
+  <AuthContext.Provider value={{ user, login, logout, navigate }}>
+    <Login />
+  </AuthContext.Provider>
+);
 
   const pageMap = {
   dashboard: <Dashboard />,
+  registrations: <Registrations seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
   fleet: <FleetManager seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,
   race: <RaceEntry seriesId={page.params.seriesId} seriesName={page.params.seriesName} raceId={page.params.raceId} />,
   standings: <Standings seriesId={page.params.seriesId} seriesName={page.params.seriesName} />,

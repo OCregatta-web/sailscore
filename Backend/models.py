@@ -63,3 +63,18 @@ class Finish(Base):
     corrected_seconds = Column(Float, nullable=True)
     race = relationship("Race", back_populates="finishes")
     boat = relationship("Boat", back_populates="finishes")
+class Registration(Base):
+    __tablename__ = "registrations"
+    id = Column(Integer, primary_key=True, index=True)
+    series_id = Column(Integer, ForeignKey("series.id"))
+    boat_name = Column(String, nullable=False)
+    sail_number = Column(String, nullable=False)
+    skipper = Column(String, nullable=False)
+    phrf_rating = Column(Integer, nullable=False)
+    fleet = Column(String, nullable=False)
+    club = Column(String, nullable=True)
+    email = Column(String, nullable=True)
+    phone = Column(String, nullable=True)
+    boat_class = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    series = relationship("Series")

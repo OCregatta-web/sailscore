@@ -91,6 +91,9 @@ export default function Dashboard() {
                 </div>
               </div>
               <div className="series-actions">
+                <button className="btn-action" onClick={() => navigate("registrations", { seriesId: s.id, seriesName: s.name })}>
+                  📋 Registrations
+                </button>
                 <button className="btn-action" onClick={() => navigate("fleet", { seriesId: s.id, seriesName: s.name })}>
                   🚢 Fleet
                 </button>

@@ -122,3 +122,29 @@ class SeriesStandings(BaseModel):
     throwouts: int
     rows: List[StandingsRow]
     fleet_standings: Dict[str, List[StandingsRow]]
+class RegistrationCreate(BaseModel):
+    boat_name: str
+    sail_number: str
+    skipper: str
+    phrf_rating: int
+    fleet: str
+    club: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    boat_class: Optional[str] = None
+
+class RegistrationOut(BaseModel):
+    id: int
+    series_id: int
+    boat_name: str
+    sail_number: str
+    skipper: str
+    phrf_rating: int
+    fleet: str
+    club: Optional[str]
+    email: Optional[str]
+    phone: Optional[str]
+    boat_class: Optional[str]
+    created_at: Optional[str] = None
+    class Config:
+        from_attributes = True

@@ -135,3 +135,53 @@ def delete_finish(db: Session, finish_id: int):
     f = db.query(models.Finish).filter(models.Finish.id == finish_id).first()
     db.delete(f)
     db.commit()
+def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id: int):
+    # Save registration record
+    db_reg = models.Registration(
+        series_id=series_id,
+        boat_name=reg.boat_name,
+        sail_number=reg.sail_number,
+        skipper=reg.skipper,
+        phrf_rating=reg.phrf_rating,
+        fleet=reg.fleet,
+        club=reg.club,
+        email=reg.email,
+        phone=reg.phone,
+        boat_class=reg.boat_class,
+    )
+    db.add(db_reg)
+    db.commit()
+    db.refresh(db_reg)
+
+    # Auto-add to fleet — check for duplicate sail number first
+    existing = db.query(models.Boat).filter(
+        models.Boat.series_id == series_id,
+        models.Boat.sail_number == reg.sail_number
+    ).first()
+
+    if existing:
+        # Update existing boat with new info
+        existing.boat_name = reg.boat_name
+        existing.skipper = reg.skipper
+        existing.phrf_rating = reg.phrf_rating
+        existing.fleet = reg.fleet
+        db.commit()
+    else:
+        # Create new boat
+        db_boat = models.Boat(
+            series_id=series_id,
+            sail_number=reg.sail_number,
+            boat_name=reg.boat_name,
+            skipper=reg.skipper,
+            phrf_rating=reg.phrf_rating,
+            fleet=reg.fleet,
+        )
+        db.add(db_boat)
+        db.commit()
+
+    return db_reg
+
+def get_registrations(db: Session, series_id: int):
+    return db.query(models.Registration).filter(
+        models.Registration.series_id == series_id
+    ).order_by(models.Registration.created_at.desc()).all()
