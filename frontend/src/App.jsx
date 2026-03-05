@@ -1,3 +1,5 @@
+// SailScore App v1.2 - 2026-03-05
+
 import Register from "./pages/Register";
 import Registrations from "./pages/Registrations";
 import PrintView from "./pages/PrintView";
