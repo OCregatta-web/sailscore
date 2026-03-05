@@ -90,6 +90,56 @@ def delete_boat(boat_id: int, db: Session = Depends(get_db), current_user=Depend
     crud.delete_boat(db, boat_id)
     return {"ok": True}
 
+# ── Races ─────────────────────────────────────────────────────────────────────
+
+@app.post("/series/{series_id}/races", response_model=schemas.RaceOut)
+def create_race(series_id: int, race: schemas.RaceCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.create_race(db, race, series_id)
+
+@app.get("/series/{series_id}/races", response_model=List[schemas.RaceOut])
+def list_races(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.get_races(db, series_id)
+
+@app.get("/races/{race_id}", response_model=schemas.RaceOut)
+def get_race(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    r = crud.get_race(db, race_id)
+    if not r:
+        raise HTTPException(404, "Race not found")
+    return r
+
+@app.put("/races/{race_id}", response_model=schemas.RaceOut)
+def update_race(race_id: int, race: schemas.RaceCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.update_race(db, race_id, race)
+
+@app.delete("/races/{race_id}")
+def delete_race(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    crud.delete_race(db, race_id)
+    return {"ok": True}
+
+# ── Finishes ──────────────────────────────────────────────────────────────────
+
+@app.post("/races/{race_id}/finishes", response_model=schemas.FinishOut)
+def record_finish(race_id: int, finish: schemas.FinishCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.upsert_finish(db, finish, race_id)
+
+@app.get("/races/{race_id}/finishes", response_model=List[schemas.FinishOut])
+def list_finishes(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.get_finishes(db, race_id)
+
+@app.delete("/finishes/{finish_id}")
+def delete_finish(finish_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    crud.delete_finish(db, finish_id)
+    return {"ok": True}
+
+@app.get("/races/{race_id}/results", response_model=List[schemas.RaceResult])
+def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    race = crud.get_race(db, race_id)
+    if not race:
+        raise HTTPException(404, "Race not found")
+    finishes = crud.get_finishes(db, race_id)
+    boats = crud.get_boats(db, race.series_id)
+    return scoring.compute_race_results(finishes, boats)
+
 # ── Public Registration (no auth required) ────────────────────────────────────
 
 @app.get("/register/{series_id}/info")
