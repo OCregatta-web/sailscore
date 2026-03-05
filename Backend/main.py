@@ -71,6 +71,11 @@ def get_series(series_id: int, db: Session = Depends(get_db), current_user=Depen
 def update_series(series_id: int, series: schemas.SeriesCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     return crud.update_series(db, series_id, series)
 
+@app.delete("/series/{series_id}")
+def delete_series(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    crud.delete_series(db, series_id)
+    return {"ok": True}
+
 # ── Boats ─────────────────────────────────────────────────────────────────────
 
 @app.post("/series/{series_id}/boats", response_model=schemas.BoatOut)
@@ -139,6 +144,34 @@ def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depen
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
     return scoring.compute_race_results(finishes, boats)
+
+@app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
+def series_standings(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    series = crud.get_series(db, series_id)
+    if not series:
+        raise HTTPException(404, "Series not found")
+    races = crud.get_races(db, series_id)
+    boats = crud.get_boats(db, series_id)
+    all_finishes = {r.id: crud.get_finishes(db, r.id) for r in races}
+    return scoring.compute_series_standings(series, races, boats, all_finishes)
+
+@app.get("/series/{series_id}/export/csv")
+def export_csv(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    series = crud.get_series(db, series_id)
+    races = crud.get_races(db, series_id)
+    boats = crud.get_boats(db, series_id)
+    all_finishes = {r.id: crud.get_finishes(db, r.id) for r in races}
+    standings = scoring.compute_series_standings(series, races, boats, all_finishes)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    race_headers = [f"R{r.race_number}" for r in races]
+    writer.writerow(["Pos", "Sail #", "Boat", "Skipper", "Rating"] + race_headers + ["Net Pts", "Total Pts"])
+    for row in standings.rows:
+        race_pts = [row.race_points.get(r.id, {}).get("display", "-") for r in races]
+        writer.writerow([row.position, row.sail_number, row.boat_name, row.skipper, row.phrf_rating] + race_pts + [row.net_points, row.total_points])
+    output.seek(0)
+    return StreamingResponse(output, media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=series_{series_id}_standings.csv"})
 
 # ── Public Registration (no auth required) ────────────────────────────────────
 
