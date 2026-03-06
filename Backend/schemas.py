@@ -47,6 +47,7 @@ class BoatCreate(BaseModel):
     skipper: str
     phrf_rating: int
     fleet: Optional[str] = "NFS"
+    boat_class: Optional[str] = None
 
 class BoatOut(BaseModel):
     id: int
@@ -55,6 +56,7 @@ class BoatOut(BaseModel):
     skipper: str
     phrf_rating: int
     fleet: Optional[str]
+    boat_class: Optional[str] = None
     series_id: int
     class Config:
         from_attributes = True

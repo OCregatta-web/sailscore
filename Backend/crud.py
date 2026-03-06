@@ -169,6 +169,7 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
         existing_boat.skipper = reg.skipper
         existing_boat.phrf_rating = reg.phrf_rating
         existing_boat.fleet = reg.fleet
+        existing_boat.boat_class = reg.boat_class
         db.commit()
     else:
         db_boat = models.Boat(
@@ -178,6 +179,7 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
             skipper=reg.skipper,
             phrf_rating=reg.phrf_rating,
             fleet=reg.fleet,
+            boat_class=reg.boat_class,
         )
         db.add(db_boat)
         db.commit()

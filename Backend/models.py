@@ -38,6 +38,7 @@ class Boat(Base):
     skipper = Column(String, nullable=False)
     phrf_rating = Column(Integer, nullable=False)
     fleet = Column(String, nullable=True, default="NFS")
+    boat_class = Column(String, nullable=True)
     series_id = Column(Integer, ForeignKey("series.id"))
     series = relationship("Series", back_populates="boats")
     finishes = relationship("Finish", back_populates="boat", cascade="all, delete-orphan")

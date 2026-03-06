@@ -11,7 +11,7 @@ export default function FleetManager({ seriesId, seriesName }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editBoat, setEditBoat] = useState(null);
-  const [form, setForm] = useState({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: "NFS" });
+  const [form, setForm] = useState({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: "NFS", boat_class: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [sortDir, setSortDir] = useState("asc"); // per fleet sort direction
@@ -23,14 +23,14 @@ export default function FleetManager({ seriesId, seriesName }) {
 
   const openNew = () => {
     setEditBoat(null);
-    setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: "NFS" });
+    setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: "NFS", boat_class: "" });
     setError("");
     setShowModal(true);
   };
 
   const openEdit = (b) => {
     setEditBoat(b);
-    setForm({ sail_number: b.sail_number, boat_name: b.boat_name, skipper: b.skipper, phrf_rating: b.phrf_rating, fleet: b.fleet || "NFS" });
+    setForm({ sail_number: b.sail_number, boat_name: b.boat_name, skipper: b.skipper, phrf_rating: b.phrf_rating, fleet: b.fleet || "NFS", boat_class: b.boat_class || "" });
     setError("");
     setShowModal(true);
   };
@@ -59,6 +59,73 @@ export default function FleetManager({ seriesId, seriesName }) {
     if (!confirm("Remove this boat from the series?")) return;
     await api.delete(`/boats/${id}`, user.token);
     load();
+  };
+
+  const printEntryList = () => {
+    const printWindow = window.open('', '_blank');
+    const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    const rows = [...boats]
+      .sort((a, b) => {
+        if ((a.fleet || "NFS") < (b.fleet || "NFS")) return -1;
+        if ((a.fleet || "NFS") > (b.fleet || "NFS")) return 1;
+        return a.phrf_rating - b.phrf_rating;
+      })
+      .map((b, i) => `
+        <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+          <td>${i + 1}</td>
+          <td><strong>${b.sail_number}</strong></td>
+          <td>${b.boat_name}</td>
+          <td>${b.skipper}</td>
+          <td>${b.fleet || 'NFS'}</td>
+          <td>${b.phrf_rating}</td>
+          <td>${b.boat_class || '—'}</td>
+          <td>${b.club || '—'}</td>
+        </tr>
+      `).join('');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${seriesName} — Entry List</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; font-size: 12px; padding: 1.5cm; }
+          .header { text-align: center; margin-bottom: 1.5rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
+          .title { font-size: 22px; font-weight: 800; margin-bottom: 0.25rem; }
+          .subtitle { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 0.25rem; }
+          .meta { font-size: 11px; color: #666; }
+          table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+          th { background: #000; color: #fff; padding: 6px 8px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+          td { padding: 6px 8px; border-bottom: 1px solid #ddd; }
+          tr.even td { background: #f9f9f9; }
+          .footer { margin-top: 1rem; font-size: 10px; color: #999; display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 0.5rem; }
+          @media print { body { padding: 1cm; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="title">${seriesName}</div>
+          <div class="subtitle">Official Entry List</div>
+          <div class="meta">${boats.length} boat${boats.length !== 1 ? 's' : ''} registered · Printed ${today}</div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Sail #</th><th>Boat Name</th><th>Skipper</th>
+              <th>Fleet</th><th>PHRF</th><th>Class</th><th>Club</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="footer">
+          <span>PHRF Time-on-Time · Corrected Time = Elapsed × (650 / (650 + Rating))</span>
+          <span>${boats.length} entries</span>
+        </div>
+        <script>window.onload = function() { window.print(); }<\/script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -94,6 +161,7 @@ export default function FleetManager({ seriesId, seriesName }) {
           <p className="page-subtitle">Fleet Management</p>
         </div>
         <div className="header-actions">
+          <button className="btn-secondary" onClick={printEntryList}>🖨 Print Entry List</button>
           <button className="btn-secondary" onClick={() => navigate("race", { seriesId, seriesName })}>Race Entry →</button>
           <button className="btn-primary" onClick={openNew}>+ Add Boat</button>
         </div>
@@ -134,7 +202,7 @@ export default function FleetManager({ seriesId, seriesName }) {
                   <span className="fleet-table-count">{fleetGroups[fleetName].length} boat{fleetGroups[fleetName].length !== 1 ? "s" : ""}</span>
                 </div>
                 <button className="btn-primary btn-sm" onClick={() => {
-                  setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: fleetName });
+                  setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: fleetName, boat_class: "" });
                   setEditBoat(null);
                   setError("");
                   setShowModal(true);
@@ -206,6 +274,10 @@ export default function FleetManager({ seriesId, seriesName }) {
             <div className="field">
               <label>Skipper</label>
               <input type="text" placeholder="e.g. Jane Smith" value={form.skipper} onChange={set("skipper")} required />
+            </div>
+            <div className="field">
+              <label>Boat Class</label>
+              <input type="text" placeholder="e.g. J/24, Catalina 36" value={form.boat_class || ""} onChange={set("boat_class")} />
             </div>
             <div className="field">
               <label>Fleet</label>
