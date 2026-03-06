@@ -277,6 +277,12 @@ def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+@app.delete("/series/{series_id}/registrations")
+def clear_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    db.query(models.Registration).filter(models.Registration.series_id == series_id).delete()
+    db.commit()
+    return {"ok": True}
+
 @app.get("/series/{series_id}/registrations", response_model=List[schemas.RegistrationOut])
 def list_registrations(series_id: int, db: Session = Depends(get_db),
                        current_user=Depends(auth.get_current_user)):

@@ -61,6 +61,13 @@ export default function FleetManager({ seriesId, seriesName }) {
     load();
   };
 
+  const clearAllBoats = async () => {
+    if (!confirm(`Delete all boats and registrations from ${seriesName}? This cannot be undone.`)) return;
+    await Promise.all(boats.map(b => api.delete(`/boats/${b.id}`, user.token)));
+    await api.delete(`/series/${seriesId}/registrations`, user.token);
+    load();
+  };
+
   const printEntryList = () => {
     const printWindow = window.open('', '_blank');
     const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -163,6 +170,7 @@ export default function FleetManager({ seriesId, seriesName }) {
         <div className="header-actions">
           <button className="btn-secondary" onClick={printEntryList}>🖨 Print Entry List</button>
           <button className="btn-secondary" onClick={() => navigate("race", { seriesId, seriesName })}>Race Entry →</button>
+          {boats.length > 0 && <button className="btn-ghost-sm danger" onClick={clearAllBoats}>🗑 Clear All Boats</button>}
           <button className="btn-primary" onClick={openNew}>+ Add Boat</button>
         </div>
       </div>
