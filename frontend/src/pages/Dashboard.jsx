@@ -13,7 +13,28 @@ export default function Dashboard() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const load = () =>
+  const [backing_up, setBackingUp] = useState(false);
+
+  const downloadBackup = async () => {
+    setBackingUp(true);
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/backup`, {
+        headers: { Authorization: `Bearer ${user.token}` }
+      });
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      a.href = url;
+      a.download = `sailscore_backup_${timestamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("Backup failed: " + err.message);
+    } finally {
+      setBackingUp(false);
+    }
+  };
     api.get("/series", user.token).then(setSeries).finally(() => setLoading(false));
 
   useEffect(() => { load(); }, []);
@@ -65,7 +86,12 @@ export default function Dashboard() {
           <h1 className="page-title">My Series</h1>
           <p className="page-subtitle">Manage your racing series and fleets</p>
         </div>
-        <button className="btn-primary" onClick={openNew}>+ New Series</button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn-ghost" onClick={downloadBackup} disabled={backing_up}>
+            {backing_up ? "Backing up..." : "⬇️ Backup"}
+          </button>
+          <button className="btn-primary" onClick={openNew}>+ New Series</button>
+        </div>
       </div>
 
       {loading ? (

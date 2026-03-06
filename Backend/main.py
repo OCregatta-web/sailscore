@@ -244,6 +244,39 @@ async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, d
     except Exception as e:
         print(f"Registration error: {e}")
         raise HTTPException(500, str(e))
+@app.get("/backup")
+def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    import json
+    from sqlalchemy import text
+    from datetime import datetime
+    from fastapi.responses import Response
+
+    tables = ['users', 'series', 'boats', 'races', 'finishes', 'registrations']
+    backup = {}
+
+    with engine.connect() as conn:
+        for table in tables:
+            result = conn.execute(text(f"SELECT * FROM {table}"))
+            rows = []
+            for row in result.mappings():
+                row_dict = {}
+                for key, value in row.items():
+                    if hasattr(value, 'isoformat'):
+                        value = value.isoformat()
+                    row_dict[key] = value
+                rows.append(row_dict)
+            backup[table] = rows
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"sailscore_backup_{timestamp}.json"
+    content = json.dumps(backup, indent=2)
+
+    return Response(
+        content=content,
+        media_type="application/json",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 @app.get("/series/{series_id}/registrations", response_model=List[schemas.RegistrationOut])
 def list_registrations(series_id: int, db: Session = Depends(get_db),
                        current_user=Depends(auth.get_current_user)):
