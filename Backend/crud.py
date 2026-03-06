@@ -171,6 +171,7 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
         existing_boat.fleet = reg.fleet
         existing_boat.boat_class = reg.boat_class
         db.commit()
+        boat_id = existing_boat.id
     else:
         db_boat = models.Boat(
             series_id=series_id,
@@ -183,6 +184,25 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
         )
         db.add(db_boat)
         db.commit()
+        db.refresh(db_boat)
+        boat_id = db_boat.id
+
+    # Add boat to all existing races in the series (as DNS if not already entered)
+    races = db.query(models.Race).filter(models.Race.series_id == series_id).all()
+    for race in races:
+        existing_finish = db.query(models.Finish).filter(
+            models.Finish.race_id == race.id,
+            models.Finish.boat_id == boat_id
+        ).first()
+        if not existing_finish:
+            db.add(models.Finish(
+                race_id=race.id,
+                boat_id=boat_id,
+                elapsed_seconds=None,
+                status="DNS",
+                corrected_seconds=None
+            ))
+    db.commit()
 
     return db_reg
 def get_registrations(db: Session, series_id: int):
