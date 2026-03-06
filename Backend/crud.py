@@ -188,4 +188,4 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
 def get_registrations(db: Session, series_id: int):
     return db.query(models.Registration).filter(
         models.Registration.series_id == series_id
-    ).order_by(models.Registration.created_at.desc()).all()
+    ).order_by(models.Registration.boat_name).all()
