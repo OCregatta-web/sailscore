@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from datetime import datetime
 
 class UserCreate(BaseModel):
     email: str
@@ -147,6 +148,6 @@ class RegistrationOut(BaseModel):
     email: Optional[str]
     phone: Optional[str]
     boat_class: Optional[str]
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
     class Config:
         from_attributes = True
