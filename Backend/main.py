@@ -179,14 +179,15 @@ def record_finish(race_id: int, finish: schemas.FinishCreate, db: Session = Depe
     result = crud.upsert_finish(db, finish, race_id)
 
     def notify():
+        from database import SessionLocal
+        notify_db = SessionLocal()
         try:
-            race = crud.get_race(db, race_id)
-            series = crud.get_series(db, race.series_id)
-            boats = crud.get_boats(db, race.series_id)
-            finishes = crud.get_finishes(db, race_id)
-            registrations = crud.get_registrations(db, race.series_id)
+            race = crud.get_race(notify_db, race_id)
+            series = crud.get_series(notify_db, race.series_id)
+            boats = crud.get_boats(notify_db, race.series_id)
+            finishes = crud.get_finishes(notify_db, race_id)
+            registrations = crud.get_registrations(notify_db, race.series_id)
 
-            # Group boats by fleet and send one email per fleet
             fleets = {}
             for boat in boats:
                 fleet = boat.fleet or "NFS"
@@ -196,13 +197,11 @@ def record_finish(race_id: int, finish: schemas.FinishCreate, db: Session = Depe
 
             for fleet_name, fleet_boats in fleets.items():
                 fleet_results = scoring.compute_race_results(finishes, fleet_boats)
-                threading.Thread(
-                    target=send_fleet_results_email,
-                    args=(race, series.name, fleet_name, fleet_results, registrations),
-                    daemon=True
-                ).start()
+                send_fleet_results_email(race, series.name, fleet_name, fleet_results, registrations)
         except Exception as e:
             print(f"Error sending results notifications: {e}")
+        finally:
+            notify_db.close()
 
     threading.Thread(target=notify, daemon=True).start()
     return result
