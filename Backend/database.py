@@ -7,9 +7,11 @@ SQLALCHEMY_DATABASE_URL = os.environ.get(
     "DATABASE_URL", "sqlite:///./sailscore.db"
 )
 
-# Railway provides postgres:// but SQLAlchemy needs postgresql://
+# Fix URL scheme for SQLAlchemy compatibility, use pg8000 as pure Python driver
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+pg8000://", 1)
+elif SQLALCHEMY_DATABASE_URL.startswith("postgresql://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+pg8000://", 1)
 
 connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 
