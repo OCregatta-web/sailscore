@@ -1,8 +1,5 @@
 import os
-import smtplib
 import threading
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -178,16 +175,14 @@ def export_csv(series_id: int, db: Session = Depends(get_db), current_user=Depen
         headers={"Content-Disposition": f"attachment; filename=series_{series_id}_standings.csv"})
 
 def send_registration_email(reg, series_name: str):
-    gmail_user = os.environ.get("GMAIL_USER")
-    gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
-    if not gmail_user or not gmail_password:
-        print("Email not configured, skipping notification")
+    api_key = os.environ.get("SENDGRID_API_KEY")
+    from_email = os.environ.get("SENDGRID_FROM_EMAIL")
+    if not api_key or not from_email:
+        print("SendGrid not configured, skipping notification")
         return
     try:
-        msg = MIMEMultipart()
-        msg["From"] = gmail_user
-        msg["To"] = gmail_user
-        msg["Subject"] = f"New Registration: {reg.boat_name} – {series_name}"
+        import urllib.request
+        import json
         body = f"""
 New boat registration received for {series_name}:
 
@@ -201,11 +196,23 @@ Phone:       {reg.phone or 'N/A'}
 Fleet:       {reg.fleet}
 Boat Class:  {reg.boat_class or 'N/A'}
 """
-        msg.attach(MIMEText(body, "plain"))
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(gmail_user, gmail_password)
-            server.sendmail(gmail_user, gmail_user, msg.as_string())
-        print(f"Registration email sent for {reg.boat_name}")
+        payload = json.dumps({
+            "personalizations": [{"to": [{"email": from_email}]}],
+            "from": {"email": from_email},
+            "subject": f"New Registration: {reg.boat_name} - {series_name}",
+            "content": [{"type": "text/plain", "value": body}]
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.sendgrid.com/v3/mail/send",
+            data=payload,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req) as response:
+            print(f"Registration email sent, status: {response.status}")
     except Exception as e:
         print(f"Failed to send email: {e}")
 
