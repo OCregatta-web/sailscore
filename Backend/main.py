@@ -1,5 +1,6 @@
 import os
 import smtplib
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from fastapi import FastAPI, Request, Depends, HTTPException, status
@@ -229,7 +230,7 @@ async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, d
             raise HTTPException(404, "Series not found")
         result = crud.create_registration(db, reg, series_id)
         print(f"Registration created: {result.id}")
-        send_registration_email(reg, series.name)
+        threading.Thread(target=send_registration_email, args=(reg, series.name), daemon=True).start()
         return result
     except Exception as e:
         print(f"Registration error: {e}")
