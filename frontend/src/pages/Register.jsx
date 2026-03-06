@@ -85,12 +85,6 @@ export default function Register() {
             <div className="reg-summary-row"><span>Fleet</span><strong>{form.fleet}</strong></div>
             <div className="reg-summary-row"><span>PHRF</span><strong>{form.phrf_rating}</strong></div>
           </div>
-          <button className="btn-primary btn-full" onClick={() => {
-            setSubmitted(false);
-            setForm({ boat_name: "", sail_number: "", skipper: "", phrf_rating: "", fleet: "NFS", club: "", email: "", phone: "", boat_class: "" });
-          }}>
-            Register Another Boat
-          </button>
         </div>
       </div>
     </div>
