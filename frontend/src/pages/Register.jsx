@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-const FLEET_OPTIONS = ["1-Design", "FS", "NFS", "Distance", "Cruising", "Multihull"];
+const FLEET_OPTIONS = ["1-Design", "FS", "NFS", "Distance"];
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function Register() {
