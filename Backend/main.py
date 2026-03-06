@@ -1,4 +1,7 @@
 import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -173,6 +176,38 @@ def export_csv(series_id: int, db: Session = Depends(get_db), current_user=Depen
     return StreamingResponse(output, media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=series_{series_id}_standings.csv"})
 
+def send_registration_email(reg, series_name: str):
+    gmail_user = os.environ.get("GMAIL_USER")
+    gmail_password = os.environ.get("GMAIL_APP_PASSWORD")
+    if not gmail_user or not gmail_password:
+        print("Email not configured, skipping notification")
+        return
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = gmail_user
+        msg["To"] = gmail_user
+        msg["Subject"] = f"New Registration: {reg.boat_name} – {series_name}"
+        body = f"""
+New boat registration received for {series_name}:
+
+Boat Name:   {reg.boat_name}
+Sail Number: {reg.sail_number}
+Skipper:     {reg.skipper}
+Club:        {reg.club or 'N/A'}
+PHRF Rating: {reg.phrf_rating}
+Email:       {reg.email or 'N/A'}
+Phone:       {reg.phone or 'N/A'}
+Fleet:       {reg.fleet}
+Boat Class:  {reg.boat_class or 'N/A'}
+"""
+        msg.attach(MIMEText(body, "plain"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(gmail_user, gmail_password)
+            server.sendmail(gmail_user, gmail_user, msg.as_string())
+        print(f"Registration email sent for {reg.boat_name}")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
 # ── Public Registration (no auth required) ────────────────────────────────────
 
 @app.get("/register/{series_id}/info")
@@ -194,6 +229,7 @@ async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, d
             raise HTTPException(404, "Series not found")
         result = crud.create_registration(db, reg, series_id)
         print(f"Registration created: {result.id}")
+        send_registration_email(reg, series.name)
         return result
     except Exception as e:
         print(f"Registration error: {e}")
