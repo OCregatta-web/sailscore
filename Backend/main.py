@@ -213,9 +213,11 @@ Boat Class:  {reg.boat_class or 'N/A'}
         )
         with urllib.request.urlopen(req) as response:
             print(f"Registration email sent, status: {response.status}")
+    except urllib.error.HTTPError as e:
+        print(f"Failed to send email: {e.code} {e.reason}")
+        print(f"SendGrid error body: {e.read().decode()}")
     except Exception as e:
         print(f"Failed to send email: {e}")
-
 # ── Public Registration (no auth required) ────────────────────────────────────
 
 @app.get("/register/{series_id}/info")
