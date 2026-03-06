@@ -3,7 +3,7 @@ import { useAuth } from "../App";
 import { api } from "../api";
 import Modal from "../components/Modal";
 
-const FLEET_OPTIONS = ["1-Design", "FS", "NFS", "Distance", "Cruising", "Multihull"];
+const FLEET_OPTIONS = ["1-Design", "FS", "NFS", "Distance"];
 
 export default function FleetManager({ seriesId, seriesName }) {
   const { user, navigate } = useAuth();
