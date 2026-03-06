@@ -35,6 +35,8 @@ export default function Dashboard() {
       setBackingUp(false);
     }
   };
+
+  const load = () =>
     api.get("/series", user.token).then(setSeries).finally(() => setLoading(false));
 
   useEffect(() => { load(); }, []);
