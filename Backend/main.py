@@ -125,11 +125,87 @@ def delete_race(race_id: int, db: Session = Depends(get_db), current_user=Depend
     crud.delete_race(db, race_id)
     return {"ok": True}
 
+def send_fleet_results_email(race, series_name: str, fleet_name: str, results, registrations):
+    api_key = os.environ.get("SENDGRID_API_KEY")
+    from_email = os.environ.get("SENDGRID_FROM_EMAIL")
+    if not api_key or not from_email:
+        return
+
+    # Get emails for boats in this fleet that have an email
+    fleet_emails = [
+        r.email for r in registrations
+        if r.fleet == fleet_name and r.email
+    ]
+    if not fleet_emails:
+        return
+
+    # Build results table
+    rows = ""
+    for r in results:
+        rows += f"  {r.position or '-':<4} {r.sail_number:<10} {r.boat_name:<20} {r.skipper:<20} {r.elapsed_display or '-':<12} {r.corrected_display or '-':<12} {r.status:<6} {int(r.points)}\n"
+
+    body = f"""Race {race.race_number} Results — {series_name} ({fleet_name} Fleet)
+
+{'Pos':<4} {'Sail #':<10} {'Boat':<20} {'Skipper':<20} {'Elapsed':<12} {'Corrected':<12} {'Status':<6} Points
+{'-'*90}
+{rows}
+Results are Time-on-Time corrected using PHRF rating (650 / (650 + rating)).
+"""
+
+    try:
+        import urllib.request, json
+        for email in fleet_emails:
+            payload = json.dumps({
+                "personalizations": [{"to": [{"email": email}]}],
+                "from": {"email": from_email},
+                "subject": f"Race {race.race_number} Results — {series_name} {fleet_name} Fleet",
+                "content": [{"type": "text/plain", "value": body}]
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                "https://api.sendgrid.com/v3/mail/send",
+                data=payload,
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                method="POST"
+            )
+            with urllib.request.urlopen(req) as response:
+                print(f"Results email sent to {email}, status: {response.status}")
+    except Exception as e:
+        print(f"Failed to send results email: {e}")
+
 # ── Finishes ──────────────────────────────────────────────────────────────────
 
 @app.post("/races/{race_id}/finishes", response_model=schemas.FinishOut)
 def record_finish(race_id: int, finish: schemas.FinishCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
-    return crud.upsert_finish(db, finish, race_id)
+    result = crud.upsert_finish(db, finish, race_id)
+
+    def notify():
+        try:
+            race = crud.get_race(db, race_id)
+            series = crud.get_series(db, race.series_id)
+            boats = crud.get_boats(db, race.series_id)
+            finishes = crud.get_finishes(db, race_id)
+            registrations = crud.get_registrations(db, race.series_id)
+
+            # Group boats by fleet and send one email per fleet
+            fleets = {}
+            for boat in boats:
+                fleet = boat.fleet or "NFS"
+                if fleet not in fleets:
+                    fleets[fleet] = []
+                fleets[fleet].append(boat)
+
+            for fleet_name, fleet_boats in fleets.items():
+                fleet_results = scoring.compute_race_results(finishes, fleet_boats)
+                threading.Thread(
+                    target=send_fleet_results_email,
+                    args=(race, series.name, fleet_name, fleet_results, registrations),
+                    daemon=True
+                ).start()
+        except Exception as e:
+            print(f"Error sending results notifications: {e}")
+
+    threading.Thread(target=notify, daemon=True).start()
+    return result
 
 @app.get("/races/{race_id}/finishes", response_model=List[schemas.FinishOut])
 def list_finishes(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
