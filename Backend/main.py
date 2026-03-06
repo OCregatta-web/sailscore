@@ -362,7 +362,9 @@ def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get
 
 @app.delete("/series/{series_id}/registrations")
 def clear_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
-    db.query(models.Registration).filter(models.Registration.series_id == series_id).delete()
+    regs = db.query(models.Registration).filter(models.Registration.series_id == series_id).all()
+    for reg in regs:
+        db.delete(reg)
     db.commit()
     return {"ok": True}
 
