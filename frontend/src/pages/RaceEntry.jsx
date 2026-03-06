@@ -178,14 +178,16 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setSaving(false);
   };
   const clearAllResults = async () => {
-    if (!confirm("Clear all finish times for this race? This cannot be undone.")) return;
-    const fins = await api.get(`/races/${selectedRace.id}/finishes`, user.token);
-    for (const f of fins) {
-      await api.delete(`/finishes/${f.id}`, user.token);
+    if (!confirm("Clear all finish times for this race? Boats will be reset to DNS. This cannot be undone.")) return;
+    for (const boat of boats) {
+      await api.post(`/races/${selectedRace.id}/finishes`,
+        { boat_id: boat.id, elapsed_seconds: null, status: "DNS" },
+        user.token
+      );
     }
     setEntries({});
-    setFinishes([]);
-    setResults([]);
+    setFleetStartTimes({});
+    await loadFinishesAndResults();
     setSubmitMsg("All results cleared ✓");
     setTimeout(() => setSubmitMsg(""), 2500);
   };
