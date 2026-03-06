@@ -22,6 +22,32 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [error, setError] = useState("");
   const [entries, setEntries] = useState({});
   const [submitMsg, setSubmitMsg] = useState("");
+  const [scoringFleet, setScoringFleet] = useState({});
+
+  const scoreFleet = async (fleetName, fleetBoats) => {
+    setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
+    try {
+      for (const boat of fleetBoats) {
+        const entry = entries[boat.id] || { finishTime: "", status: "DNS" };
+        const status = entry.status || "DNS";
+        let elapsed = null;
+        if (status === "FIN") {
+          elapsed = getElapsed(boat.id);
+        }
+        await api.post(`/races/${selectedRace.id}/finishes`,
+          { boat_id: boat.id, elapsed_seconds: elapsed, status },
+          user.token
+        );
+      }
+      await loadFinishesAndResults();
+      setSubmitMsg(`${fleetName} fleet scored ✓`);
+      setTimeout(() => setSubmitMsg(""), 3000);
+    } catch (err) {
+      setSubmitMsg("Error: " + err.message);
+    } finally {
+      setScoringFleet(prev => ({ ...prev, [fleetName]: false }));
+    }
+  };
 
   const loadRaces = () =>
     api.get(`/series/${seriesId}/races`, user.token).then(r => {
@@ -322,6 +348,13 @@ const applyFleetStartTime = (fleetName, startTime) => {
           >
             Apply to {fleetName}
           </button>
+          <button
+            className="btn-primary btn-sm"
+            onClick={() => scoreFleet(fleetName, fleetBoats)}
+            disabled={scoringFleet[fleetName]}
+          >
+            {scoringFleet[fleetName] ? "Scoring..." : `🏁 Score ${fleetName} Fleet`}
+          </button>
         </div>
       </div>
       <table className="entry-table">
@@ -335,7 +368,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
             <th>Elapsed</th>
             <th>Corrected</th>
             <th>Pos</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -412,9 +444,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
                       {result?.status}
                     </span>
                   ) : "—"}
-                </td>
-                <td>
-                  <button className="btn-save" onClick={() => submitFinish(boat.id)}>Save</button>
                 </td>
               </tr>
             );
