@@ -54,8 +54,11 @@ def me(current_user=Depends(auth.get_current_user)):
 # ── Series ────────────────────────────────────────────────────────────────────
 
 @app.post("/series", response_model=schemas.SeriesOut)
-def create_series(series: schemas.SeriesCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
-    return crud.create_series(db, series, current_user.id)
+def create_series(series: schemas.SeriesCreate, num_races: int = 0, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    new_series = crud.create_series(db, series, current_user.id)
+    for i in range(1, num_races + 1):
+        crud.create_race(db, schemas.RaceCreate(race_number=i, name=f"Race {i}"), new_series.id)
+    return new_series
 
 @app.get("/series", response_model=List[schemas.SeriesOut])
 def list_series(db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):

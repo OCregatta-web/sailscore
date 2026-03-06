@@ -9,7 +9,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editSeries, setEditSeries] = useState(null);
-  const [form, setForm] = useState({ name: "", season: "", throwouts: 0 });
+  const [form, setForm] = useState({ name: "", season: "", throwouts: 0, num_races: 10 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -43,14 +43,14 @@ export default function Dashboard() {
 
   const openNew = () => {
     setEditSeries(null);
-    setForm({ name: "", season: new Date().getFullYear().toString(), throwouts: 0 });
+    setForm({ name: "", season: new Date().getFullYear().toString(), throwouts: 0, num_races: 10 });
     setError("");
     setShowModal(true);
   };
 
   const openEdit = (s) => {
     setEditSeries(s);
-    setForm({ name: s.name, season: s.season || "", throwouts: s.throwouts });
+    setForm({ name: s.name, season: s.season || "", throwouts: s.throwouts, num_races: 0 });
     setError("");
     setShowModal(true);
   };
@@ -64,7 +64,7 @@ export default function Dashboard() {
       if (editSeries) {
         await api.put(`/series/${editSeries.id}`, body, user.token);
       } else {
-        await api.post("/series", body, user.token);
+        await api.post(`/series?num_races=${Number(form.num_races)}`, body, user.token);
       }
       setShowModal(false);
       load();
@@ -174,6 +174,20 @@ export default function Dashboard() {
               />
               <span className="field-hint">0 = no throwouts. US Sailing typically allows 1 throwout per 5 races.</span>
             </div>
+            {!editSeries && (
+              <div className="field">
+                <label>Number of Races</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={form.num_races}
+                  onChange={e => setForm({ ...form, num_races: e.target.value })}
+                  required
+                />
+                <span className="field-hint">Empty races will be created automatically.</span>
+              </div>
+            )}
             {error && <div className="form-error">{error}</div>}
             <div className="modal-footer">
               <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
