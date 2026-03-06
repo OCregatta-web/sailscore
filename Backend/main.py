@@ -231,6 +231,10 @@ def registration_info(series_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Series not found")
     return {"series_id": series.id, "series_name": series.name, "season": series.season}
 
+@app.get("/register/{series_id}/registrations")
+def public_registrations(series_id: int, db: Session = Depends(get_db)):
+    return crud.get_registrations(db, series_id)
+
 @app.post("/register/{series_id}")
 async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, db: Session = Depends(get_db)):
     try:

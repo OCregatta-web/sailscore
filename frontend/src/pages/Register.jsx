@@ -15,6 +15,13 @@ export default function Register() {
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [registrations, setRegistrations] = useState([]);
+
+  const fetchRegistrations = () =>
+    fetch(`${BASE}/register/${seriesId}/registrations`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setRegistrations)
+      .catch(() => {});
 
   useEffect(() => {
     if (!seriesId) { setNotFound(true); return; }
@@ -41,6 +48,7 @@ export default function Register() {
         throw new Error(err.detail || "Registration failed");
       }
       setSubmitted(true);
+      fetchRegistrations();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -85,6 +93,37 @@ export default function Register() {
             <div className="reg-summary-row"><span>Fleet</span><strong>{form.fleet}</strong></div>
             <div className="reg-summary-row"><span>PHRF</span><strong>{form.phrf_rating}</strong></div>
           </div>
+          {registrations.length > 0 && (
+            <div style={{ marginTop: "1.5rem" }}>
+              <h3 style={{ fontWeight: 700, marginBottom: "0.75rem" }}>Registered Fleet ({registrations.length})</h3>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
+                      <th style={{ padding: "6px 8px" }}>Boat</th>
+                      <th style={{ padding: "6px 8px" }}>Class</th>
+                      <th style={{ padding: "6px 8px" }}>Skipper</th>
+                      <th style={{ padding: "6px 8px" }}>Fleet</th>
+                      <th style={{ padding: "6px 8px" }}>PHRF</th>
+                      <th style={{ padding: "6px 8px" }}>Club</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {registrations.map((r, i) => (
+                      <tr key={r.id} style={{ borderBottom: "1px solid #eee", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
+                        <td style={{ padding: "6px 8px" }}><strong>{r.boat_name}</strong></td>
+                        <td style={{ padding: "6px 8px" }}>{r.boat_class || "—"}</td>
+                        <td style={{ padding: "6px 8px" }}>{r.skipper}</td>
+                        <td style={{ padding: "6px 8px" }}>{r.fleet}</td>
+                        <td style={{ padding: "6px 8px" }}>{r.phrf_rating}</td>
+                        <td style={{ padding: "6px 8px" }}>{r.club || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
