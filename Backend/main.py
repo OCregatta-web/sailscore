@@ -125,91 +125,11 @@ def delete_race(race_id: int, db: Session = Depends(get_db), current_user=Depend
     crud.delete_race(db, race_id)
     return {"ok": True}
 
-def send_fleet_results_email(race, series_name: str, fleet_name: str, results, registrations):
-    api_key = os.environ.get("SENDGRID_API_KEY")
-    from_email = os.environ.get("SENDGRID_FROM_EMAIL")
-    if not api_key or not from_email:
-        return
-
-    # Get emails for boats in this fleet that have an email
-    fleet_emails = [
-        r.email for r in registrations
-        if r.fleet == fleet_name and r.email
-    ]
-    if not fleet_emails:
-        return
-
-    # Build results table
-    rows = ""
-    for r in results:
-        rows += f"  {r.position or '-':<4} {r.sail_number:<10} {r.boat_name:<20} {r.skipper:<20} {r.elapsed_display or '-':<12} {r.corrected_display or '-':<12} {r.status:<6} {int(r.points)}\n"
-
-    body = f"""Race {race.race_number} Results — {series_name} ({fleet_name} Fleet)
-
-{'Pos':<4} {'Sail #':<10} {'Boat':<20} {'Skipper':<20} {'Elapsed':<12} {'Corrected':<12} {'Status':<6} Points
-{'-'*90}
-{rows}
-Results are Time-on-Time corrected using PHRF rating (650 / (650 + rating)).
-"""
-
-    try:
-        import urllib.request, json
-        for email in fleet_emails:
-            payload = json.dumps({
-                "personalizations": [{"to": [{"email": email}]}],
-                "from": {"email": from_email},
-                "subject": f"Race {race.race_number} Results — {series_name} {fleet_name} Fleet",
-                "content": [{"type": "text/plain", "value": body}]
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                "https://api.sendgrid.com/v3/mail/send",
-                data=payload,
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                method="POST"
-            )
-            try:
-                with urllib.request.urlopen(req) as response:
-                    print(f"Results email sent to {email}, status: {response.status}")
-            except urllib.error.HTTPError as e:
-                print(f"Failed to send results email: {e.code} {e.reason}")
-                print(f"SendGrid error: {e.read().decode()}")
-                print(f"API key prefix: {api_key[:10]}...")
-    except Exception as e:
-        print(f"Failed to send results email: {e}")
-
 # ── Finishes ──────────────────────────────────────────────────────────────────
 
 @app.post("/races/{race_id}/finishes", response_model=schemas.FinishOut)
 def record_finish(race_id: int, finish: schemas.FinishCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
-    result = crud.upsert_finish(db, finish, race_id)
-
-    def notify():
-        from database import SessionLocal
-        notify_db = SessionLocal()
-        try:
-            race = crud.get_race(notify_db, race_id)
-            series = crud.get_series(notify_db, race.series_id)
-            boats = crud.get_boats(notify_db, race.series_id)
-            finishes = crud.get_finishes(notify_db, race_id)
-            registrations = crud.get_registrations(notify_db, race.series_id)
-
-            fleets = {}
-            for boat in boats:
-                fleet = boat.fleet or "NFS"
-                if fleet not in fleets:
-                    fleets[fleet] = []
-                fleets[fleet].append(boat)
-
-            for fleet_name, fleet_boats in fleets.items():
-                fleet_results = scoring.compute_race_results(finishes, fleet_boats)
-                send_fleet_results_email(race, series.name, fleet_name, fleet_results, registrations)
-        except Exception as e:
-            print(f"Error sending results notifications: {e}")
-        finally:
-            notify_db.close()
-
-    threading.Thread(target=notify, daemon=True).start()
-    return result
+    return crud.upsert_finish(db, finish, race_id)
 
 @app.get("/races/{race_id}/finishes", response_model=List[schemas.FinishOut])
 def list_finishes(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -257,50 +177,6 @@ def export_csv(series_id: int, db: Session = Depends(get_db), current_user=Depen
     return StreamingResponse(output, media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=series_{series_id}_standings.csv"})
 
-def send_registration_email(reg, series_name: str):
-    api_key = os.environ.get("SENDGRID_API_KEY")
-    from_email = os.environ.get("SENDGRID_FROM_EMAIL")
-    if not api_key or not from_email:
-        print("SendGrid not configured, skipping notification")
-        return
-    try:
-        import urllib.request
-        import json
-        body = f"""
-New boat registration received for {series_name}:
-
-Boat Name:   {reg.boat_name}
-Sail Number: {reg.sail_number}
-Skipper:     {reg.skipper}
-Club:        {reg.club or 'N/A'}
-PHRF Rating: {reg.phrf_rating}
-Email:       {reg.email or 'N/A'}
-Phone:       {reg.phone or 'N/A'}
-Fleet:       {reg.fleet}
-Boat Class:  {reg.boat_class or 'N/A'}
-"""
-        payload = json.dumps({
-            "personalizations": [{"to": [{"email": from_email}]}],
-            "from": {"email": from_email},
-            "subject": f"New Registration: {reg.boat_name} - {series_name}",
-            "content": [{"type": "text/plain", "value": body}]
-        }).encode("utf-8")
-        req = urllib.request.Request(
-            "https://api.sendgrid.com/v3/mail/send",
-            data=payload,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            },
-            method="POST"
-        )
-        with urllib.request.urlopen(req) as response:
-            print(f"Registration email sent, status: {response.status}")
-    except urllib.error.HTTPError as e:
-        print(f"Failed to send email: {e.code} {e.reason}")
-        print(f"SendGrid error body: {e.read().decode()}")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
 # ── Public Results (no auth required) ────────────────────────────────────────
 
 @app.get("/public/series")
@@ -362,6 +238,43 @@ async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, d
     except Exception as e:
         print(f"Registration error: {e}")
         raise HTTPException(500, str(e))
+
+def send_registration_email(reg, series_name: str):
+    api_key = os.environ.get("SENDGRID_API_KEY")
+    from_email = os.environ.get("SENDGRID_FROM_EMAIL")
+    if not api_key or not from_email:
+        print("SendGrid not configured, skipping registration notification")
+        return
+    try:
+        import urllib.request, json
+        body = f"""New boat registration received for {series_name}:
+
+Boat Name:   {reg.boat_name}
+Sail Number: {reg.sail_number}
+Skipper:     {reg.skipper}
+Club:        {reg.club or 'N/A'}
+PHRF Rating: {reg.phrf_rating}
+Email:       {reg.email or 'N/A'}
+Phone:       {reg.phone or 'N/A'}
+Fleet:       {reg.fleet}
+Boat Class:  {reg.boat_class or 'N/A'}
+"""
+        payload = json.dumps({
+            "personalizations": [{"to": [{"email": from_email}]}],
+            "from": {"email": from_email},
+            "subject": f"New Registration: {reg.boat_name} — {series_name}",
+            "content": [{"type": "text/plain", "value": body}]
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.sendgrid.com/v3/mail/send",
+            data=payload,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            method="POST"
+        )
+        with urllib.request.urlopen(req) as response:
+            print(f"Registration email sent, status: {response.status}")
+    except Exception as e:
+        print(f"Failed to send registration email: {e}")
 @app.get("/backup")
 def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     import json
