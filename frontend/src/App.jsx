@@ -1,6 +1,8 @@
 // SailScore App v1.2 - 2026-03-05
 
 import Register from "./pages/Register";
+import Results from "./pages/Results";
+import "./pages/Results.css";
 import Registrations from "./pages/Registrations";
 import PrintView from "./pages/PrintView";
 import { useState, useEffect, createContext, useContext } from "react";
@@ -56,6 +58,11 @@ export default function App() {
   // Public registration page — no login required
 if (window.location.pathname === "/register") {
   return <Register />;
+}
+
+  // Public results page — no login required
+if (window.location.pathname.startsWith("/results")) {
+  return <Results />;
 }
 
 if (!user) return (
