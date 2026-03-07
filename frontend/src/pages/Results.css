@@ -1,0 +1,272 @@
+/* Results Page */
+.results-page {
+  min-height: 100vh;
+  background: #f0f4f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.results-nav {
+  background: #1a365d;
+  color: white;
+  padding: 0 2rem;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.results-brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.results-login-link {
+  color: rgba(255,255,255,0.75);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.results-login-link:hover { color: white; }
+
+.results-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.results-loading, .results-empty {
+  text-align: center;
+  color: #718096;
+  padding: 3rem;
+}
+
+/* Series List */
+.results-section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 1.25rem;
+}
+
+.results-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.results-series-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.results-series-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: #2b6cb0;
+}
+
+.results-series-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a365d;
+}
+.results-series-season {
+  font-size: 0.85rem;
+  color: #718096;
+}
+.results-series-arrow {
+  font-size: 0.85rem;
+  color: #2b6cb0;
+  margin-top: 0.5rem;
+}
+
+/* Series Results Header */
+.results-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.results-back {
+  background: none;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  color: #4a5568;
+  cursor: pointer;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+.results-back:hover { background: #edf2f7; }
+
+.results-title-block {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.results-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0;
+}
+.results-season {
+  font-size: 0.95rem;
+  color: #718096;
+}
+
+.results-share-btn {
+  background: #2b6cb0;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.results-share-btn:hover { background: #2c5282; }
+
+/* Fleet tabs */
+.results-fleet-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.results-fleet-tab {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1.5px solid #cbd5e0;
+  background: white;
+  color: #4a5568;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.results-fleet-tab.active {
+  background: #1a365d;
+  border-color: #1a365d;
+  color: white;
+  font-weight: 600;
+}
+.results-fleet-tab:hover:not(.active) { border-color: #2b6cb0; color: #2b6cb0; }
+
+/* Cards */
+.results-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.results-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.results-throwout-note {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #718096;
+}
+
+.results-race-date {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #718096;
+}
+
+.results-close-race {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #a0aec0;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+.results-close-race:hover { color: #4a5568; }
+
+/* Table */
+.results-table-wrap {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.results-table th {
+  background: #f7fafc;
+  color: #4a5568;
+  font-weight: 600;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.results-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #edf2f7;
+  color: #2d3748;
+}
+
+.results-table .row-even td { background: white; }
+.results-table .row-odd td { background: #f9fafb; }
+
+.results-race-col {
+  cursor: pointer;
+  user-select: none;
+  text-align: center !important;
+}
+.results-race-col:hover { color: #2b6cb0; background: #ebf8ff !important; }
+
+.active-race-col {
+  background: #ebf8ff !important;
+  color: #2b6cb0 !important;
+}
+
+.race-pts-cell {
+  text-align: center;
+}
+.throwout {
+  color: #a0aec0;
+  text-decoration: line-through;
+}
+
+.pos-cell { font-weight: 600; text-align: center; }
+.boat-name-cell { font-weight: 500; }
+.net-pts-cell { font-weight: 700; color: #1a365d; }
+
+.results-empty-row td {
+  text-align: center;
+  color: #a0aec0;
+  padding: 2rem;
+}
+
+.results-race-detail {
+  border-left: 4px solid #2b6cb0;
+}

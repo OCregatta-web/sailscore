@@ -301,6 +301,37 @@ Boat Class:  {reg.boat_class or 'N/A'}
         print(f"SendGrid error body: {e.read().decode()}")
     except Exception as e:
         print(f"Failed to send email: {e}")
+# ── Public Results (no auth required) ────────────────────────────────────────
+
+@app.get("/public/series")
+def public_series_list(db: Session = Depends(get_db)):
+    series = db.query(models.Series).order_by(models.Series.id.desc()).all()
+    return [{"id": s.id, "name": s.name, "season": s.season} for s in series]
+
+@app.get("/public/series/{series_id}/standings")
+def public_standings(series_id: int, db: Session = Depends(get_db)):
+    series = crud.get_series(db, series_id)
+    if not series:
+        raise HTTPException(404, "Series not found")
+    races = crud.get_races(db, series_id)
+    boats = crud.get_boats(db, series_id)
+    all_finishes = {r.id: crud.get_finishes(db, r.id) for r in races}
+    standings = scoring.compute_series_standings(series, races, boats, all_finishes)
+    return {
+        "series": {"id": series.id, "name": series.name, "season": series.season, "throwouts": series.throwouts},
+        "races": [{"id": r.id, "race_number": r.race_number, "name": r.name, "race_date": str(r.race_date) if r.race_date else None} for r in races],
+        "standings": standings
+    }
+
+@app.get("/public/races/{race_id}/results")
+def public_race_results(race_id: int, db: Session = Depends(get_db)):
+    race = crud.get_race(db, race_id)
+    if not race:
+        raise HTTPException(404, "Race not found")
+    finishes = crud.get_finishes(db, race_id)
+    boats = crud.get_boats(db, race.series_id)
+    return scoring.compute_race_results(finishes, boats)
+
 # ── Public Registration (no auth required) ────────────────────────────────────
 
 @app.get("/register/{series_id}/info")
