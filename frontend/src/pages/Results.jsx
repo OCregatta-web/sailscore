@@ -48,7 +48,23 @@ function SeriesResults({ series: seriesMeta, onBack }) {
   const [loading, setLoading] = useState(true);
   const [activeFleet, setActiveFleet] = useState(null);
   const [activeRace, setActiveRace] = useState(null);
+  const [raceDetail, setRaceDetail] = useState(null);
+  const [raceDetailLoading, setRaceDetailLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  const selectRace = (race) => {
+    if (activeRace?.id === race.id) {
+      setActiveRace(null);
+      setRaceDetail(null);
+      return;
+    }
+    setActiveRace(race);
+    setRaceDetail(null);
+    setRaceDetailLoading(true);
+    fetchPublic(`/public/races/${race.id}/results`)
+      .then(setRaceDetail)
+      .finally(() => setRaceDetailLoading(false));
+  };
 
   useEffect(() => {
     fetchPublic(`/public/series/${seriesMeta.id}/standings`)
@@ -76,15 +92,12 @@ function SeriesResults({ series: seriesMeta, onBack }) {
 
   const fleetRows = activeFleet ? rows.filter(r => r.fleet === activeFleet) : rows;
 
-  // Race results for selected race
-  const raceRows = activeRace
-    ? rows.filter(r => activeRace.fleet ? r.fleet === activeRace.fleet : true)
-        .map(r => ({
-          ...r,
-          racePoints: r.race_points?.[activeRace.id],
-        }))
-        .filter(r => r.racePoints)
-        .sort((a, b) => (a.racePoints?.position || 99) - (b.racePoints?.position || 99))
+  // Race detail rows filtered by active fleet
+  const raceDetailRows = raceDetail
+    ? (activeFleet ? raceDetail.filter(r => {
+        const boatRow = rows.find(b => b.boat_id === r.boat_id);
+        return boatRow?.fleet === activeFleet;
+      }) : raceDetail)
     : null;
 
   return (
@@ -134,7 +147,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                   <th
                     key={r.id}
                     className={`results-race-col ${activeRace?.id === r.id ? "active-race-col" : ""}`}
-                    onClick={() => setActiveRace(activeRace?.id === r.id ? null : r)}
+                    onClick={() => selectRace(r)}
                     title="Click to see race details"
                   >
                     R{r.race_number}
@@ -179,48 +192,54 @@ function SeriesResults({ series: seriesMeta, onBack }) {
       </div>
 
       {/* Race detail panel */}
-      {activeRace && raceRows && (
+      {activeRace && (
         <div className="results-card results-race-detail">
           <h2 className="results-card-title">
             Race {activeRace.race_number}{activeRace.name ? ` — ${activeRace.name}` : ""}
             {activeRace.race_date ? <span className="results-race-date"> · {activeRace.race_date}</span> : ""}
-            <button className="results-close-race" onClick={() => setActiveRace(null)}>✕</button>
+            <button className="results-close-race" onClick={() => { setActiveRace(null); setRaceDetail(null); }}>✕</button>
           </h2>
-          <div className="results-table-wrap">
-            <table className="results-table">
-              <thead>
-                <tr>
-                  <th>Pos</th>
-                  <th>Sail #</th>
-                  <th>Boat</th>
-                  <th>Skipper</th>
-                  <th>Fleet</th>
-                  <th>Elapsed</th>
-                  <th>Corrected</th>
-                  <th>Points</th>
-                </tr>
-              </thead>
-              <tbody>
-                {raceRows.map((row, i) => (
-                  <tr key={row.boat_id} className={i % 2 === 0 ? "row-even" : "row-odd"}>
-                    <td className="pos-cell">
-                      {row.racePoints.position === 1 ? "🥇" :
-                       row.racePoints.position === 2 ? "🥈" :
-                       row.racePoints.position === 3 ? "🥉" :
-                       row.racePoints.position ?? row.racePoints.display}
-                    </td>
-                    <td>{row.sail_number}</td>
-                    <td className="boat-name-cell">{row.boat_name}</td>
-                    <td>{row.skipper}</td>
-                    <td>{row.fleet}</td>
-                    <td>{row.racePoints.elapsed ?? "—"}</td>
-                    <td>{row.racePoints.corrected ?? "—"}</td>
-                    <td>{row.racePoints.display}</td>
+          {raceDetailLoading ? (
+            <div className="results-loading">Loading race results…</div>
+          ) : raceDetailRows && raceDetailRows.length > 0 ? (
+            <div className="results-table-wrap">
+              <table className="results-table">
+                <thead>
+                  <tr>
+                    <th>Pos</th>
+                    <th>Sail #</th>
+                    <th>Boat</th>
+                    <th>Skipper</th>
+                    <th>Fleet</th>
+                    <th>Elapsed</th>
+                    <th>Corrected</th>
+                    <th>Points</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {raceDetailRows.map((row, i) => (
+                    <tr key={row.boat_id} className={i % 2 === 0 ? "row-even" : "row-odd"}>
+                      <td className="pos-cell">
+                        {row.position === 1 ? "🥇" :
+                         row.position === 2 ? "🥈" :
+                         row.position === 3 ? "🥉" :
+                         row.position ?? row.status}
+                      </td>
+                      <td>{row.sail_number}</td>
+                      <td className="boat-name-cell">{row.boat_name}</td>
+                      <td>{row.skipper}</td>
+                      <td>{rows.find(b => b.boat_id === row.boat_id)?.fleet ?? "—"}</td>
+                      <td>{row.elapsed_display ?? "—"}</td>
+                      <td>{row.corrected_display ?? "—"}</td>
+                      <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="results-empty">No results recorded for this race yet.</p>
+          )}
         </div>
       )}
     </div>
