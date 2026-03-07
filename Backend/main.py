@@ -167,8 +167,13 @@ Results are Time-on-Time corrected using PHRF rating (650 / (650 + rating)).
                 headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                 method="POST"
             )
-            with urllib.request.urlopen(req) as response:
-                print(f"Results email sent to {email}, status: {response.status}")
+            try:
+                with urllib.request.urlopen(req) as response:
+                    print(f"Results email sent to {email}, status: {response.status}")
+            except urllib.error.HTTPError as e:
+                print(f"Failed to send results email: {e.code} {e.reason}")
+                print(f"SendGrid error: {e.read().decode()}")
+                print(f"API key prefix: {api_key[:10]}...")
     except Exception as e:
         print(f"Failed to send results email: {e}")
 
