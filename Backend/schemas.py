@@ -100,6 +100,7 @@ class RaceResult(BaseModel):
     boat_name: str
     skipper: str
     phrf_rating: int
+    fleet: Optional[str] = None
     elapsed_seconds: Optional[float]
     corrected_seconds: Optional[float]
     elapsed_display: Optional[str]
@@ -114,6 +115,7 @@ class StandingsRow(BaseModel):
     boat_name: str
     skipper: str
     phrf_rating: int
+    fleet: Optional[str] = None
     race_points: Dict[int, Any]
     total_points: float
     net_points: float

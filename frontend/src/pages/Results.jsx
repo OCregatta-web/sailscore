@@ -94,10 +94,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
 
   // Race detail rows filtered by active fleet
   const raceDetailRows = raceDetail
-    ? (activeFleet ? raceDetail.filter(r => {
-        const boatRow = rows.find(b => b.boat_id === r.boat_id);
-        return boatRow?.fleet === activeFleet;
-      }) : raceDetail)
+    ? (activeFleet ? raceDetail.filter(r => r.fleet === activeFleet) : raceDetail)
     : null;
 
   return (
@@ -228,7 +225,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.sail_number}</td>
                       <td className="boat-name-cell">{row.boat_name}</td>
                       <td>{row.skipper}</td>
-                      <td>{rows.find(b => b.boat_id === row.boat_id)?.fleet ?? "—"}</td>
+                      <td>{row.fleet ?? "—"}</td>
                       <td>{row.elapsed_display ?? "—"}</td>
                       <td>{row.corrected_display ?? "—"}</td>
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>

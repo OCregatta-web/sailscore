@@ -36,7 +36,7 @@ def compute_race_results(finishes, boats):
         results.append({
             "boat_id": boat.id, "sail_number": boat.sail_number,
             "boat_name": boat.boat_name, "skipper": boat.skipper,
-            "phrf_rating": boat.phrf_rating,
+            "phrf_rating": boat.phrf_rating, "fleet": boat.fleet,
             "elapsed_seconds": finish.elapsed_seconds,
             "corrected_seconds": corrected,
             "elapsed_display": seconds_to_display(finish.elapsed_seconds),
@@ -49,7 +49,7 @@ def compute_race_results(finishes, boats):
             results.append({
                 "boat_id": boat.id, "sail_number": boat.sail_number,
                 "boat_name": boat.boat_name, "skipper": boat.skipper,
-                "phrf_rating": boat.phrf_rating,
+                "phrf_rating": boat.phrf_rating, "fleet": boat.fleet,
                 "elapsed_seconds": None, "corrected_seconds": None,
                 "elapsed_display": None, "corrected_display": None,
                 "status": "DNS", "points": None, "position": None,
@@ -127,7 +127,8 @@ def compute_series_standings(series, races, boats, all_finishes):
             rows.append(schemas.StandingsRow(
                 position=0, boat_id=boat.id, sail_number=boat.sail_number,
                 boat_name=boat.boat_name, skipper=boat.skipper,
-                phrf_rating=boat.phrf_rating, race_points=race_points,
+                phrf_rating=boat.phrf_rating, fleet=boat.fleet,
+                race_points=race_points,
                 total_points=total_points, net_points=net_points,
             ))
 
