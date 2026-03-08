@@ -25,7 +25,28 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [scoringFleet, setScoringFleet] = useState({});
   const [dirtyEntries, setDirtyEntries] = useState(new Set());
 
-  const scoreFleet = async (fleetName, fleetBoats) => {
+  const [scoringAll, setScoringAll] = useState(false);
+
+  const scoreAllFleets = async () => {
+    const fleetGroups = boats.reduce((groups, boat) => {
+      const fleet = boat.fleet || "NFS";
+      if (!groups[fleet]) groups[fleet] = [];
+      groups[fleet].push(boat);
+      return groups;
+    }, {});
+    setScoringAll(true);
+    try {
+      for (const [fleetName, fleetBoats] of Object.entries(fleetGroups)) {
+        await scoreFleet(fleetName, fleetBoats);
+      }
+      setSubmitMsg("All fleets scored ✓");
+      setTimeout(() => setSubmitMsg(""), 3000);
+    } catch (err) {
+      setSubmitMsg("Error: " + err.message);
+    } finally {
+      setScoringAll(false);
+    }
+  };
     setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
     try {
       for (const boat of fleetBoats) {
@@ -351,13 +372,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
           >
             Apply to {fleetName}
           </button>
-          <button
-            className="btn-primary btn-sm"
-            onClick={() => scoreFleet(fleetName, fleetBoats)}
-            disabled={scoringFleet[fleetName]}
-          >
-            {scoringFleet[fleetName] ? "Scoring..." : `🏁 Score ${fleetName} Fleet`}
-          </button>
         </div>
       </div>
       <table className="entry-table">
@@ -459,19 +473,13 @@ const applyFleetStartTime = (fleetName, startTime) => {
 
                   <div className="entry-footer">
                     {submitMsg && <span className="save-msg">{submitMsg}</span>}
-                    <button className="btn-primary" onClick={submitAll} disabled={saving}>
-                      {saving ? "Saving all..." : "Save All"}
+                    <button className="btn-clear" onClick={clearAllResults}>
+                      🗑 Clear All Results
+                    </button>
+                    <button className="btn-primary" onClick={scoreAllFleets} disabled={scoringAll}>
+                      {scoringAll ? "Scoring..." : "🏁 Score All Fleets"}
                     </button>
                   </div>
-                  <div className="entry-footer">
-                    {submitMsg && <span className="save-msg">{submitMsg}</span>}
-                    <button className="btn-clear" onClick={clearAllResults}>
-                    🗑 Clear All Results
-                  </button>
-                  <button className="btn-primary" onClick={submitAll} disabled={saving}>
-                   {saving ? "Saving all..." : "Save All"}
-                  </button>
-                 </div>
                 </>
               )}
             </>
