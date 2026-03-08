@@ -206,7 +206,17 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    return scoring.compute_race_results(finishes, boats)
+    # Score each fleet separately so positions are per-fleet
+    fleets = {}
+    for boat in boats:
+        fleet = boat.fleet or "NFS"
+        if fleet not in fleets:
+            fleets[fleet] = []
+        fleets[fleet].append(boat)
+    all_results = []
+    for fleet_boats in fleets.values():
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats))
+    return all_results
 
 # ── Public Registration (no auth required) ────────────────────────────────────
 
