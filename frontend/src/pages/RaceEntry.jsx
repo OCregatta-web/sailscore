@@ -47,6 +47,8 @@ export default function RaceEntry({ seriesId, seriesName }) {
       setScoringAll(false);
     }
   };
+
+  const scoreFleet = async (fleetName, fleetBoats) => {
     setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
     try {
       for (const boat of fleetBoats) {
