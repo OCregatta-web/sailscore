@@ -28,7 +28,9 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
     try {
       for (const boat of fleetBoats) {
-        const entry = entries[boat.id] || { finishTime: "", status: "DNS" };
+        const entry = entries[boat.id];
+        // Skip boats with no entry at all — don't overwrite existing finishes
+        if (!entry) continue;
         const status = entry.status || "DNS";
         let elapsed = null;
         if (status === "FIN") {
