@@ -23,19 +23,18 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [entries, setEntries] = useState({});
   const [submitMsg, setSubmitMsg] = useState("");
   const [scoringFleet, setScoringFleet] = useState({});
+  const [dirtyEntries, setDirtyEntries] = useState(new Set());
 
   const scoreFleet = async (fleetName, fleetBoats) => {
     setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
     try {
       for (const boat of fleetBoats) {
+        // Only save boats the user has actually modified
+        if (!dirtyEntries.has(boat.id)) continue;
         const entry = entries[boat.id];
-        // Skip boats with no entry at all — don't overwrite existing finishes
         if (!entry) continue;
         const status = entry.status || "DNS";
-        let elapsed = null;
-        if (status === "FIN") {
-          elapsed = getElapsed(boat.id);
-        }
+        const elapsed = status === "FIN" ? getElapsed(boat.id) : null;
         await api.post(`/races/${selectedRace.id}/finishes`,
           { boat_id: boat.id, elapsed_seconds: elapsed, status },
           user.token
@@ -85,6 +84,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
       };
     });
     setEntries(map);
+    setDirtyEntries(new Set());
   };
 
   const parseTimeOfDay = (str) => {
@@ -165,6 +165,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
   };
 
   const setEntry = (boatId, field, value) => {
+    setDirtyEntries(prev => new Set(prev).add(boatId));
     setEntries(prev => ({
       ...prev,
       [boatId]: { ...(prev[boatId] || { finishTime: "", status: "FIN" }), [field]: value }
