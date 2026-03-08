@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 
-const FLEET_OPTIONS = ["1-Design", "FS", "NFS", "Distance"];
 const BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function Register() {
   const seriesId = new URLSearchParams(window.location.search).get("series");
   const [seriesInfo, setSeriesInfo] = useState(null);
   const [notFound, setNotFound] = useState(false);
+  const [fleetOptions, setFleetOptions] = useState([]);
   const [form, setForm] = useState({
     boat_name: "", sail_number: "", skipper: "",
-    phrf_rating: "", fleet: "NFS", club: "",
+    phrf_rating: "", fleet: "", club: "",
     email: "", phone: "", boat_class: "",
   });
   const [submitted, setSubmitted] = useState(false);
@@ -29,6 +29,14 @@ export default function Register() {
       .then(r => r.ok ? r.json() : Promise.reject())
       .then(setSeriesInfo)
       .catch(() => setNotFound(true));
+    fetch(`${BASE}/public/series/${seriesId}/fleets`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        const names = data.map(f => f.name);
+        setFleetOptions(names);
+        if (names.length > 0) setForm(f => ({ ...f, fleet: names[0] }));
+      })
+      .catch(() => {});
   }, [seriesId]);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -163,7 +171,7 @@ export default function Register() {
             <div className="field">
               <label>Fleet *</label>
               <select value={form.fleet} onChange={set("fleet")} required>
-                {FLEET_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
+                {fleetOptions.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
             </div>
             <div className="field">

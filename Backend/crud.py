@@ -209,3 +209,52 @@ def get_registrations(db: Session, series_id: int):
     return db.query(models.Registration).filter(
         models.Registration.series_id == series_id
     ).order_by(models.Registration.boat_name).all()
+def get_series_fleets(db: Session, series_id: int):
+    return db.query(models.SeriesFleet).filter(
+        models.SeriesFleet.series_id == series_id
+    ).order_by(models.SeriesFleet.sort_order, models.SeriesFleet.name).all()
+
+def create_series_fleet(db: Session, series_id: int, name: str):
+    existing = db.query(models.SeriesFleet).filter(
+        models.SeriesFleet.series_id == series_id,
+        models.SeriesFleet.name == name
+    ).first()
+    if existing:
+        return existing
+    count = db.query(models.SeriesFleet).filter(models.SeriesFleet.series_id == series_id).count()
+    fleet = models.SeriesFleet(series_id=series_id, name=name, sort_order=count)
+    db.add(fleet)
+    db.commit()
+    db.refresh(fleet)
+    return fleet
+
+def rename_series_fleet(db: Session, fleet_id: int, new_name: str, series_id: int):
+    fleet = db.query(models.SeriesFleet).filter(models.SeriesFleet.id == fleet_id).first()
+    if not fleet:
+        return None
+    old_name = fleet.name
+    fleet.name = new_name
+    # Update all boats in this series with old fleet name
+    db.query(models.Boat).filter(
+        models.Boat.series_id == series_id,
+        models.Boat.fleet == old_name
+    ).update({"fleet": new_name})
+    db.commit()
+    db.refresh(fleet)
+    return fleet
+
+def delete_series_fleet(db: Session, fleet_id: int, series_id: int):
+    fleet = db.query(models.SeriesFleet).filter(models.SeriesFleet.id == fleet_id).first()
+    if not fleet:
+        return
+    # Move boats in this fleet to first remaining fleet or None
+    other = db.query(models.SeriesFleet).filter(
+        models.SeriesFleet.series_id == series_id,
+        models.SeriesFleet.id != fleet_id
+    ).first()
+    db.query(models.Boat).filter(
+        models.Boat.series_id == series_id,
+        models.Boat.fleet == fleet.name
+    ).update({"fleet": other.name if other else None})
+    db.delete(fleet)
+    db.commit()

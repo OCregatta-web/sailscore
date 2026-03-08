@@ -64,6 +64,14 @@ class Finish(Base):
     corrected_seconds = Column(Float, nullable=True)
     race = relationship("Race", back_populates="finishes")
     boat = relationship("Boat", back_populates="finishes")
+class SeriesFleet(Base):
+    __tablename__ = "series_fleets"
+    id = Column(Integer, primary_key=True, index=True)
+    series_id = Column(Integer, ForeignKey("series.id"))
+    name = Column(String, nullable=False)
+    sort_order = Column(Integer, default=0)
+    series = relationship("Series")
+
 class Registration(Base):
     __tablename__ = "registrations"
     id = Column(Integer, primary_key=True, index=True)

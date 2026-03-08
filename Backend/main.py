@@ -99,6 +99,38 @@ def delete_boat(boat_id: int, db: Session = Depends(get_db), current_user=Depend
     crud.delete_boat(db, boat_id)
     return {"ok": True}
 
+# ── Series Fleets ─────────────────────────────────────────────────────────────
+
+@app.get("/series/{series_id}/fleets")
+def list_fleets(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.get_series_fleets(db, series_id)
+
+@app.get("/public/series/{series_id}/fleets")
+def public_list_fleets(series_id: int, db: Session = Depends(get_db)):
+    return crud.get_series_fleets(db, series_id)
+
+@app.post("/series/{series_id}/fleets")
+def create_fleet(series_id: int, body: dict, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    name = body.get("name", "").strip()
+    if not name:
+        raise HTTPException(400, "Fleet name required")
+    return crud.create_series_fleet(db, series_id, name)
+
+@app.put("/series/{series_id}/fleets/{fleet_id}")
+def rename_fleet(series_id: int, fleet_id: int, body: dict, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    name = body.get("name", "").strip()
+    if not name:
+        raise HTTPException(400, "Fleet name required")
+    result = crud.rename_series_fleet(db, fleet_id, name, series_id)
+    if not result:
+        raise HTTPException(404, "Fleet not found")
+    return result
+
+@app.delete("/series/{series_id}/fleets/{fleet_id}")
+def delete_fleet(series_id: int, fleet_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    crud.delete_series_fleet(db, fleet_id, series_id)
+    return {"ok": True}
+
 # ── Races ─────────────────────────────────────────────────────────────────────
 
 @app.post("/series/{series_id}/races", response_model=schemas.RaceOut)

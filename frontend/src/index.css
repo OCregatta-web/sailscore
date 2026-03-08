@@ -1,3 +1,88 @@
+/* Fleet Management Section */
+.fleet-mgmt-section {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.fleet-mgmt-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.fleet-mgmt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.fleet-mgmt-empty {
+  color: #a0aec0;
+  font-size: 0.875rem;
+}
+
+.fleet-mgmt-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #f7fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.fleet-mgmt-name {
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+}
+
+.fleet-mgmt-count {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-right: 0.5rem;
+}
+
+.fleet-mgmt-add {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.fleet-mgmt-input {
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  min-width: 180px;
+}
+.fleet-mgmt-input:focus { border-color: #2b6cb0; }
+
+.fleet-mgmt-error {
+  color: #e53e3e;
+  font-size: 0.8rem;
+}
+
+/* Inline fleet select in boat table */
+.fleet-inline-select {
+  border: 1px solid #cbd5e0;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  background: white;
+  cursor: pointer;
+  color: #2d3748;
+}
+.fleet-inline-select:focus { outline: none; border-color: #2b6cb0; }
 /* ── Google Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
