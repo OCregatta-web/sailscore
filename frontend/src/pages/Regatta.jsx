@@ -45,7 +45,7 @@ export default function Regatta() {
     <div style={styles.page}>
       {/* Nav */}
       <nav style={styles.nav}>
-        <span style={styles.navBrand}>⛵ OCOR 2025</span>
+        <span style={styles.navBrand}>⛵ OCOR 2026</span>
         <div style={styles.navLinks}>
           {["schedule", "register", "results", "photos", "sponsors", "contact"].map(s => (
             <button key={s} style={styles.navLink} onClick={() => scrollTo(s)}>
@@ -70,7 +70,7 @@ export default function Regatta() {
           </h1>
           <div style={styles.heroDate}>
             <span style={styles.heroDateIcon}>📅</span>
-            Saturday, August 15, 2025
+            Saturday, August 15, 2026
           </div>
           <div style={styles.heroCtas}>
             <a href="https://sailscore.vercel.app/register" style={styles.ctaPrimary}>
@@ -235,7 +235,7 @@ export default function Regatta() {
       {/* Footer */}
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
-          <span>⛵ Oakville Club Open Regatta 2025</span>
+          <span>⛵ Oakville Club Open Regatta 2026</span>
           <span>Powered by <a href="https://sailscore.vercel.app" style={styles.footerLink}>SailScore</a></span>
         </div>
       </footer>
@@ -264,7 +264,7 @@ const sponsorStyles = {
 };
 
 const animations = `
-  @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Pacifico&family=Nunito:wght@400;600;700;800&display=swap');
 
   @keyframes waveAnim {
     0% { transform: translateX(-100%) scaleY(1); }
@@ -287,7 +287,7 @@ const styles = {
   page: { fontFamily: "'Nunito', sans-serif", background: "#f0f7ff", minHeight: "100vh", color: "#1a1a2e" },
 
   nav: { position: "sticky", top: 0, zIndex: 100, background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", borderBottom: "3px solid #FF6B35", padding: "0.75rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" },
-  navBrand: { fontFamily: "'Pacifico', cursive", fontSize: "1.3rem", color: "#FF6B35" },
+  navBrand: { fontFamily: "'Anton', sans-serif", fontSize: "1.4rem", color: "#FF6B35", letterSpacing: "0.1em" },
   navLinks: { display: "flex", gap: "0.25rem", flexWrap: "wrap" },
   navLink: { background: "none", border: "none", padding: "0.35rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontFamily: "'Nunito', sans-serif", fontSize: "0.85rem", fontWeight: 700, color: "#444", transition: "all 0.2s" },
 
@@ -296,9 +296,9 @@ const styles = {
   wave: { position: "absolute", bottom: 0, left: "-100%", right: "-100%", height: "60px", background: "#f0f7ff", borderRadius: "50% 50% 0 0 / 30px 30px 0 0", animation: "waveAnim 6s ease-in-out infinite" },
   heroContent: { position: "relative", zIndex: 2, textAlign: "center", color: "white" },
   heroBadge: { display: "inline-block", background: "rgba(255,255,255,0.2)", border: "1px solid rgba(255,255,255,0.4)", borderRadius: "20px", padding: "0.3rem 1rem", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.1em", marginBottom: "1rem" },
-  heroTitle: { fontFamily: "'Pacifico', cursive", lineHeight: 1.1, marginBottom: "1rem", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.2))" },
-  heroTitleLine1: { display: "block", fontSize: "clamp(2rem, 6vw, 3.5rem)", color: "#fff" },
-  heroTitleLine2: { display: "block", fontSize: "clamp(2.5rem, 8vw, 5rem)", color: "#FFD166" },
+  heroTitle: { lineHeight: 1.05, marginBottom: "1rem", filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.25))" },
+  heroTitleLine1: { display: "block", fontSize: "clamp(2rem, 6vw, 3.2rem)", color: "#fff", fontFamily: "'Anton', sans-serif", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase" },
+  heroTitleLine2: { display: "block", fontSize: "clamp(2.5rem, 8vw, 4.5rem)", color: "#FFD166", fontFamily: "'Anton', sans-serif", fontWeight: 900, letterSpacing: "0.06em", textTransform: "uppercase" },
   heroDate: { fontSize: "1.1rem", fontWeight: 700, marginBottom: "2rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" },
   heroDateIcon: { fontSize: "1.3rem" },
   heroCtas: { display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" },
