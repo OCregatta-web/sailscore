@@ -2,6 +2,7 @@
 
 import Register from "./pages/Register";
 import Results from "./pages/Results";
+import Regatta from "./pages/Regatta";
 import "./pages/Results.css";
 import Registrations from "./pages/Registrations";
 import PrintView from "./pages/PrintView";
@@ -63,6 +64,11 @@ if (window.location.pathname === "/register") {
   // Public results page — no login required
 if (window.location.pathname.startsWith("/results")) {
   return <Results />;
+}
+
+  // Regatta event page — no login required
+if (window.location.pathname.startsWith("/regatta")) {
+  return <Regatta />;
 }
 
 if (!user) return (
