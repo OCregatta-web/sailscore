@@ -50,32 +50,22 @@ export default function App() {
 
   const navigate = (name, params = {}) => setPage({ name, params });
 
+  // Public pages — check before auth or loading
+  if (window.location.pathname === "/register") return <Register />;
+  if (window.location.pathname.startsWith("/results")) return <Results />;
+  if (window.location.pathname.startsWith("/regatta")) return <Regatta />;
+
   if (loading) return (
     <div className="loading-screen">
       <div className="buoy-spinner" />
     </div>
   );
 
-  // Public registration page — no login required
-if (window.location.pathname === "/register") {
-  return <Register />;
-}
-
-  // Public results page — no login required
-if (window.location.pathname.startsWith("/results")) {
-  return <Results />;
-}
-
-  // Regatta event page — no login required
-if (window.location.pathname.startsWith("/regatta")) {
-  return <Regatta />;
-}
-
-if (!user) return (
-  <AuthContext.Provider value={{ user, login, logout, navigate }}>
-    <Login />
-  </AuthContext.Provider>
-);
+  if (!user) return (
+    <AuthContext.Provider value={{ user, login, logout, navigate }}>
+      <Login />
+    </AuthContext.Provider>
+  );
 
   const pageMap = {
   dashboard: <Dashboard />,
