@@ -100,7 +100,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
   return (
     <div className="results-series">
       <div className="results-header">
-        <button className="results-back" onClick={onBack}>← All Series</button>
+        <a className="results-back" href="/regatta">← Back</a>
         <div className="results-title-block">
           <h1 className="results-title">{data.series.name}</h1>
           {data.series.season && <span className="results-season">{data.series.season}</span>}
@@ -256,29 +256,23 @@ function getFleets(rows) {
 }
 
 // ── Main Results Page ─────────────────────────────────────────────────────────
+const REGATTA_SERIES_ID = 3;
+
 export default function Results() {
   const [selected, setSelected] = useState(null);
 
-  // Support direct URL like /results/3
   useEffect(() => {
+    // Check for a specific series ID in URL, otherwise default to regatta series
     const match = window.location.pathname.match(/\/results\/(\d+)/);
-    if (match) {
-      fetchPublic(`/public/series/${match[1]}/standings`)
-        .then(d => setSelected({ id: d.series.id, name: d.series.name, season: d.series.season }))
-        .catch(() => {});
+    const seriesId = match ? match[1] : REGATTA_SERIES_ID;
+    fetchPublic(`/public/series/${seriesId}/standings`)
+      .then(d => setSelected({ id: d.series.id, name: d.series.name, season: d.series.season }))
+      .catch(() => {});
+    // Ensure URL reflects the series
+    if (!match) {
+      window.history.replaceState({}, "", `/results/${seriesId}`);
     }
   }, []);
-
-  // Update URL when series selected
-  const handleSelect = (s) => {
-    setSelected(s);
-    window.history.pushState({}, "", `/results/${s.id}`);
-  };
-
-  const handleBack = () => {
-    setSelected(null);
-    window.history.pushState({}, "", "/results");
-  };
 
   return (
     <div className="results-page">
@@ -288,8 +282,8 @@ export default function Results() {
       </div>
       <div className="results-content">
         {selected
-          ? <SeriesResults series={selected} onBack={handleBack} />
-          : <SeriesList onSelect={handleSelect} />
+          ? <SeriesResults series={selected} onBack={() => window.location.href = "/regatta"} />
+          : <div className="results-loading">Loading results…</div>
         }
       </div>
     </div>
