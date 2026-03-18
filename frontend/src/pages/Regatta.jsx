@@ -1,5 +1,6 @@
 import { useState } from "react";
 import heroImg from "../assets/hero.jpg";
+import mapImg from "../assets/map.jpg";
 
 const updates = [
   { date: "Aug 1", text: "Registration is now open! Early bird entries welcome. Fleet assignments confirmed by Aug 10." },
@@ -189,10 +190,7 @@ export default function Regatta() {
           <SectionHeader emoji="📍" title="Getting There" color="#9B5DE5" />
           <div style={styles.locationCard}>
             <div style={styles.locationMap}>
-              <div style={styles.locationMapPlaceholder}>
-                <span style={styles.locationPin}>📍</span>
-                <span>Oakville Waterfront<br />Oakville, Ontario</span>
-              </div>
+              <img src={mapImg} alt="The Oakville Club location map" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </div>
             <div style={styles.locationInfo}>
               <h3 style={styles.locationTitle}>Oakville Waterfront</h3>
