@@ -123,7 +123,7 @@ export default function Regatta() {
                 Online registration is open for all fleets. PHRF Time-on-Time scoring.
                 Fleets include FS, NFS, Distance, and 1-Design classes.
               </p>
-              <div style={styles.freeRegatta}>🎉 This is a FREE regatta — no entry fees!</div>
+              <div style={styles.freeRegatta}>🎉 This is a FREE regatta — 10 years running with no entry fees!</div>
               <ul style={styles.registerList}>
                 <li>✅ Online registration</li>
                 <li>✅ Fleet assignment by Aug 10</li>
@@ -318,7 +318,7 @@ const styles = {
   scheduleEvent: { fontSize: "0.85rem", fontWeight: 700, color: "#1a1a2e", lineHeight: 1.3 },
 
   registerCard: { background: "white", borderRadius: "20px", padding: "2.5rem", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" },
-  freeRegatta: { background: "linear-gradient(135deg, #06D6A0, #00b4d8)", color: "white", fontWeight: 800, fontSize: "1.1rem", padding: "0.85rem 1.5rem", borderRadius: "12px", marginBottom: "1.25rem", display: "inline-block" },
+  freeRegatta: { background: "linear-gradient(135deg, #06D6A0, #00b4d8)", color: "white", fontWeight: 800, fontSize: "1.35rem", padding: "1.1rem 2rem", borderRadius: "16px", marginBottom: "1.25rem", display: "block", textAlign: "center", lineHeight: 1.4 },
   registerLeft: {},
   registerTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.5rem", color: "#1a1a2e", marginBottom: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" },
   registerText: { color: "#555", lineHeight: 1.7, marginBottom: "1rem" },
