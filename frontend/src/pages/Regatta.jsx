@@ -137,6 +137,9 @@ export default function Regatta() {
               <a href="https://sailscore.vercel.app/register" style={styles.registerBtn}>
                 Register Online →
               </a>
+              <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}&view=list`} style={{ ...styles.registerBtn, background: "white", color: "#06D6A0", border: "2px solid #06D6A0", marginTop: "0.75rem", display: "inline-block" }}>
+                👀 View Registered Boats
+              </a>
             </div>
           </div>
         </section>

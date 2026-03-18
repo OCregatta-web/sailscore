@@ -39,12 +39,20 @@ export default function Register() {
       .catch(() => {});
   }, [seriesId]);
 
-  const [showingRegistrations, setShowingRegistrations] = useState(false);
+  const [showingRegistrations, setShowingRegistrations] = useState(
+    new URLSearchParams(window.location.search).get("view") === "list"
+  );
 
   const toggleRegistrations = () => {
     if (!showingRegistrations) fetchRegistrations();
     setShowingRegistrations(r => !r);
   };
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("view") === "list") {
+      fetchRegistrations();
+    }
+  }, [seriesId]);
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
