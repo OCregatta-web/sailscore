@@ -6,9 +6,7 @@ import mapImg from "../assets/map.jpg";
 const REGATTA_SERIES_ID = 3;
 
 const updates = [
-  { date: "Aug 1", text: "Registration is now open! Early bird entries welcome. Fleet assignments confirmed by Aug 10." },
-  { date: "Jul 20", text: "Sponsor announcement: Welcome aboard our platinum sponsor. More details coming soon!" },
-  { date: "Jul 10", text: "Notice to Competitors posted. Please review racing instructions on the documents page." },
+  { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
 ];
 
 const schedule = [
