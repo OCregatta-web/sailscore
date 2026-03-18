@@ -9,13 +9,14 @@ const updates = [
 ];
 
 const schedule = [
-  { time: "7:30 AM", event: "Registration Opens", icon: "📋" },
-  { time: "8:30 AM", event: "Skippers' Meeting", icon: "🧭" },
-  { time: "9:30 AM", event: "Warning Signal — Race 1", icon: "🚦" },
-  { time: "11:00 AM", event: "Warning Signal — Race 2", icon: "🚦" },
-  { time: "1:00 PM", event: "Warning Signal — Race 3", icon: "🚦" },
-  { time: "3:00 PM", event: "Last Warning Signal", icon: "🏁" },
-  { time: "5:00 PM", event: "Pool Party & Prize Giving", icon: "🏆" },
+  { time: "08:00", event: "Registration Opens", icon: "📋" },
+  { time: "09:00", event: "Skippers' Meeting", icon: "🧭" },
+  { time: "TBD", event: "Warning Signal — Race 1", icon: "🚦" },
+  { time: "TBD", event: "Warning Signal — Race 2", icon: "🚦" },
+  { time: "TBD", event: "Warning Signal — Race 3", icon: "🚦" },
+  { time: "No later than 15:30", event: "Last Warning Signal", icon: "🏁" },
+  { time: "17:30", event: "Dinner & Pool Party", icon: "🎉" },
+  { time: "18:30", event: "Awards", icon: "🏆" },
 ];
 
 const sponsors = [
