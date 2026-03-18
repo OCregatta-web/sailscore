@@ -317,7 +317,7 @@ const styles = {
   section: { padding: "4rem 0" },
   sectionHeader: { display: "flex", alignItems: "center", gap: "1rem", marginBottom: "2rem" },
   sectionEmoji: { width: "44px", height: "44px", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", flexShrink: 0 },
-  sectionTitle: { fontFamily: "'Pacifico', cursive", fontSize: "1.8rem", color: "#1a1a2e" },
+  sectionTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.8rem", color: "#1a1a2e", letterSpacing: "0.05em", textTransform: "uppercase" },
   sectionLine: { flex: 1, height: "3px", borderRadius: "2px" },
 
   scheduleGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" },
@@ -328,7 +328,7 @@ const styles = {
 
   registerCard: { background: "white", borderRadius: "20px", padding: "2.5rem", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "grid", gridTemplateColumns: "1fr auto", gap: "3rem", alignItems: "start" },
   registerLeft: {},
-  registerTitle: { fontFamily: "'Pacifico', cursive", fontSize: "1.5rem", color: "#1a1a2e", marginBottom: "0.75rem" },
+  registerTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.5rem", color: "#1a1a2e", marginBottom: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" },
   registerText: { color: "#555", lineHeight: 1.7, marginBottom: "1rem" },
   registerList: { listStyle: "none", display: "flex", flexDirection: "column", gap: "0.4rem", marginBottom: "1.5rem", color: "#333", fontSize: "0.9rem" },
   registerBtn: { display: "inline-block", background: "#06D6A0", color: "white", padding: "0.85rem 2rem", borderRadius: "50px", fontWeight: 800, fontSize: "1rem", textDecoration: "none", boxShadow: "0 4px 15px rgba(6,214,160,0.3)" },
@@ -341,7 +341,7 @@ const styles = {
 
   resultsCard: { background: "linear-gradient(135deg, #1a1a2e, #16213e)", borderRadius: "20px", padding: "3rem", textAlign: "center", color: "white" },
   resultsEmoji: { fontSize: "3rem", marginBottom: "1rem" },
-  resultsTitle: { fontFamily: "'Pacifico', cursive", fontSize: "1.75rem", marginBottom: "0.75rem", color: "#FFD166" },
+  resultsTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.75rem", marginBottom: "0.75rem", color: "#FFD166", letterSpacing: "0.05em", textTransform: "uppercase" },
   resultsText: { color: "#aab4c4", maxWidth: "500px", margin: "0 auto 1.5rem", lineHeight: 1.7 },
   resultsBtn: { display: "inline-block", background: "#FFD166", color: "#1a1a2e", padding: "0.85rem 2rem", borderRadius: "50px", fontWeight: 800, fontSize: "1rem", textDecoration: "none" },
 
@@ -364,7 +364,7 @@ const styles = {
   locationMapPlaceholder: { textAlign: "center", color: "white", fontWeight: 700 },
   locationPin: { display: "block", fontSize: "3rem", marginBottom: "0.5rem" },
   locationInfo: { padding: "2rem" },
-  locationTitle: { fontFamily: "'Pacifico', cursive", fontSize: "1.3rem", marginBottom: "0.75rem", color: "#1a1a2e" },
+  locationTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.3rem", marginBottom: "0.75rem", color: "#1a1a2e", letterSpacing: "0.05em", textTransform: "uppercase" },
   locationText: { color: "#555", lineHeight: 1.7, marginBottom: "1rem", fontSize: "0.9rem" },
   locationDetails: { display: "flex", flexDirection: "column", gap: "0.5rem" },
   locationDetail: { display: "flex", gap: "0.5rem", alignItems: "center", fontSize: "0.875rem", color: "#444" },
