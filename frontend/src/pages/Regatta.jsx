@@ -123,8 +123,9 @@ export default function Regatta() {
                 Online registration is open for all fleets. PHRF Time-on-Time scoring.
                 Fleets include FS, NFS, Distance, and 1-Design classes.
               </p>
+              <div style={styles.freeRegatta}>🎉 This is a FREE regatta — no entry fees!</div>
               <ul style={styles.registerList}>
-                <li>✅ Online registration &amp; payment</li>
+                <li>✅ Online registration</li>
                 <li>✅ Fleet assignment by Aug 10</li>
                 <li>✅ Skippers' package at sign-in</li>
                 <li>✅ Post-race dock party included</li>
@@ -132,16 +133,6 @@ export default function Regatta() {
               <a href="https://sailscore.vercel.app/register" style={styles.registerBtn}>
                 Register Online →
               </a>
-            </div>
-            <div style={styles.registerRight}>
-              <div style={styles.registerFees}>
-                <div style={styles.feesTitle}>Entry Fees</div>
-                <div style={styles.feeRow}><span>FS / NFS Fleet</span><span style={styles.feeAmount}>$85</span></div>
-                <div style={styles.feeRow}><span>Distance Fleet</span><span style={styles.feeAmount}>$95</span></div>
-                <div style={styles.feeRow}><span>1-Design Fleet</span><span style={styles.feeAmount}>$75</span></div>
-                <div style={styles.feeRow}><span>Junior Skipper</span><span style={styles.feeAmount}>$40</span></div>
-                <div style={styles.feesNote}>Fees include dock party & prizes</div>
-              </div>
             </div>
           </div>
         </section>
@@ -326,7 +317,8 @@ const styles = {
   scheduleTime: { fontSize: "0.8rem", fontWeight: 800, color: "#FF6B35", marginBottom: "0.25rem" },
   scheduleEvent: { fontSize: "0.85rem", fontWeight: 700, color: "#1a1a2e", lineHeight: 1.3 },
 
-  registerCard: { background: "white", borderRadius: "20px", padding: "2.5rem", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", display: "grid", gridTemplateColumns: "1fr auto", gap: "3rem", alignItems: "start" },
+  registerCard: { background: "white", borderRadius: "20px", padding: "2.5rem", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" },
+  freeRegatta: { background: "linear-gradient(135deg, #06D6A0, #00b4d8)", color: "white", fontWeight: 800, fontSize: "1.1rem", padding: "0.85rem 1.5rem", borderRadius: "12px", marginBottom: "1.25rem", display: "inline-block" },
   registerLeft: {},
   registerTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.5rem", color: "#1a1a2e", marginBottom: "0.75rem", letterSpacing: "0.05em", textTransform: "uppercase" },
   registerText: { color: "#555", lineHeight: 1.7, marginBottom: "1rem" },
