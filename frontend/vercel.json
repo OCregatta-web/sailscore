@@ -1,11 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/regatta",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
