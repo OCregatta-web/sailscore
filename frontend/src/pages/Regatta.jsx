@@ -81,41 +81,7 @@ export default function Regatta() {
             </button>
           </div>
         </div>
-        <div style={styles.heroBoat}>
-          <svg viewBox="0 0 220 280" width="220" height="280" xmlns="http://www.w3.org/2000/svg" style={{ filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.3))" }}>
-            {/* Water */}
-            <ellipse cx="110" cy="262" rx="90" ry="10" fill="rgba(0,60,100,0.3)" />
-            {/* Hull */}
-            <path d="M40 240 Q110 258 180 240 L165 220 Q110 232 55 220 Z" fill="#1a1a2e" />
-            <path d="M55 220 Q110 232 165 220 L158 212 Q110 224 62 212 Z" fill="#2d3a5e" />
-            {/* Deck stripe */}
-            <path d="M62 212 Q110 222 158 212 L155 208 Q110 218 65 208 Z" fill="#FF6B35" />
-            {/* Mast */}
-            <line x1="110" y1="60" x2="110" y2="215" stroke="white" strokeWidth="3" strokeLinecap="round" />
-            {/* Boom */}
-            <line x1="110" y1="185" x2="162" y2="205" stroke="white" strokeWidth="2" strokeLinecap="round" />
-            {/* Main sail */}
-            <path d="M110 65 L110 200 L158 198 Z" fill="white" opacity="0.92" />
-            <path d="M110 65 L110 200 L158 198 Z" fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="1" />
-            {/* Main sail batten lines */}
-            <line x1="110" y1="110" x2="148" y2="140" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
-            <line x1="110" y1="145" x2="152" y2="168" stroke="rgba(0,0,0,0.08)" strokeWidth="1" />
-            {/* Spinnaker */}
-            <path d="M110 68 Q52 100 30 175 Q70 210 110 200 Q88 155 110 68 Z" fill="#FFD166" opacity="0.95" />
-            <path d="M110 68 Q168 95 188 168 Q152 208 110 200 Q132 155 110 68 Z" fill="#FF6B35" opacity="0.95" />
-            {/* Spinnaker centre seam */}
-            <path d="M110 68 Q105 130 110 200" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
-            {/* Spinnaker halyard */}
-            <line x1="110" y1="68" x2="30" y2="175" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
-            <line x1="110" y1="68" x2="188" y2="168" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
-            {/* Forestay */}
-            <line x1="110" y1="62" x2="62" y2="210" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
-            {/* Backstay */}
-            <line x1="110" y1="62" x2="158" y2="198" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-            {/* Flag at top */}
-            <polygon points="110,58 125,53 110,48" fill="#EF476F" />
-          </svg>
-        </div>
+        <div style={styles.heroBoat} />
       </header>
 
       {/* Updates */}
@@ -316,7 +282,7 @@ const styles = {
   navLinks: { display: "flex", gap: "0.25rem", flexWrap: "wrap" },
   navLink: { background: "none", border: "none", padding: "0.35rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontFamily: "'Nunito', sans-serif", fontSize: "0.85rem", fontWeight: 700, color: "#444", transition: "all 0.2s" },
 
-  hero: { position: "relative", background: "linear-gradient(135deg, #0077b6 0%, #00b4d8 50%, #48cae4 100%)", minHeight: "480px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "4rem 2rem 6rem" },
+  hero: { position: "relative", background: "linear-gradient(135deg, rgba(0,30,60,0.75) 0%, rgba(0,80,120,0.6) 100%), url('/hero.jpg') center center / cover no-repeat", minHeight: "480px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "4rem 2rem 6rem" },
   heroWaves: { position: "absolute", bottom: 0, left: 0, right: 0, height: "120px" },
   wave: { position: "absolute", bottom: 0, left: "-100%", right: "-100%", height: "60px", background: "#f0f7ff", borderRadius: "50% 50% 0 0 / 30px 30px 0 0", animation: "waveAnim 6s ease-in-out infinite" },
   heroContent: { position: "relative", zIndex: 2, textAlign: "center", color: "white" },
@@ -329,7 +295,7 @@ const styles = {
   heroCtas: { display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" },
   ctaPrimary: { background: "#FF6B35", color: "white", padding: "0.85rem 2rem", borderRadius: "50px", fontWeight: 800, fontSize: "1rem", textDecoration: "none", boxShadow: "0 4px 15px rgba(255,107,53,0.4)", transition: "transform 0.2s" },
   ctaSecondary: { background: "rgba(255,255,255,0.15)", color: "white", border: "2px solid white", padding: "0.85rem 2rem", borderRadius: "50px", fontWeight: 800, fontSize: "1rem", cursor: "pointer", fontFamily: "'Nunito', sans-serif" },
-  heroBoat: { position: "absolute", right: "4%", bottom: "8%", zIndex: 2, animation: "boatFloat 4s ease-in-out infinite" },
+  heroBoat: { display: "none" },
 
   updatesBar: { background: "#1a1a2e", color: "white", padding: "1rem 2rem", display: "flex", alignItems: "flex-start", gap: "1.5rem", flexWrap: "wrap" },
   updatesLabel: { background: "#FF6B35", color: "white", padding: "0.25rem 0.75rem", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", marginTop: "0.1rem" },
