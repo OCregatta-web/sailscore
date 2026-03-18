@@ -203,6 +203,7 @@ export default function Regatta() {
                 Race committee vessel will be stationed at the start line. Marks will be set on the day based on conditions.
               </p>
               <div style={styles.locationDetails}>
+                <div style={styles.locationDetail}><span>📍</span> 43.44° N, 79.69° W</div>
                 <div style={styles.locationDetail}><span>⚓</span> Guest docking available at Oakville Harbour</div>
                 <div style={styles.locationDetail}><span>🅿️</span> Parking at Lakeside Park lot</div>
                 <div style={styles.locationDetail}><span>🚤</span> Launch ramp at 16 Mile Creek</div>
