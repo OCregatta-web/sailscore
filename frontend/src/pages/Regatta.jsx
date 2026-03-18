@@ -1,4 +1,5 @@
 import { useState } from "react";
+import heroImg from "../assets/hero.jpg";
 
 const updates = [
   { date: "Aug 1", text: "Registration is now open! Early bird entries welcome. Fleet assignments confirmed by Aug 10." },
@@ -282,7 +283,7 @@ const styles = {
   navLinks: { display: "flex", gap: "0.25rem", flexWrap: "wrap" },
   navLink: { background: "none", border: "none", padding: "0.35rem 0.75rem", borderRadius: "20px", cursor: "pointer", fontFamily: "'Nunito', sans-serif", fontSize: "0.85rem", fontWeight: 700, color: "#444", transition: "all 0.2s" },
 
-  hero: { position: "relative", background: "linear-gradient(135deg, rgba(0,30,60,0.75) 0%, rgba(0,80,120,0.6) 100%), url('/hero.jpg') center center / cover no-repeat", minHeight: "480px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "4rem 2rem 6rem" },
+  hero: { position: "relative", backgroundImage: `linear-gradient(135deg, rgba(0,30,60,0.75) 0%, rgba(0,80,120,0.6) 100%), url(${heroImg})`, backgroundSize: "cover", backgroundPosition: "center", minHeight: "480px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "4rem 2rem 6rem" },
   heroWaves: { position: "absolute", bottom: 0, left: 0, right: 0, height: "120px" },
   wave: { position: "absolute", bottom: 0, left: "-100%", right: "-100%", height: "60px", background: "#f0f7ff", borderRadius: "50% 50% 0 0 / 30px 30px 0 0", animation: "waveAnim 6s ease-in-out infinite" },
   heroContent: { position: "relative", zIndex: 2, textAlign: "center", color: "white" },
