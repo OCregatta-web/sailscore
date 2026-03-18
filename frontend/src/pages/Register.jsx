@@ -223,8 +223,8 @@ export default function Register() {
             {saving ? "Registering..." : "Register My Boat"}
           </button>
 
-          <button type="button" className="btn-secondary btn-full" style={{ marginTop: "0.75rem" }} onClick={toggleRegistrations}>
-            {showingRegistrations ? "Hide Registered Boats" : `👀 View Registered Boats`}
+          <button type="button" style={{ marginTop: "0.75rem", width: "100%", padding: "0.75rem", borderRadius: "8px", border: "2px solid #2b6cb0", background: "white", color: "#2b6cb0", fontWeight: 700, fontSize: "1rem", cursor: "pointer", fontFamily: "inherit" }} onClick={toggleRegistrations}>
+            {showingRegistrations ? "▲ Hide Registered Boats" : "👀 View Registered Boats"}
           </button>
 
           {showingRegistrations && (
