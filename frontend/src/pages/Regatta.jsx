@@ -2,6 +2,9 @@ import { useState } from "react";
 import heroImg from "../assets/hero.jpg";
 import mapImg from "../assets/map.jpg";
 
+// ── Update this ID to match the regatta series in SailScore ──
+const REGATTA_SERIES_ID = 3;
+
 const updates = [
   { date: "Aug 1", text: "Registration is now open! Early bird entries welcome. Fleet assignments confirmed by Aug 10." },
   { date: "Jul 20", text: "Sponsor announcement: Welcome aboard our platinum sponsor. More details coming soon!" },
@@ -149,7 +152,7 @@ export default function Regatta() {
             <p style={styles.resultsText}>
               Results will be posted in real-time as races are scored. Check back on race day for live standings by fleet.
             </p>
-            <a href="https://sailscore.vercel.app/results" style={styles.resultsBtn}>
+            <a href={`https://sailscore.vercel.app/results/${REGATTA_SERIES_ID}`} style={styles.resultsBtn}>
               View Results →
             </a>
           </div>
