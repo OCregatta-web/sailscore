@@ -1,4 +1,4 @@
-// SailScore App v1.2 - 2026-03-05
+﻿// SailScore App v1.2 - 2026-03-05
 
 import Register from "./pages/Register";
 import Results from "./pages/Results";
@@ -50,7 +50,7 @@ export default function App() {
 
   const navigate = (name, params = {}) => setPage({ name, params });
 
-  // Public pages — check before auth or loading
+  // Public pages â€” check before auth or loading
   if (window.location.pathname === "/register") return <Register />;
   if (window.location.pathname.startsWith("/results")) return <Results />;
   if (window.location.pathname.startsWith("/regatta")) return <Regatta />;
@@ -93,7 +93,7 @@ function Nav({ page }) {
   return (
     <nav className="navbar">
       <button className="nav-brand" onClick={() => navigate("dashboard")}>
-        <span className="brand-icon">⛵</span>
+        <span className="brand-icon">â›µ</span>
         <span className="brand-name">SailScore</span>
       </button>
       <div className="nav-right">
