@@ -14,7 +14,7 @@ const schedule = [
   { time: "11:00 AM", event: "Warning Signal — Race 2", icon: "🚦" },
   { time: "1:00 PM", event: "Warning Signal — Race 3", icon: "🚦" },
   { time: "3:00 PM", event: "Last Warning Signal", icon: "🏁" },
-  { time: "5:00 PM", event: "Dock Party & Prize Giving", icon: "🏆" },
+  { time: "5:00 PM", event: "Pool Party & Prize Giving", icon: "🏆" },
 ];
 
 const sponsors = [
@@ -129,7 +129,7 @@ export default function Regatta() {
                 <li>✅ Online registration</li>
                 <li>✅ Fleet assignment by Aug 10</li>
                 <li>✅ Skippers' package at sign-in</li>
-                <li>✅ Post-race dock party included</li>
+                <li>✅ Post-race pool party included</li>
               </ul>
               <a href="https://sailscore.vercel.app/register" style={styles.registerBtn}>
                 Register Online →
