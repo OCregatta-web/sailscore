@@ -1,5 +1,5 @@
 import { useState } from "react";
-import heroImg from "../assets/hero.jpg";
+import heroImg from "../assets/hero.JPG";
 
 const updates = [
   { date: "Aug 1", text: "Registration is now open! Early bird entries welcome. Fleet assignments confirmed by Aug 10." },
