@@ -299,12 +299,12 @@ const styles = {
   ctaSecondary: { background: "rgba(255,255,255,0.15)", color: "white", border: "2px solid white", padding: "0.85rem 2rem", borderRadius: "50px", fontWeight: 800, fontSize: "1rem", cursor: "pointer", fontFamily: "'Nunito', sans-serif" },
   heroBoat: { display: "none" },
 
-  updatesBar: { background: "#1a1a2e", color: "white", padding: "1rem 2rem", display: "flex", alignItems: "flex-start", gap: "1.5rem", flexWrap: "wrap" },
-  updatesLabel: { background: "#FF6B35", color: "white", padding: "0.25rem 0.75rem", borderRadius: "4px", fontSize: "0.75rem", fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", marginTop: "0.1rem" },
+  updatesBar: { background: "#1a1a2e", color: "white", padding: "1.25rem 2rem", display: "flex", alignItems: "flex-start", gap: "1.5rem", flexWrap: "wrap" },
+  updatesLabel: { background: "#FF6B35", color: "white", padding: "0.35rem 0.9rem", borderRadius: "4px", fontSize: "0.85rem", fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", marginTop: "0.15rem" },
   updatesList: { display: "flex", flexDirection: "column", gap: "0.4rem", flex: 1 },
   updateItem: { display: "flex", gap: "0.75rem", fontSize: "0.875rem" },
-  updateDate: { color: "#FFD166", fontWeight: 700, whiteSpace: "nowrap" },
-  updateText: { color: "#cdd5e0" },
+  updateDate: { color: "#FFD166", fontWeight: 800, whiteSpace: "nowrap", fontSize: "1rem" },
+  updateText: { color: "white", fontSize: "1.1rem", fontWeight: 600, lineHeight: 1.5 },
 
   container: { maxWidth: "1100px", margin: "0 auto", padding: "0 1.5rem" },
   section: { padding: "4rem 0" },
