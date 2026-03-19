@@ -277,6 +277,7 @@ export default function FleetManager({ seriesId, seriesName }) {
                             PHRF {sortDir === "asc" ? "↑" : "↓"}
                           </th>
                           <th className="num-col">ToT Factor</th>
+                          <th>Class</th>
                           <th>Fleet</th>
                           <th></th>
                         </tr>
@@ -295,6 +296,21 @@ export default function FleetManager({ seriesId, seriesName }) {
                                 </span>
                               </td>
                               <td className="num-col mono">{factor}</td>
+                              <td>
+                                <input
+                                  className="fleet-inline-select"
+                                  type="text"
+                                  placeholder="e.g. J/24"
+                                  defaultValue={b.boat_class || ""}
+                                  onBlur={async (e) => {
+                                    if (e.target.value !== (b.boat_class || "")) {
+                                      await api.put(`/boats/${b.id}`, { ...b, boat_class: e.target.value }, user.token);
+                                      loadAll();
+                                    }
+                                  }}
+                                  style={{ width: "90px" }}
+                                />
+                              </td>
                               <td>
                                 <select
                                   className="fleet-inline-select"
