@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import heroImg from "../assets/hero.jpg";
 import mapImg from "../assets/map.jpg";
+import sponsorNND from "../assets/sponsor-nnd.png";
+import sponsorOC from "../assets/sponsor-oc.png";
 
 // ── Update this ID to match the regatta series in SailScore ──
 const REGATTA_SERIES_ID = 3;
@@ -22,12 +24,8 @@ const schedule = [
 ];
 
 const sponsors = [
-  { name: "Oakville Sailing Club", tier: "platinum" },
-  { name: "Lake Ontario Marine", tier: "gold" },
-  { name: "Harbourside Chandlery", tier: "gold" },
-  { name: "Wind & Water Gear", tier: "silver" },
-  { name: "The Anchor Pub", tier: "silver" },
-  { name: "Oakville Boatworks", tier: "silver" },
+  { name: "The Oakville Club", tier: "platinum", logo: null },
+  { name: "Nurse Next Door", tier: "platinum", logo: null },
 ];
 
 const photos = [
@@ -57,6 +55,7 @@ export default function Regatta() {
         const boats = (standings.standings?.rows || []).map(b => ({
           ...b,
           club: regMap[b.sail_number]?.club || "—",
+          boat_class: regMap[b.sail_number]?.boat_class || null,
         }));
         setRegistrations(boats);
       }).finally(() => setLoadingRegs(false));
@@ -243,12 +242,12 @@ export default function Regatta() {
         <section id="sponsors" style={styles.section}>
           <SectionHeader emoji="🤝" title="Our Sponsors" color="#118AB2" />
           <div style={styles.sponsorsGrid}>
-            {sponsors.map((s, i) => (
-              <div key={i} style={{ ...styles.sponsorCard, ...sponsorStyles[s.tier] }}>
-                <div style={styles.sponsorTier}>{s.tier.toUpperCase()}</div>
-                <div style={styles.sponsorName}>{s.name}</div>
-              </div>
-            ))}
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
+              <img src={sponsorOC} alt="The Oakville Club" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
+              <img src={sponsorNND} alt="Nurse Next Door" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
           </div>
           <div style={styles.sponsorCta}>
             <p>Interested in sponsoring? <a href="mailto:alex@mcmillin.ca" style={styles.sponsorLink}>Get in touch →</a></p>
