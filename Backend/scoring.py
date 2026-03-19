@@ -128,6 +128,7 @@ def compute_series_standings(series, races, boats, all_finishes):
                 position=0, boat_id=boat.id, sail_number=boat.sail_number,
                 boat_name=boat.boat_name, skipper=boat.skipper,
                 phrf_rating=boat.phrf_rating, fleet=boat.fleet,
+                boat_class=boat.boat_class,
                 race_points=race_points,
                 total_points=total_points, net_points=net_points,
             ))

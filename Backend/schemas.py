@@ -116,6 +116,7 @@ class StandingsRow(BaseModel):
     skipper: str
     phrf_rating: int
     fleet: Optional[str] = None
+    boat_class: Optional[str] = None
     race_points: Dict[int, Any]
     total_points: float
     net_points: float
