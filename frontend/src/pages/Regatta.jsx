@@ -180,17 +180,21 @@ export default function Regatta() {
                           <thead>
                             <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
                               <th style={{ padding: "6px 8px", color: "#4a5568" }}>Boat</th>
+                              <th style={{ padding: "6px 8px", color: "#4a5568" }}>Class</th>
                               <th style={{ padding: "6px 8px", color: "#4a5568" }}>Skipper</th>
                               <th style={{ padding: "6px 8px", color: "#4a5568" }}>Fleet</th>
+                              <th style={{ padding: "6px 8px", color: "#4a5568" }}>PHRF</th>
                               <th style={{ padding: "6px 8px", color: "#4a5568" }}>Club</th>
                             </tr>
                           </thead>
                           <tbody>
                             {registrations.map((r, i) => (
-                              <tr key={r.id} style={{ borderBottom: "1px solid #edf2f7", background: i % 2 === 0 ? "#f7fafc" : "white" }}>
+                              <tr key={r.boat_id} style={{ borderBottom: "1px solid #edf2f7", background: i % 2 === 0 ? "#f7fafc" : "white" }}>
                                 <td style={{ padding: "6px 8px", fontWeight: 600 }}>{r.boat_name}</td>
+                                <td style={{ padding: "6px 8px" }}>{r.boat_class || "—"}</td>
                                 <td style={{ padding: "6px 8px" }}>{r.skipper}</td>
                                 <td style={{ padding: "6px 8px" }}>{r.fleet}</td>
+                                <td style={{ padding: "6px 8px" }}>{r.phrf_rating}</td>
                                 <td style={{ padding: "6px 8px" }}>{r.club || "—"}</td>
                               </tr>
                             ))}
