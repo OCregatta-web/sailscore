@@ -10,6 +10,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const updates = [
   { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
+  { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
 ];
 
 const schedule = [
@@ -119,6 +120,7 @@ export default function Regatta() {
             <div key={i} style={styles.updateItem}>
               <span style={styles.updateDate}>{u.date}</span>
               <span style={styles.updateText}>{u.text}</span>
+              {u.link && <a href={u.link} style={styles.updateBtn}>{u.linkText}</a>}
             </div>
           ))}
         </div>
@@ -373,6 +375,7 @@ const styles = {
   updateItem: { display: "flex", gap: "0.75rem", fontSize: "0.875rem" },
   updateDate: { color: "#FFD166", fontWeight: 800, whiteSpace: "nowrap", fontSize: "1rem" },
   updateText: { color: "white", fontSize: "1.1rem", fontWeight: 600, lineHeight: 1.5 },
+  updateBtn: { background: "#FF6B35", color: "white", padding: "0.25rem 0.75rem", borderRadius: "20px", textDecoration: "none", fontSize: "0.85rem", fontWeight: 700, whiteSpace: "nowrap" },
 
   container: { maxWidth: "1100px", margin: "0 auto", padding: "0 1.5rem" },
   section: { padding: "4rem 0" },
