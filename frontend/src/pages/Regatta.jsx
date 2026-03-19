@@ -48,10 +48,18 @@ export default function Regatta() {
   const toggleBoatList = () => {
     if (!showBoatList && registrations.length === 0) {
       setLoadingRegs(true);
-      fetch(`${API}/public/series/${REGATTA_SERIES_ID}/standings`)
-        .then(r => r.ok ? r.json() : {})
-        .then(data => setRegistrations(data.standings?.rows || []))
-        .finally(() => setLoadingRegs(false));
+      Promise.all([
+        fetch(`${API}/public/series/${REGATTA_SERIES_ID}/standings`).then(r => r.ok ? r.json() : {}),
+        fetch(`${API}/register/${REGATTA_SERIES_ID}/registrations`).then(r => r.ok ? r.json() : []),
+      ]).then(([standings, regs]) => {
+        const regMap = {};
+        regs.forEach(r => { regMap[r.sail_number] = r; });
+        const boats = (standings.standings?.rows || []).map(b => ({
+          ...b,
+          club: regMap[b.sail_number]?.club || "—",
+        }));
+        setRegistrations(boats);
+      }).finally(() => setLoadingRegs(false));
     }
     setShowBoatList(v => !v);
   };
