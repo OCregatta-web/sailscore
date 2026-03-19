@@ -100,7 +100,7 @@ export default function Regatta() {
             Saturday, August 15, 2026
           </div>
           <div style={styles.heroCtas}>
-            <a href="https://sailscore.vercel.app/register" style={styles.ctaPrimary}>
+            <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}`} style={styles.ctaPrimary}>
               Register Now →
             </a>
             <button style={styles.ctaSecondary} onClick={() => scrollTo("schedule")}>
@@ -157,7 +157,7 @@ export default function Regatta() {
                 <li>✅ Skippers' package at sign-in</li>
                 <li>✅ Post-race pool party included</li>
               </ul>
-              <a href="https://sailscore.vercel.app/register" style={styles.registerBtn}>
+              <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}`} style={styles.registerBtn}>
                 Register Online →
               </a>
               <button onClick={toggleBoatList} style={{ ...styles.registerBtn, background: "white", color: "#06D6A0", border: "2px solid #06D6A0", marginTop: "0.75rem", cursor: "pointer", fontFamily: "inherit", display: "block", width: "fit-content" }}>
