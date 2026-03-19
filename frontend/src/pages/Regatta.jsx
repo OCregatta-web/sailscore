@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import heroImg from "../assets/hero.jpg";
 import mapImg from "../assets/map.jpg";
 
 // ── Update this ID to match the regatta series in SailScore ──
 const REGATTA_SERIES_ID = 3;
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const updates = [
   { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
@@ -40,6 +41,20 @@ const photos = [
 
 export default function Regatta() {
   const [activeSection, setActiveSection] = useState(null);
+  const [showBoatList, setShowBoatList] = useState(false);
+  const [registrations, setRegistrations] = useState([]);
+  const [loadingRegs, setLoadingRegs] = useState(false);
+
+  const toggleBoatList = () => {
+    if (!showBoatList && registrations.length === 0) {
+      setLoadingRegs(true);
+      fetch(`${API}/register/${REGATTA_SERIES_ID}/registrations`)
+        .then(r => r.ok ? r.json() : [])
+        .then(setRegistrations)
+        .finally(() => setLoadingRegs(false));
+    }
+    setShowBoatList(v => !v);
+  };
 
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -137,9 +152,47 @@ export default function Regatta() {
               <a href="https://sailscore.vercel.app/register" style={styles.registerBtn}>
                 Register Online →
               </a>
-              <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}&view=list`} style={{ ...styles.registerBtn, background: "white", color: "#06D6A0", border: "2px solid #06D6A0", marginTop: "0.75rem", display: "inline-block" }}>
-                👀 View Registered Boats
-              </a>
+              <button onClick={toggleBoatList} style={{ ...styles.registerBtn, background: "white", color: "#06D6A0", border: "2px solid #06D6A0", marginTop: "0.75rem", cursor: "pointer", fontFamily: "inherit", display: "block", width: "fit-content" }}>
+                {showBoatList ? "▲ Hide Registered Boats" : "👀 View Registered Boats"}
+              </button>
+
+              {showBoatList && (
+                <div style={{ marginTop: "1.25rem" }}>
+                  {loadingRegs ? (
+                    <p style={{ color: "#888", fontSize: "0.875rem" }}>Loading...</p>
+                  ) : registrations.length === 0 ? (
+                    <p style={{ color: "#888", fontSize: "0.875rem" }}>No boats registered yet — be the first!</p>
+                  ) : (
+                    <>
+                      <div style={{ fontWeight: 700, marginBottom: "0.5rem", fontSize: "0.9rem", color: "#1a1a2e" }}>
+                        {registrations.length} boat{registrations.length !== 1 ? "s" : ""} registered
+                      </div>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+                          <thead>
+                            <tr style={{ borderBottom: "2px solid #e2e8f0", textAlign: "left" }}>
+                              <th style={{ padding: "6px 8px", color: "#4a5568" }}>Boat</th>
+                              <th style={{ padding: "6px 8px", color: "#4a5568" }}>Skipper</th>
+                              <th style={{ padding: "6px 8px", color: "#4a5568" }}>Fleet</th>
+                              <th style={{ padding: "6px 8px", color: "#4a5568" }}>Club</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {registrations.map((r, i) => (
+                              <tr key={r.id} style={{ borderBottom: "1px solid #edf2f7", background: i % 2 === 0 ? "#f7fafc" : "white" }}>
+                                <td style={{ padding: "6px 8px", fontWeight: 600 }}>{r.boat_name}</td>
+                                <td style={{ padding: "6px 8px" }}>{r.skipper}</td>
+                                <td style={{ padding: "6px 8px" }}>{r.fleet}</td>
+                                <td style={{ padding: "6px 8px" }}>{r.club || "—"}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
