@@ -78,6 +78,7 @@ export default function Regatta() {
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
           ))}
+          <a href="/nor" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #FF6B35", color: "#FF6B35", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Notice of Race</a>
         </div>
       </nav>
 
