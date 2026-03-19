@@ -48,9 +48,9 @@ export default function Regatta() {
   const toggleBoatList = () => {
     if (!showBoatList && registrations.length === 0) {
       setLoadingRegs(true);
-      fetch(`${API}/register/${REGATTA_SERIES_ID}/registrations`)
-        .then(r => r.ok ? r.json() : [])
-        .then(setRegistrations)
+      fetch(`${API}/public/series/${REGATTA_SERIES_ID}/standings`)
+        .then(r => r.ok ? r.json() : {})
+        .then(data => setRegistrations(data.standings?.rows || []))
         .finally(() => setLoadingRegs(false));
     }
     setShowBoatList(v => !v);
