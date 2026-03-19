@@ -236,43 +236,9 @@ export default function Register() {
             {saving ? "Registering..." : "Register My Boat"}
           </button>
 
-          <button type="button" style={{ marginTop: "0.75rem", width: "100%", padding: "0.75rem", borderRadius: "8px", border: "2px solid #2b6cb0", background: "white", color: "#2b6cb0", fontWeight: 700, fontSize: "1rem", cursor: "pointer", fontFamily: "inherit" }} onClick={toggleRegistrations}>
-            {showingRegistrations ? "▲ Hide Registered Boats" : "👀 View Registered Boats"}
-          </button>
-
-          {showingRegistrations && (
-            <div style={{ marginTop: "1.25rem" }}>
-              <h3 style={{ fontWeight: 700, marginBottom: "0.75rem", fontSize: "0.95rem" }}>
-                Registered Boats {registrations.length > 0 ? `(${registrations.length})` : ""}
-              </h3>
-              {registrations.length === 0 ? (
-                <p style={{ color: "#888", fontSize: "0.875rem" }}>No boats registered yet — be the first!</p>
-              ) : (
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-                    <thead>
-                      <tr style={{ borderBottom: "2px solid #ddd", textAlign: "left" }}>
-                        <th style={{ padding: "6px 8px" }}>Boat</th>
-                        <th style={{ padding: "6px 8px" }}>Skipper</th>
-                        <th style={{ padding: "6px 8px" }}>Fleet</th>
-                        <th style={{ padding: "6px 8px" }}>Club</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {registrations.map((r, i) => (
-                        <tr key={r.id} style={{ borderBottom: "1px solid #eee", background: i % 2 === 0 ? "#fafafa" : "#fff" }}>
-                          <td style={{ padding: "6px 8px" }}><strong>{r.boat_name}</strong></td>
-                          <td style={{ padding: "6px 8px" }}>{r.skipper}</td>
-                          <td style={{ padding: "6px 8px" }}>{r.fleet}</td>
-                          <td style={{ padding: "6px 8px" }}>{r.club || "—"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )}
+          <a href="/regatta" style={{ display: "block", textAlign: "center", marginTop: "0.75rem", padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e0", color: "#4a5568", textDecoration: "none", fontWeight: 600, fontSize: "0.95rem" }}>
+            ← Back to Regatta
+          </a>
         </form>
       </div>
     </div>
