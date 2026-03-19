@@ -33,10 +33,15 @@ export default function Register() {
       .then(r => r.ok ? r.json() : [])
       .then(data => {
         const names = data.map(f => f.name);
-        setFleetOptions(names);
-        if (names.length > 0) setForm(f => ({ ...f, fleet: names[0] }));
+        const options = names.length > 0 ? names : ["NFS", "FS", "1-Design", "Distance"];
+        setFleetOptions(options);
+        if (options.length > 0) setForm(f => ({ ...f, fleet: options[0] }));
       })
-      .catch(() => {});
+      .catch(() => {
+        const defaults = ["NFS", "FS", "1-Design", "Distance"];
+        setFleetOptions(defaults);
+        setForm(f => ({ ...f, fleet: defaults[0] }));
+      });
   }, [seriesId]);
 
   const [showingRegistrations, setShowingRegistrations] = useState(
