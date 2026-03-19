@@ -27,6 +27,7 @@ export default function FleetManager({ seriesId, seriesName }) {
   useEffect(() => { loadAll(); }, [seriesId]);
 
   const fleetNames = fleets.map(f => f.name);
+  const fleetOptions = fleetNames.length > 0 ? fleetNames : ["NFS", "FS", "1-Design", "Distance"];
 
   const addFleet = async () => {
     const name = newFleetName.trim();
@@ -64,14 +65,14 @@ export default function FleetManager({ seriesId, seriesName }) {
 
   const openNew = (defaultFleet = "") => {
     setEditBoat(null);
-    setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: defaultFleet || fleetNames[0] || "", boat_class: "" });
+    setForm({ sail_number: "", boat_name: "", skipper: "", phrf_rating: "", fleet: defaultFleet || fleetOptions[0] || "", boat_class: "" });
     setError("");
     setShowModal(true);
   };
 
   const openEdit = (b) => {
     setEditBoat(b);
-    setForm({ sail_number: b.sail_number, boat_name: b.boat_name, skipper: b.skipper, phrf_rating: b.phrf_rating, fleet: b.fleet || fleetNames[0] || "", boat_class: b.boat_class || "" });
+    setForm({ sail_number: b.sail_number, boat_name: b.boat_name, skipper: b.skipper, phrf_rating: b.phrf_rating, fleet: b.fleet || fleetOptions[0] || "", boat_class: b.boat_class || "" });
     setError("");
     setShowModal(true);
   };
@@ -303,7 +304,7 @@ export default function FleetManager({ seriesId, seriesName }) {
                                     loadAll();
                                   }}
                                 >
-                                  {fleetNames.map(f => <option key={f} value={f}>{f}</option>)}
+                                  {fleetOptions.map(f => <option key={f} value={f}>{f}</option>)}
                                 </select>
                               </td>
                               <td className="actions-cell">
@@ -350,14 +351,10 @@ export default function FleetManager({ seriesId, seriesName }) {
             </div>
             <div className="field">
               <label>Fleet</label>
-              {fleetNames.length > 0 ? (
-                <select value={form.fleet} onChange={set("fleet")}>
-                  {fleetNames.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
-              ) : (
-                <div className="form-hint">No fleets defined yet — add fleets in the Fleet Management section first.</div>
-              )}
-            </div>
+              <select value={form.fleet} onChange={set("fleet")}>
+                {fleetOptions.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>            </div>
             {form.phrf_rating !== "" && (
               <div className="rating-preview">
                 ToT factor: <strong>{(650 / (650 + Number(form.phrf_rating))).toFixed(4)}</strong>
