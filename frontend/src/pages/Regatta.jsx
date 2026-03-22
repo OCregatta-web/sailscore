@@ -67,6 +67,7 @@ export default function Regatta() {
   const [showBoatList, setShowBoatList] = useState(false);
   const [registrations, setRegistrations] = useState([]);
   const [loadingRegs, setLoadingRegs] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
 
   const toggleBoatList = () => {
     if (!showBoatList && registrations.length === 0) {
@@ -272,7 +273,7 @@ export default function Regatta() {
           <p style={styles.pastPhotosSubtitle}>A decade of great racing on Lake Ontario</p>
           <div style={styles.pastPhotosGrid}>
             {pastPhotos.map((src, i) => (
-              <div key={i} style={styles.pastPhotoCard}>
+              <div key={i} style={{ ...styles.pastPhotoCard, cursor: "pointer" }} onClick={() => setLightbox(src)}>
                 <img src={src} alt={`Past regatta photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px", display: "block" }} />
               </div>
             ))}
@@ -342,6 +343,14 @@ export default function Regatta() {
       </footer>
 
       <style>{animations}</style>
+
+      {/* Lightbox */}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-out", padding: "1rem" }}>
+          <img src={lightbox} alt="Enlarged photo" style={{ maxWidth: "90vw", maxHeight: "90vh", objectFit: "contain", borderRadius: "8px", boxShadow: "0 8px 40px rgba(0,0,0,0.8)" }} />
+          <button onClick={() => setLightbox(null)} style={{ position: "absolute", top: "1rem", right: "1.5rem", background: "none", border: "none", color: "white", fontSize: "2rem", cursor: "pointer", lineHeight: 1 }}>✕</button>
+        </div>
+      )}
     </div>
   );
 }
