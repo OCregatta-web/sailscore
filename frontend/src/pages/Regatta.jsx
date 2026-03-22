@@ -4,6 +4,30 @@ import mapImg from "../assets/map.jpg";
 import sponsorNND from "../assets/sponsor-nnd.png";
 import sponsorOC from "../assets/sponsor-oc.png";
 
+import photo1 from "../assets/allegro 2.jpg";
+import photo2 from "../assets/Blackbird2.jpg";
+import photo3 from "../assets/Chimo II.jpg";
+import photo4 from "../assets/el jefe.JPG";
+import photo5 from "../assets/etchells start.jpg";
+import photo6 from "../assets/etchells.jpg";
+import photo7 from "../assets/FS2 giving chase.JPG";
+import photo8 from "../assets/FS2 starting.jpg";
+import photo9 from "../assets/lunatic and snowbird.JPG";
+import photo10 from "../assets/maggie.jpg";
+import photo11 from "../assets/racing 7.jpg";
+import photo12 from "../assets/Screenshot 2018-11-16 at 10.00.41.png";
+import photo13 from "../assets/Screenshot 2018-11-16 at 10.05.08.png";
+import photo14 from "../assets/sharks2.jpg";
+import photo15 from "../assets/the lads from tiburon.jpg";
+import photo16 from "../assets/ElleBruce-20230819-6440.jpg";
+import photo17 from "../assets/ocr23-5.jpg";
+import photo18 from "../assets/ocr23-6.jpg";
+import photo19 from "../assets/ElleBruce-20150218-6853.jpg";
+import photo20 from "../assets/ElleBruce-20150218-6875-2.jpg";
+import photo21 from "../assets/ElleBruce-20150218-6883-2.jpg";
+
+const pastPhotos = [photo1,photo2,photo3,photo4,photo5,photo6,photo7,photo8,photo9,photo10,photo11,photo12,photo13,photo14,photo15,photo16,photo17,photo18,photo19,photo20,photo21];
+
 // ── Update this ID to match the regatta series in SailScore ──
 const REGATTA_SERIES_ID = 3;
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -245,11 +269,11 @@ export default function Regatta() {
             <span style={styles.pastPhotosEmoji}>🏅</span>
             <h3 style={styles.pastPhotosTitle}>Blast from the Past!</h3>
           </div>
-          <p style={styles.pastPhotosSubtitle}>A decade of great racing on Lake Ontario — photos coming soon!</p>
+          <p style={styles.pastPhotosSubtitle}>A decade of great racing on Lake Ontario</p>
           <div style={styles.pastPhotosGrid}>
-            {[...Array(10)].map((_, i) => (
-              <div key={i} style={{ ...styles.pastPhotoCard, background: pastPhotoColors[i % pastPhotoColors.length] }}>
-                <div style={styles.pastPhotoIcon}>⛵</div>
+            {pastPhotos.map((src, i) => (
+              <div key={i} style={styles.pastPhotoCard}>
+                <img src={src} alt={`Past regatta photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px", display: "block" }} />
               </div>
             ))}
           </div>
@@ -436,7 +460,7 @@ const styles = {
   pastPhotosTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.5rem", color: "#1a1a2e", letterSpacing: "0.05em", textTransform: "uppercase" },
   pastPhotosSubtitle: { color: "#718096", fontSize: "0.875rem", marginBottom: "1rem" },
   pastPhotosGrid: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem" },
-  pastPhotoCard: { borderRadius: "12px", padding: "1.25rem 0.5rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem", aspectRatio: "1" },
+  pastPhotoCard: { borderRadius: "12px", overflow: "hidden", aspectRatio: "4/3", background: "#e2e8f0" },
   pastPhotoYear: { fontFamily: "'Anton', sans-serif", fontSize: "1.3rem", color: "#FFD166", letterSpacing: "0.05em" },
   pastPhotoIcon: { fontSize: "1.75rem" },
   pastPhotoLabel: { fontSize: "0.65rem", color: "rgba(255,255,255,0.5)", fontWeight: 600 },
