@@ -238,7 +238,21 @@ export default function Regatta() {
               </div>
             ))}
           </div>
-          <p style={styles.photosNote}>📷 Race photos will be posted here after the event. Past year photos coming soon!</p>
+          <p style={styles.photosNote}>📷 Race photos will be posted here after the event.</p>
+
+          {/* Blast from the Past */}
+          <div style={styles.pastPhotosHeader}>
+            <span style={styles.pastPhotosEmoji}>🏅</span>
+            <h3 style={styles.pastPhotosTitle}>Blast from the Past!</h3>
+          </div>
+          <p style={styles.pastPhotosSubtitle}>A decade of great racing on Lake Ontario — photos coming soon!</p>
+          <div style={styles.pastPhotosGrid}>
+            {[...Array(10)].map((_, i) => (
+              <div key={i} style={{ ...styles.pastPhotoCard, background: pastPhotoColors[i % pastPhotoColors.length] }}>
+                <div style={styles.pastPhotoIcon}>⛵</div>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* Sponsors */}
@@ -319,6 +333,7 @@ function SectionHeader({ emoji, title, color }) {
 }
 
 const photoColors = ["#FFE5D9", "#D9F0FF", "#E8FFE5", "#FFF5D9", "#F5D9FF", "#D9FFEF"];
+const pastPhotoColors = ["#1a365d", "#2c5282", "#2b6cb0", "#2a4365", "#1e3a5f", "#153e75", "#1a365d", "#2c5282", "#2b6cb0", "#2a4365"];
 
 const sponsorStyles = {
   platinum: { background: "linear-gradient(135deg, #fff8e1, #fffde7)", border: "2px solid #FFD700" },
@@ -416,6 +431,15 @@ const styles = {
   photoCaption: { fontWeight: 700, fontSize: "0.875rem", color: "#333" },
   photoOverlay: { position: "absolute", bottom: 0, left: 0, right: 0, background: "rgba(0,0,0,0.5)", color: "white", padding: "0.4rem", fontSize: "0.7rem", fontWeight: 600 },
   photosNote: { color: "#888", fontSize: "0.875rem", textAlign: "center" },
+  pastPhotosHeader: { display: "flex", alignItems: "center", gap: "0.75rem", margin: "2rem 0 0.5rem" },
+  pastPhotosEmoji: { fontSize: "1.5rem" },
+  pastPhotosTitle: { fontFamily: "'Anton', sans-serif", fontSize: "1.5rem", color: "#1a1a2e", letterSpacing: "0.05em", textTransform: "uppercase" },
+  pastPhotosSubtitle: { color: "#718096", fontSize: "0.875rem", marginBottom: "1rem" },
+  pastPhotosGrid: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "0.75rem" },
+  pastPhotoCard: { borderRadius: "12px", padding: "1.25rem 0.5rem", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.4rem", aspectRatio: "1" },
+  pastPhotoYear: { fontFamily: "'Anton', sans-serif", fontSize: "1.3rem", color: "#FFD166", letterSpacing: "0.05em" },
+  pastPhotoIcon: { fontSize: "1.75rem" },
+  pastPhotoLabel: { fontSize: "0.65rem", color: "rgba(255,255,255,0.5)", fontWeight: 600 },
 
   sponsorsGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1rem", marginBottom: "1.5rem" },
   sponsorCard: { borderRadius: "12px", padding: "1.25rem", textAlign: "center" },
