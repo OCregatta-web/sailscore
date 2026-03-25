@@ -107,13 +107,6 @@ export default function Regatta() {
           ))}
           <a href="/nor" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #FF6B35", color: "#FF6B35", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Notice of Race</a>
           <a href="/noticeboard" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #2b6cb0", color: "#2b6cb0", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Notice Board</a>
-          <a href="https://www.instagram.com/ocregattarace/" target="_blank" rel="noopener noreferrer" title="Follow us on Instagram" style={{ textDecoration: "none", display: "flex", alignItems: "center", padding: "0.35rem 0.5rem" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C13584" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <circle cx="12" cy="12" r="4"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="#C13584" stroke="none"/>
-            </svg>
-          </a>
         </div>
       </nav>
 
@@ -374,14 +367,6 @@ export default function Regatta() {
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
           <span>⛵ Oakville Club Open Regatta 2026</span>
-          <a href="https://www.instagram.com/ocregattarace/" target="_blank" rel="noopener noreferrer" style={{ color: "#C13584", textDecoration: "none", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C13584" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <circle cx="12" cy="12" r="4"/>
-              <circle cx="17.5" cy="6.5" r="1" fill="#C13584" stroke="none"/>
-            </svg>
-            @ocregattarace
-          </a>
           <span>Powered by <a href="https://sailscore.vercel.app" style={styles.footerLink}>SailScore</a></span>
         </div>
       </footer>
