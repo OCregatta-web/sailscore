@@ -341,6 +341,33 @@ export default function Regatta() {
           </div>
         </section>
 
+        {/* Follow Us */}
+        <section style={styles.section}>
+          <SectionHeader emoji="📣" title="Follow Us" color="#C13584" />
+          <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
+            <a href="https://www.instagram.com/ocregattarace/" target="_blank" rel="noopener noreferrer" style={styles.socialBtn}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"/>
+              </svg>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: "1rem" }}>Instagram</div>
+                <div style={{ fontSize: "0.85rem", opacity: 0.85 }}>@ocregattarace</div>
+              </div>
+            </a>
+            <a href="https://www.facebook.com/groups/809220102744572" target="_blank" rel="noopener noreferrer" style={{ ...styles.socialBtn, background: "#1877F2" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="white">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: "1rem" }}>Facebook</div>
+                <div style={{ fontSize: "0.85rem", opacity: 0.85 }}>OC Regatta</div>
+              </div>
+            </a>
+          </div>
+        </section>
+
       </div>
 
       {/* Footer */}
@@ -518,4 +545,5 @@ const styles = {
   footer: { background: "#1a1a2e", color: "#aab4c4", padding: "1.5rem 2rem", marginTop: "2rem" },
   footerContent: { maxWidth: "1100px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.875rem" },
   footerLink: { color: "#06D6A0", textDecoration: "none", fontWeight: 700 },
+  socialBtn: { display: "flex", alignItems: "center", gap: "1rem", background: "linear-gradient(135deg, #C13584, #E1306C)", color: "white", padding: "1rem 1.5rem", borderRadius: "14px", textDecoration: "none", boxShadow: "0 4px 15px rgba(193,53,132,0.3)", minWidth: "220px" },
 };
