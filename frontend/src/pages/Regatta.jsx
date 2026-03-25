@@ -107,6 +107,7 @@ export default function Regatta() {
           ))}
           <a href="/nor" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #FF6B35", color: "#FF6B35", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Notice of Race</a>
           <a href="/noticeboard" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #2b6cb0", color: "#2b6cb0", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Notice Board</a>
+          <a href="https://www.instagram.com/ocregattarace/" target="_blank" rel="noopener noreferrer" style={{ ...styles.navLink, textDecoration: "none", color: "#C13584", padding: "0.35rem 0.75rem" }}>📸 Instagram</a>
         </div>
       </nav>
 
@@ -340,6 +341,7 @@ export default function Regatta() {
       <footer style={styles.footer}>
         <div style={styles.footerContent}>
           <span>⛵ Oakville Club Open Regatta 2026</span>
+          <a href="https://www.instagram.com/ocregattarace/" target="_blank" rel="noopener noreferrer" style={{ color: "#C13584", textDecoration: "none", fontWeight: 700 }}>📸 @ocregattarace</a>
           <span>Powered by <a href="https://sailscore.vercel.app" style={styles.footerLink}>SailScore</a></span>
         </div>
       </footer>
