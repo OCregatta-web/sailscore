@@ -176,8 +176,7 @@ export default function Regatta() {
             <div style={styles.registerLeft}>
               <h3 style={styles.registerTitle}>Ready to race?</h3>
               <p style={styles.registerText}>
-                Online registration is open for all fleets. PHRF Time-on-Time scoring.
-                Fleets include FS, NFS, Distance, and 1-Design classes.
+                Already 66% full! Register soon or risk missing out on a great day on and off the water!
               </p>
               <div style={styles.freeRegatta}>🎉 This is a FREE regatta — 10 years running with no entry fees!</div>
               <ul style={styles.registerList}>
