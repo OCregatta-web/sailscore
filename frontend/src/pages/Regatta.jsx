@@ -312,9 +312,8 @@ export default function Regatta() {
               </p>
               <div style={styles.locationDetails}>
                 <div style={styles.locationDetail}><span>📍</span> 43.44° N, 79.69° W</div>
-                <div style={styles.locationDetail}><span>⚓</span> Guest docking available at Oakville Harbour</div>
-                <div style={styles.locationDetail}><span>🅿️</span> Parking at Lakeside Park lot</div>
-                <div style={styles.locationDetail}><span>🚤</span> Launch ramp at 16 Mile Creek</div>
+                <div style={styles.locationDetail}><span>⚓</span> Guest docking available contact the Oakville Dock Master</div>
+                <div style={styles.locationDetail}><span>⚓</span> at pcarter@oakvilleclub.com</div>
               </div>
             </div>
           </div>
