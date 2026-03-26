@@ -139,6 +139,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                 <th>Sail #</th>
                 <th>Boat</th>
                 <th>Skipper</th>
+                <th>Club</th>
                 <th>Rating</th>
                 {races.map(r => (
                   <th
@@ -163,6 +164,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                   <td>{row.sail_number}</td>
                   <td className="boat-name-cell">{row.boat_name}</td>
                   <td>{row.skipper}</td>
+                  <td>{row.club ?? "—"}</td>
                   <td>{row.phrf_rating ?? "—"}</td>
                   {races.map(r => {
                     const pts = row.race_points?.[r.id];
@@ -207,7 +209,9 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     <th>Sail #</th>
                     <th>Boat</th>
                     <th>Skipper</th>
+                    <th>Club</th>
                     <th>Fleet</th>
+                    <th>Finish Time</th>
                     <th>Elapsed</th>
                     <th>Corrected</th>
                     <th>Points</th>
@@ -225,7 +229,9 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.sail_number}</td>
                       <td className="boat-name-cell">{row.boat_name}</td>
                       <td>{row.skipper}</td>
+                      <td>{row.club ?? "—"}</td>
                       <td>{row.fleet ?? "—"}</td>
+                      <td>{row.finish_time ?? "—"}</td>
                       <td>{row.elapsed_display ?? "—"}</td>
                       <td>{row.corrected_display ?? "—"}</td>
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>

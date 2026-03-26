@@ -93,6 +93,7 @@ export default function Standings({ seriesId, seriesName }) {
                       <th className="pos-th">Pos</th>
                       <th>Boat</th>
                       <th>Skipper</th>
+                      <th>Club</th>
                       <th className="num-col">PHRF</th>
                       {races.map(r => (
                         <th key={r.id} className="num-col race-col">
@@ -119,6 +120,7 @@ export default function Standings({ seriesId, seriesName }) {
                           </div>
                         </td>
                         <td>{row.skipper}</td>
+                        <td>{row.club ?? "—"}</td>
                         <td className="num-col">{row.phrf_rating}</td>
                         {races.map(r => {
                           const rp = row.race_points[r.id];

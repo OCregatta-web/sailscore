@@ -20,23 +20,40 @@ def penalty_points(status: str, fleet_size: int) -> float:
         return fleet_size + 2
     return fleet_size + 1
 
-def compute_race_results(finishes, boats):
+def compute_race_results(finishes, boats, race=None):
     boat_map = {b.id: b for b in boats}
     fleet_size = len(boats)
     finish_map = {f.boat_id: f for f in finishes}
     results = []
+
+    # Parse start time for finish time calculation
+    start_seconds = None
+    if race and race.start_time:
+        try:
+            parts = race.start_time.split(":")
+            start_seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + (int(parts[2]) if len(parts) > 2 else 0)
+        except Exception:
+            pass
 
     for finish in finishes:
         boat = boat_map.get(finish.boat_id)
         if not boat:
             continue
         corrected = None
+        finish_time_str = None
         if finish.status == "FIN" and finish.elapsed_seconds is not None:
             corrected = phrf_corrected_time(finish.elapsed_seconds, boat.phrf_rating)
+            if start_seconds is not None:
+                total = start_seconds + int(finish.elapsed_seconds)
+                h, rem = divmod(total, 3600)
+                m, s = divmod(rem, 60)
+                finish_time_str = f"{h:02d}:{m:02d}:{s:02d}"
         results.append({
             "boat_id": boat.id, "sail_number": boat.sail_number,
             "boat_name": boat.boat_name, "skipper": boat.skipper,
             "phrf_rating": boat.phrf_rating, "fleet": boat.fleet,
+            "club": boat.club,
+            "finish_time": finish_time_str,
             "elapsed_seconds": finish.elapsed_seconds,
             "corrected_seconds": corrected,
             "elapsed_display": seconds_to_display(finish.elapsed_seconds),
@@ -50,6 +67,8 @@ def compute_race_results(finishes, boats):
                 "boat_id": boat.id, "sail_number": boat.sail_number,
                 "boat_name": boat.boat_name, "skipper": boat.skipper,
                 "phrf_rating": boat.phrf_rating, "fleet": boat.fleet,
+                "club": boat.club,
+                "finish_time": None,
                 "elapsed_seconds": None, "corrected_seconds": None,
                 "elapsed_display": None, "corrected_display": None,
                 "status": "DNS", "points": None, "position": None,
@@ -128,7 +147,7 @@ def compute_series_standings(series, races, boats, all_finishes):
                 position=0, boat_id=boat.id, sail_number=boat.sail_number,
                 boat_name=boat.boat_name, skipper=boat.skipper,
                 phrf_rating=boat.phrf_rating, fleet=boat.fleet,
-                boat_class=boat.boat_class,
+                boat_class=boat.boat_class, club=boat.club,
                 race_points=race_points,
                 total_points=total_points, net_points=net_points,
             ))
