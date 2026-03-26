@@ -184,6 +184,7 @@ export default function Regatta() {
                 <li>✅ Fleet assignment by Aug 10</li>
                 <li>✅ Skippers' package at sign-in</li>
                 <li>✅ Post-race pool party included</li>
+                <li>✅ Famous OC Regatta gourment dinner</li>
               </ul>
               <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}`} style={styles.registerBtn}>
                 Register Online →
