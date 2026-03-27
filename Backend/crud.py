@@ -109,7 +109,7 @@ def upsert_finish(db: Session, finish: schemas.FinishCreate, race_id: int):
     if finish.status == "FIN" and finish.elapsed_seconds is not None:
         boat = get_boat(db, finish.boat_id)
         if boat:
-            corrected = finish.elapsed_seconds * (650 / (650 + boat.phrf_rating))
+            corrected = finish.elapsed_seconds * (566.431 / (401.431 + boat.phrf_rating))
     if existing:
         existing.elapsed_seconds = finish.elapsed_seconds
         existing.status = finish.status
@@ -170,7 +170,6 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
         existing_boat.phrf_rating = reg.phrf_rating
         existing_boat.fleet = reg.fleet
         existing_boat.boat_class = reg.boat_class
-        existing_boat.club = reg.club
         db.commit()
         boat_id = existing_boat.id
     else:
@@ -182,7 +181,6 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
             phrf_rating=reg.phrf_rating,
             fleet=reg.fleet,
             boat_class=reg.boat_class,
-            club=reg.club,
         )
         db.add(db_boat)
         db.commit()

@@ -1,10 +1,11 @@
 from typing import List, Dict, Optional
 import schemas, models
 
-TOT_CONSTANT = 650
+TOT_A = 566.431
+TOT_B = 401.431
 
 def phrf_corrected_time(elapsed_seconds: float, phrf_rating: int) -> float:
-    return elapsed_seconds * (TOT_CONSTANT / (TOT_CONSTANT + phrf_rating))
+    return elapsed_seconds * (TOT_A / (TOT_B + phrf_rating))
 
 def seconds_to_display(seconds: Optional[float]) -> Optional[str]:
     if seconds is None:
