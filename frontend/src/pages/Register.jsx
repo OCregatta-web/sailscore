@@ -174,7 +174,7 @@ export default function Register() {
 
           {form.phrf_rating !== "" && !isNaN(Number(form.phrf_rating)) && (
             <div className="rating-preview">
-              ToT factor: <strong>{(650 / (650 + Number(form.phrf_rating))).toFixed(4)}</strong>
+              ToT factor: <strong>{(566.431 / (401.431 + Number(form.phrf_rating))).toFixed(4)}</strong>
               <span className="hint"> — corrected = elapsed × factor</span>
             </div>
           )}
@@ -198,8 +198,8 @@ export default function Register() {
           </div>
 
           <div className="field">
-            <label>Club</label>
-            <input type="text" placeholder="e.g. Lakeshore Yacht Club" value={form.club} onChange={set("club")} />
+            <label>Club *</label>
+            <input type="text" placeholder="e.g. Lakeshore Yacht Club" value={form.club} onChange={set("club")} required />
           </div>
 
           {error && <div className="form-error">{error}</div>}
