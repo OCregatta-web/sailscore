@@ -273,6 +273,7 @@ export default function FleetManager({ seriesId, seriesName }) {
                           <th>Sail #</th>
                           <th>Boat Name</th>
                           <th>Skipper</th>
+                          <th>Club</th>
                           <th className="num-col" style={{ cursor: "pointer" }} onClick={toggleSort}>
                             PHRF {sortDir === "asc" ? "↑" : "↓"}
                           </th>
@@ -290,6 +291,7 @@ export default function FleetManager({ seriesId, seriesName }) {
                               <td><span className="sail-num">{b.sail_number}</span></td>
                               <td className="boat-name-cell">{b.boat_name}</td>
                               <td>{b.skipper}</td>
+                              <td>{b.club || "—"}</td>
                               <td className="num-col">
                                 <span className={`rating-badge ${b.phrf_rating < 0 ? "fast" : b.phrf_rating > 150 ? "slow" : ""}`}>
                                   {b.phrf_rating}
