@@ -266,8 +266,10 @@ const applyFleetStartTime = (fleetName, startTime) => {
   results.forEach(r => { resultMap[r.boat_id] = r; });
 
   const distanceBoats = boats.filter(b => (b.fleet || "").toLowerCase() === "distance");
-  const isDistance = distanceBoats.length > 0;
-  const visibleBoats = boats;
+  const isDistance = (selectedRace?.name || "").toLowerCase().includes("distance");
+  const visibleBoats = isDistance
+    ? distanceBoats
+    : boats.filter(b => (b.fleet || "").toLowerCase() !== "distance");
 
   // Pursuit Race Calculator - TOD (Time on Distance)
   const calcPursuitStarts = () => {
