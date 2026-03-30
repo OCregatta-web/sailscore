@@ -11,6 +11,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [races, setRaces] = useState([]);
   const [fleetStartTimes, setFleetStartTimes] = useState({});
   const [selectedRace, setSelectedRace] = useState(null);
+  const [mode, setMode] = useState("buoy"); // "buoy" | "distance"
   const [boats, setBoats] = useState([]);
   const [finishes, setFinishes] = useState([]);
   const [results, setResults] = useState([]);
@@ -27,8 +28,13 @@ export default function RaceEntry({ seriesId, seriesName }) {
 
   const [scoringAll, setScoringAll] = useState(false);
 
+  const isDistance = mode === "distance";
+  const visibleBoats = isDistance
+    ? boats.filter(b => (b.fleet || "").toLowerCase() === "distance")
+    : boats.filter(b => (b.fleet || "").toLowerCase() !== "distance");
+
   const scoreAllFleets = async () => {
-    const fleetGroups = boats.reduce((groups, boat) => {
+    const fleetGroups = visibleBoats.reduce((groups, boat) => {
       const fleet = boat.fleet || "NFS";
       if (!groups[fleet]) groups[fleet] = [];
       groups[fleet].push(boat);
@@ -270,6 +276,16 @@ const applyFleetStartTime = (fleetName, startTime) => {
           <p className="page-subtitle">Race Entry</p>
         </div>
         <div className="header-actions">
+          <div style={{ display: "flex", gap: "0.5rem", background: "#f0f4f8", borderRadius: "8px", padding: "4px" }}>
+            <button
+              onClick={() => setMode("buoy")}
+              style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: !isDistance ? "#1a365d" : "transparent", color: !isDistance ? "white" : "#4a5568" }}
+            >Buoy Races</button>
+            <button
+              onClick={() => setMode("distance")}
+              style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: isDistance ? "#1a365d" : "transparent", color: isDistance ? "white" : "#4a5568" }}
+            >Distance Race</button>
+          </div>
           <button className="btn-secondary" onClick={() => navigate("standings", { seriesId, seriesName })}>Standings →</button>
           <button className="btn-primary" onClick={openNewRace}>+ New Race</button>
         </div>
@@ -328,7 +344,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                 </div>
               )}
 
-              {boats.length === 0 ? (
+              {visibleBoats.length === 0 ? (
                 <div className="empty-state small">
                   <p>No boats in fleet yet. <button className="link-btn" onClick={() => navigate("fleet", { seriesId, seriesName })}>Add boats</button> first.</p>
                 </div>
@@ -336,7 +352,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                 <>
                   <div className="entry-table-wrap">
   {Object.entries(
-    boats.reduce((groups, boat) => {
+    visibleBoats.reduce((groups, boat) => {
       const fleet = boat.fleet || "NFS";
       if (!groups[fleet]) groups[fleet] = [];
       groups[fleet].push(boat);
