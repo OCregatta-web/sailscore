@@ -11,17 +11,6 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [races, setRaces] = useState([]);
   const [fleetStartTimes, setFleetStartTimes] = useState({});
   const [selectedRace, setSelectedRace] = useState(null);
-  const [mode, setMode] = useState("buoy"); // "buoy" | "distance"
-
-  const switchMode = (newMode) => {
-    setMode(newMode);
-    const isD = newMode === "distance";
-    const filtered = races.filter(r =>
-      isD ? (r.name || "").toLowerCase().includes("distance")
-           : !(r.name || "").toLowerCase().includes("distance")
-    );
-    setSelectedRace(filtered.length > 0 ? filtered[filtered.length - 1] : null);
-  };
   const [boats, setBoats] = useState([]);
   const [finishes, setFinishes] = useState([]);
   const [results, setResults] = useState([]);
@@ -35,13 +24,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [submitMsg, setSubmitMsg] = useState("");
   const [scoringFleet, setScoringFleet] = useState({});
   const [dirtyEntries, setDirtyEntries] = useState(new Set());
-
   const [scoringAll, setScoringAll] = useState(false);
 
-  const isDistance = mode === "distance";
-  const visibleBoats = isDistance
-    ? boats.filter(b => (b.fleet || "").toLowerCase() === "distance")
-    : boats.filter(b => (b.fleet || "").toLowerCase() !== "distance");
+  // Pursuit race state
+  const [pursuitFirstStart, setPursuitFirstStart] = useState("10:00:00");
+  const [pursuitDuration, setPursuitDuration] = useState(90);
+  const [showPursuitSheet, setShowPursuitSheet] = useState(false);
 
   const scoreAllFleets = async () => {
     const fleetGroups = visibleBoats.reduce((groups, boat) => {
@@ -277,6 +265,33 @@ const applyFleetStartTime = (fleetName, startTime) => {
   const resultMap = {};
   results.forEach(r => { resultMap[r.boat_id] = r; });
 
+  const isDistance = mode === "distance";
+  const visibleBoats = isDistance
+    ? boats.filter(b => (b.fleet || "").toLowerCase() === "distance")
+    : boats.filter(b => (b.fleet || "").toLowerCase() !== "distance");
+
+  // Pursuit Race Calculator - TOD (Time on Distance)
+  const calcPursuitStarts = () => {
+    if (!pursuitFirstStart || !pursuitDuration || visibleBoats.length === 0) return [];
+    const distanceNM = pursuitDuration; // reusing field as distance in NM
+    const sorted = [...visibleBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
+    const slowestPHRF = sorted[0].phrf_rating;
+    const [fh, fm, fs] = pursuitFirstStart.split(":").map(Number);
+    const firstStartSecs = fh * 3600 + fm * 60 + (fs || 0);
+    return sorted.map(boat => {
+      // TOD offset: (slowest_PHRF - this_PHRF) * distance / 60  (in seconds)
+      const offsetSecs = Math.round((slowestPHRF - boat.phrf_rating) * distanceNM / 60);
+      const startSecs = firstStartSecs + offsetSecs;
+      const h = Math.floor(startSecs / 3600);
+      const m = Math.floor((startSecs % 3600) / 60);
+      const s = startSecs % 60;
+      const startTime = `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+      return { ...boat, pursuitStart: startTime, offsetSecs };
+    });
+  };
+
+  const pursuitStarts = isDistance ? calcPursuitStarts() : [];
+
   return (
     <div className="page">
       <div className="page-header">
@@ -286,16 +301,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
           <p className="page-subtitle">Race Entry</p>
         </div>
         <div className="header-actions">
-          <div style={{ display: "flex", gap: "0.5rem", background: "#f0f4f8", borderRadius: "8px", padding: "4px" }}>
-            <button
-              onClick={() => switchMode("buoy")}
-              style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: !isDistance ? "#1a365d" : "transparent", color: !isDistance ? "white" : "#4a5568" }}
-            >Buoy Races</button>
-            <button
-              onClick={() => switchMode("distance")}
-              style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: isDistance ? "#1a365d" : "transparent", color: isDistance ? "white" : "#4a5568" }}
-            >Distance Race</button>
-          </div>
           <button className="btn-secondary" onClick={() => navigate("standings", { seriesId, seriesName })}>Standings →</button>
           <button className="btn-primary" onClick={openNewRace}>+ New Race</button>
         </div>
@@ -303,26 +308,21 @@ const applyFleetStartTime = (fleetName, startTime) => {
 
       <div className="race-layout">
         <div className="race-sidebar">
-          <div className="sidebar-title">{isDistance ? "Distance Race" : "Races"}</div>
-          {loading ? <div className="spinner" /> : (() => {
-            const visibleRaces = isDistance
-              ? races.filter(r => (r.name || "").toLowerCase().includes("distance"))
-              : races.filter(r => !(r.name || "").toLowerCase().includes("distance"));
-            return visibleRaces.length === 0 ? (
-              <div className="sidebar-empty">{isDistance ? "No distance race yet" : "No races yet"}</div>
-            ) : (
-              visibleRaces.map(r => (
-                <button
-                  key={r.id}
-                  className={`race-tab ${selectedRace?.id === r.id ? "active" : ""}`}
-                  onClick={() => setSelectedRace(r)}
-                >
-                  <span className="race-tab-num">{isDistance ? "D" : `R${r.race_number}`}</span>
-                  <span className="race-tab-detail">{r.name || r.race_date || "—"}</span>
-                </button>
-              ))
-            );
-          })()}
+          <div className="sidebar-title">Races</div>
+          {loading ? <div className="spinner" /> : races.length === 0 ? (
+            <div className="sidebar-empty">No races yet</div>
+          ) : (
+            races.map(r => (
+              <button
+                key={r.id}
+                className={`race-tab ${selectedRace?.id === r.id ? "active" : ""}`}
+                onClick={() => setSelectedRace(r)}
+              >
+                <span className="race-tab-num">R{r.race_number}</span>
+                <span className="race-tab-detail">{r.name || r.race_date || "—"}</span>
+              </button>
+            ))
+          )}
         </div>
 
         <div className="race-main">
@@ -356,6 +356,70 @@ const applyFleetStartTime = (fleetName, startTime) => {
               {!selectedRace.start_time && (
                 <div className="start-time-warning">
                   ⚠️ No start time set for this race. <button className="link-btn" onClick={() => openEditRace(selectedRace)}>Add start time</button>
+                </div>
+              )}
+
+              {/* Pursuit Race Calculator */}
+              {isDistance && (
+                <div style={{ background: "#f0f4f8", borderRadius: "10px", padding: "1.25rem", marginBottom: "1rem", border: "1px solid #cbd5e0" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1rem" }}>
+                    <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#1a365d" }}>⏱ Pursuit Start Calculator</h3>
+                    <button className="btn-secondary" style={{ fontSize: "0.8rem" }} onClick={() => setShowPursuitSheet(s => !s)}>
+                      {showPursuitSheet ? "Hide Start Sheet" : "🖨 Print Start Sheet"}
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "flex-end" }}>
+                    <div>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#4a5568", display: "block", marginBottom: "4px" }}>First Boat Start Time (slowest)</label>
+                      <input type="text" placeholder="HH:MM:SS" value={pursuitFirstStart}
+                        onChange={e => setPursuitFirstStart(e.target.value)}
+                        style={{ padding: "0.4rem 0.6rem", borderRadius: "6px", border: "1px solid #cbd5e0", fontSize: "0.9rem", width: "120px" }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#4a5568", display: "block", marginBottom: "4px" }}>Course Distance (nautical miles)</label>
+                      <input type="number" placeholder="e.g. 15" value={pursuitDuration}
+                        onChange={e => setPursuitDuration(Number(e.target.value))}
+                        style={{ padding: "0.4rem 0.6rem", borderRadius: "6px", border: "1px solid #cbd5e0", fontSize: "0.9rem", width: "100px" }} />
+                    </div>
+                  </div>
+
+                  {showPursuitSheet && pursuitStarts.length > 0 && (
+                    <div style={{ marginTop: "1rem" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem", background: "white", borderRadius: "8px", overflow: "hidden" }}>
+                        <thead>
+                          <tr style={{ background: "#1a365d", color: "white" }}>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Start Time</th>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Sail #</th>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Boat</th>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Skipper</th>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Club</th>
+                            <th style={{ padding: "8px 12px", textAlign: "right" }}>PHRF</th>
+                            <th style={{ padding: "8px 12px", textAlign: "right" }}>Offset</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pursuitStarts.map((b, i) => {
+                            const offsetMin = Math.floor(b.offsetSecs / 60);
+                            const offsetSec = b.offsetSecs % 60;
+                            const offsetStr = `+${offsetMin}:${String(offsetSec).padStart(2,"0")}`;
+                            return (
+                            <tr key={b.id} style={{ background: i % 2 === 0 ? "#f7fafc" : "white", borderBottom: "1px solid #e2e8f0" }}>
+                              <td style={{ padding: "8px 12px", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
+                              <td style={{ padding: "8px 12px", fontWeight: 600 }}>{b.sail_number}</td>
+                              <td style={{ padding: "8px 12px" }}>{b.boat_name}</td>
+                              <td style={{ padding: "8px 12px" }}>{b.skipper}</td>
+                              <td style={{ padding: "8px 12px" }}>{b.club || "—"}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right" }}>{b.phrf_rating}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "monospace", color: "#718096" }}>{i === 0 ? "—" : offsetStr}</td>
+                            </tr>
+                          )})}
+                        </tbody>
+                      </table>
+                      <div style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "#718096" }}>
+                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD · Offset = (PHRF_slow − PHRF_boat) × distance ÷ 60
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
