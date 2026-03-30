@@ -12,6 +12,16 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [fleetStartTimes, setFleetStartTimes] = useState({});
   const [selectedRace, setSelectedRace] = useState(null);
   const [mode, setMode] = useState("buoy"); // "buoy" | "distance"
+
+  const switchMode = (newMode) => {
+    setMode(newMode);
+    const isD = newMode === "distance";
+    const filtered = races.filter(r =>
+      isD ? (r.name || "").toLowerCase().includes("distance")
+           : !(r.name || "").toLowerCase().includes("distance")
+    );
+    setSelectedRace(filtered.length > 0 ? filtered[filtered.length - 1] : null);
+  };
   const [boats, setBoats] = useState([]);
   const [finishes, setFinishes] = useState([]);
   const [results, setResults] = useState([]);
@@ -278,11 +288,11 @@ const applyFleetStartTime = (fleetName, startTime) => {
         <div className="header-actions">
           <div style={{ display: "flex", gap: "0.5rem", background: "#f0f4f8", borderRadius: "8px", padding: "4px" }}>
             <button
-              onClick={() => setMode("buoy")}
+              onClick={() => switchMode("buoy")}
               style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: !isDistance ? "#1a365d" : "transparent", color: !isDistance ? "white" : "#4a5568" }}
             >Buoy Races</button>
             <button
-              onClick={() => setMode("distance")}
+              onClick={() => switchMode("distance")}
               style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: isDistance ? "#1a365d" : "transparent", color: isDistance ? "white" : "#4a5568" }}
             >Distance Race</button>
           </div>
@@ -293,21 +303,26 @@ const applyFleetStartTime = (fleetName, startTime) => {
 
       <div className="race-layout">
         <div className="race-sidebar">
-          <div className="sidebar-title">Races</div>
-          {loading ? <div className="spinner" /> : races.length === 0 ? (
-            <div className="sidebar-empty">No races yet</div>
-          ) : (
-            races.map(r => (
-              <button
-                key={r.id}
-                className={`race-tab ${selectedRace?.id === r.id ? "active" : ""}`}
-                onClick={() => setSelectedRace(r)}
-              >
-                <span className="race-tab-num">R{r.race_number}</span>
-                <span className="race-tab-detail">{r.name || r.race_date || "—"}</span>
-              </button>
-            ))
-          )}
+          <div className="sidebar-title">{isDistance ? "Distance Race" : "Races"}</div>
+          {loading ? <div className="spinner" /> : (() => {
+            const visibleRaces = isDistance
+              ? races.filter(r => (r.name || "").toLowerCase().includes("distance"))
+              : races.filter(r => !(r.name || "").toLowerCase().includes("distance"));
+            return visibleRaces.length === 0 ? (
+              <div className="sidebar-empty">{isDistance ? "No distance race yet" : "No races yet"}</div>
+            ) : (
+              visibleRaces.map(r => (
+                <button
+                  key={r.id}
+                  className={`race-tab ${selectedRace?.id === r.id ? "active" : ""}`}
+                  onClick={() => setSelectedRace(r)}
+                >
+                  <span className="race-tab-num">{isDistance ? "D" : `R${r.race_number}`}</span>
+                  <span className="race-tab-detail">{r.name || r.race_date || "—"}</span>
+                </button>
+              ))
+            );
+          })()}
         </div>
 
         <div className="race-main">
