@@ -271,9 +271,9 @@ const applyFleetStartTime = (fleetName, startTime) => {
 
   // Pursuit Race Calculator - TOD (Time on Distance)
   const calcPursuitStarts = () => {
-    if (!pursuitFirstStart || !pursuitDuration || visibleBoats.length === 0) return [];
+    if (!pursuitFirstStart || !pursuitDuration || distanceBoats.length === 0) return [];
     const distanceNM = pursuitDuration; // reusing field as distance in NM
-    const sorted = [...visibleBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
+    const sorted = [...distanceBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
     const slowestPHRF = sorted[0].phrf_rating;
     const [fh, fm, fs] = pursuitFirstStart.split(":").map(Number);
     const firstStartSecs = fh * 3600 + fm * 60 + (fs || 0);
@@ -440,35 +440,37 @@ const applyFleetStartTime = (fleetName, startTime) => {
     <div key={fleetName} className="fleet-entry-block">
       <div className="fleet-entry-header">
         <span className="fleet-entry-title">{fleetName} Fleet</span>
-        <div className="fleet-start-controls">
-          <label className="fleet-start-label">Fleet Start Time:</label>
-          <input
-            className="time-input"
-            type="text"
-            placeholder="13:00:00"
-            value={fleetStartTimes[fleetName] || ""}
-            onChange={e => setFleetStartTimes(prev => ({ ...prev, [fleetName]: e.target.value }))}
-          />
-          <button
-            className="btn-apply-start"
-            onClick={() => {
-              const t = fleetStartTimes[fleetName];
-              if (!t) return;
-              setSelectedRace(prev => ({ ...prev, start_time: t }));
-              const updated = { ...entries };
-              fleetBoats.forEach(boat => {
-                updated[boat.id] = {
-                  ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
-                };
-              });
-              setEntries(updated);
-              setSubmitMsg(`Start time ${t} applied to ${fleetName} fleet ✓`);
-              setTimeout(() => setSubmitMsg(""), 2500);
-            }}
-          >
-            Apply to {fleetName}
-          </button>
-        </div>
+        {fleetName.toLowerCase() !== "distance" && (
+          <div className="fleet-start-controls">
+            <label className="fleet-start-label">Fleet Start Time:</label>
+            <input
+              className="time-input"
+              type="text"
+              placeholder="13:00:00"
+              value={fleetStartTimes[fleetName] || ""}
+              onChange={e => setFleetStartTimes(prev => ({ ...prev, [fleetName]: e.target.value }))}
+            />
+            <button
+              className="btn-apply-start"
+              onClick={() => {
+                const t = fleetStartTimes[fleetName];
+                if (!t) return;
+                setSelectedRace(prev => ({ ...prev, start_time: t }));
+                const updated = { ...entries };
+                fleetBoats.forEach(boat => {
+                  updated[boat.id] = {
+                    ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
+                  };
+                });
+                setEntries(updated);
+                setSubmitMsg(`Start time ${t} applied to ${fleetName} fleet ✓`);
+                setTimeout(() => setSubmitMsg(""), 2500);
+              }}
+            >
+              Apply to {fleetName}
+            </button>
+          </div>
+        )}
       </div>
       <table className="entry-table">
         <thead>
