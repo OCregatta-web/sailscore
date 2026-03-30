@@ -35,7 +35,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const updates = [
   { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
   { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
-  { date: "March 26", text: "WOW! Already over 2/3 full. Only 15 spots left." },
+  { date: "March 26", text: "WOW! Already over 2/3 full. Only 12 spots left." },
 ];
 
 const schedule = [
