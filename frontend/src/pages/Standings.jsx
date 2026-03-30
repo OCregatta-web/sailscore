@@ -83,7 +83,14 @@ export default function Standings({ seriesId, seriesName }) {
             )}
           </div>
 
-          {Object.entries(standings.fleet_standings).map(([fleetName, rows]) => (
+          {Object.entries(standings.fleet_standings).map(([fleetName, rows]) => {
+            const isDistanceFleet = fleetName.toLowerCase() === "distance";
+            const fleetRaces = races.filter(r =>
+              isDistanceFleet
+                ? (r.name || "").toLowerCase().includes("distance")
+                : !(r.name || "").toLowerCase().includes("distance")
+            );
+            return (
             <div key={fleetName} className="fleet-standings-block">
               <h2 className="fleet-title">{fleetName} Fleet</h2>
               <div className="table-wrap standings-wrap">
@@ -95,9 +102,9 @@ export default function Standings({ seriesId, seriesName }) {
                       <th>Skipper</th>
                       <th>Club</th>
                       <th className="num-col">PHRF</th>
-                      {races.map(r => (
+                      {fleetRaces.map(r => (
                         <th key={r.id} className="num-col race-col">
-                          <div className="race-th">R{r.race_number}</div>
+                          <div className="race-th">{isDistanceFleet ? "D1" : `R${r.race_number}`}</div>
                           {r.race_date && <div className="race-th-date">{r.race_date}</div>}
                         </th>
                       ))}
@@ -122,7 +129,7 @@ export default function Standings({ seriesId, seriesName }) {
                         <td>{row.skipper}</td>
                         <td>{row.club ?? "—"}</td>
                         <td className="num-col">{row.phrf_rating}</td>
-                        {races.map(r => {
+                        {fleetRaces.map(r => {
                           const rp = row.race_points[r.id];
                           const isThrown = rp?.thrown_out;
                           return (
@@ -149,7 +156,8 @@ export default function Standings({ seriesId, seriesName }) {
                 </table>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           <div className="standings-legend">
             <strong>Legend:</strong> DNF/DNS/DNC = fleet+1 pts · DSQ = fleet+2 pts · [brackets] = throwout

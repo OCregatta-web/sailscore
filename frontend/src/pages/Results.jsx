@@ -90,6 +90,13 @@ function SeriesResults({ series: seriesMeta, onBack }) {
   const rows = standings?.rows || [];
   const fleets = getFleets(rows);
 
+  const isDistanceFleet = activeFleet?.toLowerCase() === "distance";
+  const fleetRaces = races.filter(r =>
+    isDistanceFleet
+      ? (r.name || "").toLowerCase().includes("distance")
+      : !(r.name || "").toLowerCase().includes("distance")
+  );
+
   const fleetRows = activeFleet ? rows.filter(r => r.fleet === activeFleet) : rows;
 
   // Race detail rows filtered by active fleet
@@ -141,14 +148,14 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                 <th>Skipper</th>
                 <th>Club</th>
                 <th>Rating</th>
-                {races.map(r => (
+                {fleetRaces.map(r => (
                   <th
                     key={r.id}
                     className={`results-race-col ${activeRace?.id === r.id ? "active-race-col" : ""}`}
                     onClick={() => selectRace(r)}
                     title="Click to see race details"
                   >
-                    R{r.race_number}
+                    {isDistanceFleet ? "D1" : `R${r.race_number}`}
                   </th>
                 ))}
                 <th>Net</th>
@@ -166,7 +173,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                   <td>{row.skipper}</td>
                   <td>{row.club ?? "—"}</td>
                   <td>{row.phrf_rating ?? "—"}</td>
-                  {races.map(r => {
+                  {fleetRaces.map(r => {
                     const pts = row.race_points?.[r.id];
                     return (
                       <td
@@ -183,7 +190,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                 </tr>
               ))}
               {fleetRows.length === 0 && (
-                <tr><td colSpan={8 + races.length} className="results-empty-row">No results yet</td></tr>
+                <tr><td colSpan={8 + fleetRaces.length} className="results-empty-row">No results yet</td></tr>
               )}
             </tbody>
           </table>
