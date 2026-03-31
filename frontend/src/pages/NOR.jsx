@@ -86,7 +86,8 @@ const sections = [
   {
     num: 9, title: "SCORING",
     items: [
-      "The Racing/Distance race divisions shall be scored using the PHRF-LO handicapping system using the 'time on time' method of establishing corrected times.",
+      "The Racing race divisions shall be scored using the PHRF-LO handicapping system using the 'time on time' method of establishing corrected times.",
+      "The Distance race will be a pursuit race with individual start times being calculated using the \"time on distance\" method.",
       "Race ties will follow RRS rule A7. Series ties will follow RRS rule A8.",
     ]
   },
