@@ -354,7 +354,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                 </div>
               </div>
 
-              {!selectedRace.start_time && (
+              {!selectedRace.start_time && !isDistance && (
                 <div className="start-time-warning">
                   ⚠️ No start time set for this race. <button className="link-btn" onClick={() => openEditRace(selectedRace)}>Add start time</button>
                 </div>
@@ -389,31 +389,25 @@ const applyFleetStartTime = (fleetName, startTime) => {
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem", background: "white", borderRadius: "8px", overflow: "hidden" }}>
                         <thead>
                           <tr style={{ background: "#1a365d", color: "white" }}>
-                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Start Time</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Sail #</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Boat</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Skipper</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Club</th>
                             <th style={{ padding: "8px 12px", textAlign: "right" }}>PHRF</th>
-                            <th style={{ padding: "8px 12px", textAlign: "right" }}>Offset</th>
+                            <th style={{ padding: "8px 12px", textAlign: "right" }}>Start Time</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {pursuitStarts.map((b, i) => {
-                            const offsetMin = Math.floor(b.offsetSecs / 60);
-                            const offsetSec = b.offsetSecs % 60;
-                            const offsetStr = `+${offsetMin}:${String(offsetSec).padStart(2,"0")}`;
-                            return (
+                          {pursuitStarts.map((b, i) => (
                             <tr key={b.id} style={{ background: i % 2 === 0 ? "#f7fafc" : "white", borderBottom: "1px solid #e2e8f0" }}>
-                              <td style={{ padding: "8px 12px", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
                               <td style={{ padding: "8px 12px", fontWeight: 600 }}>{b.sail_number}</td>
                               <td style={{ padding: "8px 12px" }}>{b.boat_name}</td>
                               <td style={{ padding: "8px 12px" }}>{b.skipper}</td>
                               <td style={{ padding: "8px 12px" }}>{b.club || "—"}</td>
                               <td style={{ padding: "8px 12px", textAlign: "right" }}>{b.phrf_rating}</td>
-                              <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "monospace", color: "#718096" }}>{i === 0 ? "—" : offsetStr}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
                             </tr>
-                          )})}
+                          ))}
                         </tbody>
                       </table>
                       <div style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "#718096" }}>
