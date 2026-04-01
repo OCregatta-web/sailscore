@@ -132,17 +132,24 @@ export default function RaceEntry({ seriesId, seriesName }) {
   };
 
   const getElapsed = (boatId) => {
-  const boat = boats.find(b => b.id === boatId);
-  const fleetName = boat?.fleet || "NFS";
-  const entry = entries[boatId] || {};
-  if (entry.status !== "FIN" && entry.status) return null;
-  const startTime = fleetStartTimes[fleetName] || selectedRace?.start_time;
-  const startSecs = parseTimeOfDay(startTime);
-  const finishSecs = parseTimeOfDay(entry.finishTime);
-  if (startSecs === null || finishSecs === null) return null;
-  const elapsed = finishSecs - startSecs;
-  return elapsed > 0 ? elapsed : null;
-};
+    const boat = boats.find(b => b.id === boatId);
+    const fleetName = boat?.fleet || "NFS";
+    const entry = entries[boatId] || {};
+    if (entry.status !== "FIN" && entry.status) return null;
+    let startTime;
+    if (fleetName.toLowerCase() === "distance") {
+      // Use this boat's individual pursuit start time
+      const pursuitBoat = pursuitStarts.find(p => p.id === boatId);
+      startTime = pursuitBoat?.pursuitStart || null;
+    } else {
+      startTime = fleetStartTimes[fleetName] || selectedRace?.start_time;
+    }
+    const startSecs = parseTimeOfDay(startTime);
+    const finishSecs = parseTimeOfDay(entry.finishTime);
+    if (startSecs === null || finishSecs === null) return null;
+    const elapsed = finishSecs - startSecs;
+    return elapsed > 0 ? elapsed : null;
+  };
 
   const openNewRace = () => {
     const nextNum = races.length > 0 ? Math.max(...races.map(r => r.race_number)) + 1 : 1;
@@ -468,6 +475,97 @@ const applyFleetStartTime = (fleetName, startTime) => {
           </div>
         )}
       </div>
+      {fleetName.toLowerCase() === "distance" ? (() => {
+        // Sort distance boats by pursuit start time order (slowest PHRF first)
+        const pursuitMap = {};
+        pursuitStarts.forEach(b => { pursuitMap[b.id] = b.pursuitStart; });
+        const sortedBoats = [...fleetBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
+        return (
+          <table className="entry-table">
+            <thead>
+              <tr>
+                <th>Sail #</th>
+                <th>Boat / Skipper</th>
+                <th>PHRF</th>
+                <th>Start Time</th>
+                <th>Status</th>
+                <th>Finish Time (HH:MM:SS)</th>
+                <th>Pos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedBoats.map(boat => {
+                const entry = entries[boat.id] || { finishTime: "", status: "FIN" };
+                const result = resultMap[boat.id];
+                const isFin = entry.status === "FIN";
+                const boatStart = showPursuitSheet ? (pursuitMap[boat.id] || "—") : "—";
+                return (
+                  <tr key={boat.id} className={result ? "has-result" : ""}>
+                    <td><span className="sail-num">{boat.sail_number}</span></td>
+                    <td>
+                      <div className="boat-cell">
+                        <button
+                          className="boat-name-btn"
+                          onClick={() => {
+                            const now = new Date();
+                            const h = String(now.getHours()).padStart(2, "0");
+                            const m = String(now.getMinutes()).padStart(2, "0");
+                            const s = String(now.getSeconds()).padStart(2, "0");
+                            setEntry(boat.id, "finishTime", `${h}:${m}:${s}`);
+                            setEntry(boat.id, "status", "FIN");
+                          }}
+                          title="Click to stamp finish time"
+                        >
+                          {boat.boat_name}
+                        </button>
+                        <span className="skipper-name">{boat.skipper}</span>
+                      </div>
+                    </td>
+                    <td className="num-col">{boat.phrf_rating}</td>
+                    <td className="num-col mono" style={{ color: showPursuitSheet && pursuitMap[boat.id] ? "#FF6B35" : "#a0aec0", fontWeight: 600 }}>
+                      {boatStart}
+                    </td>
+                    <td>
+                      <select
+                        className={`status-select status-${STATUS_COLORS[entry.status] || "gray"}`}
+                        value={entry.status || "FIN"}
+                        onChange={e => setEntry(boat.id, "status", e.target.value)}
+                      >
+                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                    </td>
+                    <td>
+                      {isFin ? (
+                        <input
+                          className="time-input"
+                          type="text"
+                          placeholder="14:23:45"
+                          value={entry.finishTime}
+                          onChange={e => setEntry(boat.id, "finishTime", e.target.value)}
+                          onKeyDown={e => e.key === "Enter" && submitFinish(boat.id)}
+                        />
+                      ) : (
+                        <span className="na-text">—</span>
+                      )}
+                    </td>
+                    <td className="num-col">
+                      {result?.position != null ? (
+                        <span className="pos-badge">
+                          {result.position === 1 ? "🥇" : result.position === 2 ? "🥈" : result.position === 3 ? "🥉" : `${result.position}th`}
+                        </span>
+                      ) : result?.status && result.status !== "FIN" ? (
+                        <span className={`status-pill status-${STATUS_COLORS[result.status] || "gray"}`}>
+                          {result.status}
+                        </span>
+                      ) : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        );
+      })() : (
       <table className="entry-table">
         <thead>
           <tr>
@@ -561,6 +659,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
           })}
         </tbody>
       </table>
+      )}
     </div>
   ))}
 </div>
