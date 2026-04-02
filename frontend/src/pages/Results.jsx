@@ -158,8 +158,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     {isDistanceFleet ? "D1" : `R${r.race_number}`}
                   </th>
                 ))}
-                <th>Net</th>
-                <th>Total</th>
+                {!isDistanceFleet && <th>Net</th>}
+                {!isDistanceFleet && <th>Total</th>}
               </tr>
             </thead>
             <tbody>
@@ -185,8 +185,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       </td>
                     );
                   })}
-                  <td className="net-pts-cell">{row.net_points}</td>
-                  <td>{row.total_points}</td>
+                  {!isDistanceFleet && <td className="net-pts-cell">{row.net_points}</td>}
+                  {!isDistanceFleet && <td>{row.total_points}</td>}
                 </tr>
               ))}
               {fleetRows.length === 0 && (
@@ -220,7 +220,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     <th>Fleet</th>
                     <th>Finish Time</th>
                     <th>Elapsed</th>
-                    <th>Corrected</th>
+                    {!isDistanceFleet && <th>Corrected</th>}
                     <th>Points</th>
                   </tr>
                 </thead>
@@ -240,7 +240,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.fleet ?? "—"}</td>
                       <td>{row.finish_time ?? "—"}</td>
                       <td>{row.elapsed_display ?? "—"}</td>
-                      <td>{row.corrected_display ?? "—"}</td>
+                      {!isDistanceFleet && <td>{row.corrected_display ?? "—"}</td>}
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>
                     </tr>
                   ))}
