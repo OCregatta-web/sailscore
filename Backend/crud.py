@@ -112,6 +112,7 @@ def upsert_finish(db: Session, finish: schemas.FinishCreate, race_id: int):
             corrected = finish.elapsed_seconds * (566.431 / (401.431 + boat.phrf_rating))
     if existing:
         existing.elapsed_seconds = finish.elapsed_seconds
+        existing.finish_time = getattr(finish, 'finish_time', None)
         existing.status = finish.status
         existing.corrected_seconds = corrected
         db.commit()
@@ -121,6 +122,7 @@ def upsert_finish(db: Session, finish: schemas.FinishCreate, race_id: int):
         db_finish = models.Finish(
             race_id=race_id, boat_id=finish.boat_id,
             elapsed_seconds=finish.elapsed_seconds,
+            finish_time=getattr(finish, 'finish_time', None),
             status=finish.status, corrected_seconds=corrected
         )
         db.add(db_finish)

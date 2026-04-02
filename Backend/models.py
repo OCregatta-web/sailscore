@@ -61,6 +61,7 @@ class Finish(Base):
     race_id = Column(Integer, ForeignKey("races.id"))
     boat_id = Column(Integer, ForeignKey("boats.id"))
     elapsed_seconds = Column(Float, nullable=True)
+    finish_time = Column(String, nullable=True)
     status = Column(String, default="FIN")
     corrected_seconds = Column(Float, nullable=True)
     race = relationship("Race", back_populates="finishes")

@@ -83,6 +83,7 @@ class RaceOut(BaseModel):
 class FinishCreate(BaseModel):
     boat_id: int
     elapsed_seconds: Optional[float] = None
+    finish_time: Optional[str] = None
     status: str = "FIN"
 
 class FinishOut(BaseModel):
@@ -90,6 +91,7 @@ class FinishOut(BaseModel):
     race_id: int
     boat_id: int
     elapsed_seconds: Optional[float]
+    finish_time: Optional[str] = None
     corrected_seconds: Optional[float]
     status: str
     class Config:
