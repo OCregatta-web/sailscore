@@ -219,7 +219,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     <th>Club</th>
                     <th>Fleet</th>
                     <th>Finish Time</th>
-                    <th>Elapsed</th>
+                    {!isDistanceFleet && <th>Elapsed</th>}
                     {!isDistanceFleet && <th>Corrected</th>}
                     <th>Points</th>
                   </tr>
@@ -239,7 +239,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.club ?? "—"}</td>
                       <td>{row.fleet ?? "—"}</td>
                       <td>{row.finish_time ?? "—"}</td>
-                      <td>{row.elapsed_display ?? "—"}</td>
+                      {!isDistanceFleet && <td>{row.elapsed_display ?? "—"}</td>}
                       {!isDistanceFleet && <td>{row.corrected_display ?? "—"}</td>}
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>
                     </tr>
