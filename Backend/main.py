@@ -179,7 +179,16 @@ def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depen
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    return scoring.compute_race_results(finishes, boats, race)
+    fleets = {}
+    for boat in boats:
+        fleet = boat.fleet or "NFS"
+        if fleet not in fleets:
+            fleets[fleet] = []
+        fleets[fleet].append(boat)
+    all_results = []
+    for fleet_boats in fleets.values():
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race))
+    return all_results
 
 @app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
 def series_standings(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
