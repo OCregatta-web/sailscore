@@ -21,9 +21,10 @@ def penalty_points(status: str, fleet_size: int) -> float:
         return fleet_size + 2
     return fleet_size + 1
 
-def compute_race_results(finishes, boats, race=None):
+def compute_race_results(finishes, boats, race=None, fleet_size=None):
     boat_map = {b.id: b for b in boats}
-    fleet_size = len(boats)
+    if fleet_size is None:
+        fleet_size = len(boats)
     finish_map = {f.boat_id: f for f in finishes}
     results = []
 
@@ -42,14 +43,9 @@ def compute_race_results(finishes, boats, race=None):
             continue
         corrected = None
         finish_time_str = None
-        is_pursuit = boat.fleet and boat.fleet.lower() == "distance"
         if finish.status == "FIN" and finish.elapsed_seconds is not None:
             corrected = phrf_corrected_time(finish.elapsed_seconds, boat.phrf_rating)
-            # For pursuit/distance fleet, use stored finish_time directly
-            stored_finish_time = getattr(finish, 'finish_time', None)
-            if stored_finish_time:
-                finish_time_str = stored_finish_time
-            elif start_seconds is not None and not is_pursuit:
+            if start_seconds is not None:
                 total = start_seconds + int(finish.elapsed_seconds)
                 h, rem = divmod(total, 3600)
                 m, s = divmod(rem, 60)
@@ -80,12 +76,9 @@ def compute_race_results(finishes, boats, race=None):
                 "status": "DNS", "points": None, "position": None,
             })
 
-    is_pursuit_race = any(
-        b.fleet and b.fleet.lower() == "distance" for b in boats
-    )
     finishers = sorted(
         [r for r in results if r["status"] == "FIN" and r["corrected_seconds"] is not None],
-        key=lambda r: r["finish_time"] if (is_pursuit_race and r["finish_time"]) else r["corrected_seconds"]
+        key=lambda r: r["corrected_seconds"]
     )
     penalties = [r for r in results if r["status"] != "FIN" or r["corrected_seconds"] is None]
 
@@ -116,7 +109,7 @@ def compute_series_standings(series, races, boats, all_finishes):
         race_results_map = {}
         for race in races:
             finishes = all_finishes.get(race.id, [])
-            results = compute_race_results(finishes, fleet_boats)
+            results = compute_race_results(finishes, fleet_boats, race=race, fleet_size=fleet_size)
             race_results_map[race.id] = {r.boat_id: r for r in results}
 
         rows = []
