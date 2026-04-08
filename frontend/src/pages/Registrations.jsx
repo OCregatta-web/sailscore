@@ -20,6 +20,23 @@ export default function Registrations({ seriesId, seriesName }) {
     alert("Registration link copied to clipboard!");
   };
 
+  const downloadCSV = () => {
+    const headers = ["Boat Name", "Skipper", "Email"];
+    const rows = registrations.map(r => [
+      `"${(r.boat_name || "").replace(/"/g, '""')}"`,
+      `"${(r.skipper || "").replace(/"/g, '""')}"`,
+      `"${(r.email || "").replace(/"/g, '""')}"`,
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${seriesName.replace(/\s+/g, "_")}_registrations.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -28,9 +45,16 @@ export default function Registrations({ seriesId, seriesName }) {
           <h1 className="page-title">{seriesName}</h1>
           <p className="page-subtitle">Registrations</p>
         </div>
-        <button className="btn-secondary" onClick={() => navigate("fleet", { seriesId, seriesName })}>
-          View Fleet →
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          {registrations.length > 0 && (
+            <button className="btn-secondary" onClick={downloadCSV}>
+              ⬇ Download CSV
+            </button>
+          )}
+          <button className="btn-secondary" onClick={() => navigate("fleet", { seriesId, seriesName })}>
+            View Fleet →
+          </button>
+        </div>
       </div>
 
       {/* Registration link */}
