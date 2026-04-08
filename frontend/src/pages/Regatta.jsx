@@ -35,7 +35,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const updates = [
   { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
   { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
-  { date: "March 26", text: "WOW! Already over 75% full. Only 12 spots left." },
+  { date: "March 22", text: "WOW! Already 2/3 full. Great initial response! Only 17 spots left." },
 ];
 
 const schedule = [
@@ -176,7 +176,7 @@ export default function Regatta() {
             <div style={styles.registerLeft}>
               <h3 style={styles.registerTitle}>Ready to race?</h3>
               <p style={styles.registerText}>
-                Already 66% full! Register soon or risk missing out on a great day on and off the water!
+                Already 75% full! Register soon or risk missing out on a great day on and off the water!
               </p>
               <div style={styles.freeRegatta}>🎉 This is a FREE regatta — 10 years running with no entry fees!</div>
               <ul style={styles.registerList}>
@@ -184,7 +184,6 @@ export default function Regatta() {
                 <li>✅ Fleet assignment by Aug 10</li>
                 <li>✅ Skippers' package at sign-in</li>
                 <li>✅ Post-race pool party included</li>
-                <li>✅ Famous OC Regatta gourment dinner</li>
               </ul>
               <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}`} style={styles.registerBtn}>
                 Register Online →
@@ -313,8 +312,9 @@ export default function Regatta() {
               </p>
               <div style={styles.locationDetails}>
                 <div style={styles.locationDetail}><span>📍</span> 43.44° N, 79.69° W</div>
-                <div style={styles.locationDetail}><span>⚓</span> Guest docking available contact the Oakville Dock Master</div>
-                <div style={styles.locationDetail}><span>⚓</span> at pcarter@oakvilleclub.com</div>
+                <div style={styles.locationDetail}><span>⚓</span> Guest docking available at Oakville Harbour</div>
+                <div style={styles.locationDetail}><span>🅿️</span> Parking at Lakeside Park lot</div>
+                <div style={styles.locationDetail}><span>🚤</span> Launch ramp at 16 Mile Creek</div>
               </div>
             </div>
           </div>
