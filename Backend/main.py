@@ -179,16 +179,7 @@ def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depen
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    fleets = {}
-    for boat in boats:
-        fleet = boat.fleet or "NFS"
-        if fleet not in fleets:
-            fleets[fleet] = []
-        fleets[fleet].append(boat)
-    all_results = []
-    for fleet_boats in fleets.values():
-        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race))
-    return all_results
+    return scoring.compute_race_results(finishes, boats)
 
 @app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
 def series_standings(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -256,7 +247,7 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         fleets[fleet].append(boat)
     all_results = []
     for fleet_boats in fleets.values():
-        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race))
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats))
     return all_results
 
 # ── Public Registration (no auth required) ────────────────────────────────────
@@ -371,3 +362,18 @@ def clear_registrations(series_id: int, db: Session = Depends(get_db), current_u
 def list_registrations(series_id: int, db: Session = Depends(get_db),
                        current_user=Depends(auth.get_current_user)):
     return crud.get_registrations(db, series_id)
+
+@app.get("/series/{series_id}/export/registrations")
+def export_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    regs = crud.get_registrations(db, series_id)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Boat Name", "Sail Number", "Class", "Skipper", "Fleet", "PHRF", "Club", "Email", "Phone"])
+    for r in regs:
+        writer.writerow([r.boat_name, r.sail_number, r.boat_class or "", r.skipper, r.fleet, r.phrf_rating, r.club or "", r.email or "", r.phone or ""])
+    output.seek(0)
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode()),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=registrations_{series_id}.csv"}
+    )
