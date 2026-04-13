@@ -62,7 +62,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
     setRaceDetail(null);
     setRaceDetailLoading(true);
     fetchPublic(`/public/races/${race.id}/results`)
-      .then(setRaceDetail)
+      .then(d => setRaceDetail({ results: d, start_time: race.start_time }))
       .finally(() => setRaceDetailLoading(false));
   };
 
@@ -101,7 +101,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
 
   // Race detail rows filtered by active fleet
   const raceDetailRows = raceDetail
-    ? (activeFleet ? raceDetail.filter(r => r.fleet === activeFleet) : raceDetail)
+    ? (activeFleet ? raceDetail.results.filter(r => r.fleet === activeFleet) : raceDetail.results)
     : null;
 
   return (
@@ -203,6 +203,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
           <h2 className="results-card-title">
             Race {activeRace.race_number}{activeRace.name ? ` — ${activeRace.name}` : ""}
             {activeRace.race_date ? <span className="results-race-date"> · {activeRace.race_date}</span> : ""}
+            {raceDetail?.start_time ? <span className="results-race-date"> · 🚦 Start: {raceDetail.start_time}</span> : ""}
             <button className="results-close-race" onClick={() => { setActiveRace(null); setRaceDetail(null); }}>✕</button>
           </h2>
           {raceDetailLoading ? (
@@ -218,9 +219,10 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     <th>Skipper</th>
                     <th>Club</th>
                     <th>Fleet</th>
+                    <th>Start Time</th>
                     <th>Finish Time</th>
-                    {!isDistanceFleet && <th>Elapsed</th>}
-                    {!isDistanceFleet && <th>Corrected</th>}
+                    <th>Elapsed</th>
+                    <th>Corrected</th>
                     <th>Points</th>
                   </tr>
                 </thead>
@@ -238,9 +240,10 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.skipper}</td>
                       <td>{row.club ?? "—"}</td>
                       <td>{row.fleet ?? "—"}</td>
-                      <td>{row.finish_time ?? "—"}</td>
-                      {!isDistanceFleet && <td>{row.elapsed_display ?? "—"}</td>}
-                      {!isDistanceFleet && <td>{row.corrected_display ?? "—"}</td>}
+                      <td className="mono">{raceDetail?.start_time ?? "—"}</td>
+                      <td className="mono">{row.finish_time ?? "—"}</td>
+                      <td className="mono">{row.elapsed_display ?? "—"}</td>
+                      <td className="mono">{row.corrected_display ?? "—"}</td>
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>
                     </tr>
                   ))}
