@@ -179,7 +179,16 @@ def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depen
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    return scoring.compute_race_results(finishes, boats)
+    fleets = {}
+    for boat in boats:
+        fleet = boat.fleet or "NFS"
+        if fleet not in fleets:
+            fleets[fleet] = []
+        fleets[fleet].append(boat)
+    all_results = []
+    for fleet_boats in fleets.values():
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race=race))
+    return all_results
 
 @app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
 def series_standings(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -227,7 +236,7 @@ def public_standings(series_id: int, db: Session = Depends(get_db)):
     standings = scoring.compute_series_standings(series, races, boats, all_finishes)
     return {
         "series": {"id": series.id, "name": series.name, "season": series.season, "throwouts": series.throwouts},
-        "races": [{"id": r.id, "race_number": r.race_number, "name": r.name, "race_date": str(r.race_date) if r.race_date else None} for r in races],
+        "races": [{"id": r.id, "race_number": r.race_number, "name": r.name, "race_date": str(r.race_date) if r.race_date else None, "start_time": r.start_time} for r in races],
         "standings": standings
     }
 
@@ -247,7 +256,7 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         fleets[fleet].append(boat)
     all_results = []
     for fleet_boats in fleets.values():
-        all_results.extend(scoring.compute_race_results(finishes, fleet_boats))
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race=race))
     return all_results
 
 # ── Public Registration (no auth required) ────────────────────────────────────
