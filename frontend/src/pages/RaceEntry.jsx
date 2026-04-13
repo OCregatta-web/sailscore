@@ -56,11 +56,9 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
     try {
       for (const boat of fleetBoats) {
-        // Only save boats the user has actually modified
-        if (!dirtyEntries.has(boat.id)) continue;
         const entry = entries[boat.id];
-        if (!entry) continue;
-        const status = entry.status || "DNS";
+        const status = entry?.status || "DNS";
+        // Only compute elapsed for FIN boats that have a finish time entry
         const elapsed = status === "FIN" ? getElapsed(boat.id) : null;
         await api.post(`/races/${selectedRace.id}/finishes`,
           { boat_id: boat.id, elapsed_seconds: elapsed, status },
