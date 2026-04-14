@@ -58,10 +58,10 @@ export default function RaceEntry({ seriesId, seriesName }) {
       for (const boat of fleetBoats) {
         const entry = entries[boat.id];
         const status = entry?.status || "DNS";
-        // Only compute elapsed for FIN boats that have a finish time entry
         const elapsed = status === "FIN" ? getElapsed(boat.id) : null;
+        const finish_time = status === "FIN" ? (entry?.finishTime || null) : null;
         await api.post(`/races/${selectedRace.id}/finishes`,
-          { boat_id: boat.id, elapsed_seconds: elapsed, status },
+          { boat_id: boat.id, elapsed_seconds: elapsed, finish_time, status },
           user.token
         );
       }
