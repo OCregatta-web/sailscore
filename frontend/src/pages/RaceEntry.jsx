@@ -60,8 +60,17 @@ export default function RaceEntry({ seriesId, seriesName }) {
         const status = entry?.status || "DNS";
         const elapsed = status === "FIN" ? getElapsed(boat.id) : null;
         const finish_time = status === "FIN" ? (entry?.finishTime || null) : null;
+        // Use per-boat pursuit start for distance fleet, otherwise fleet start time
+        const boatFleet = boat.fleet || "NFS";
+        let start_time = null;
+        if (boatFleet.toLowerCase() === "distance") {
+          const pursuitBoat = pursuitStarts.find(p => p.id === boat.id);
+          start_time = pursuitBoat?.pursuitStart || null;
+        } else {
+          start_time = fleetStartTimes[fleetName] || selectedRace?.start_time || null;
+        }
         await api.post(`/races/${selectedRace.id}/finishes`,
-          { boat_id: boat.id, elapsed_seconds: elapsed, finish_time, status },
+          { boat_id: boat.id, elapsed_seconds: elapsed, start_time, finish_time, status },
           user.token
         );
       }
