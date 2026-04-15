@@ -67,7 +67,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
           const pursuitBoat = pursuitStarts.find(p => p.id === boat.id);
           start_time = pursuitBoat?.pursuitStart || null;
         } else {
-          start_time = fleetStartTimes[fleetName] || selectedRace?.start_time || null;
+          start_time = fleetStartTimes[fleetName] || null;
         }
         await api.post(`/races/${selectedRace.id}/finishes`,
           { boat_id: boat.id, elapsed_seconds: elapsed, start_time, finish_time, status },
@@ -149,7 +149,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
       const pursuitBoat = pursuitStarts.find(p => p.id === boatId);
       startTime = pursuitBoat?.pursuitStart || null;
     } else {
-      startTime = fleetStartTimes[fleetName] || selectedRace?.start_time;
+      startTime = fleetStartTimes[fleetName] || null;
     }
     const startSecs = parseTimeOfDay(startTime);
     const finishSecs = parseTimeOfDay(entry.finishTime);
@@ -357,9 +357,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
                   </h2>
                   <div className="race-meta">
                     {selectedRace.race_date && <span className="race-date">{selectedRace.race_date}</span>}
-                    {selectedRace.start_time && (
-                      <span className="race-start">🚦 Start: <strong>{selectedRace.start_time}</strong></span>
-                    )}
                   </div>
                 </div>
                 <div className="race-entry-actions">
@@ -368,11 +365,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                 </div>
               </div>
 
-              {!selectedRace.start_time && !isDistance && (
-                <div className="start-time-warning">
-                  ⚠️ No start time set for this race. <button className="link-btn" onClick={() => openEditRace(selectedRace)}>Add start time</button>
-                </div>
-              )}
+
 
               {/* Pursuit Race Calculator */}
               {isDistance && (
