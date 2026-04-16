@@ -17,7 +17,8 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [loading, setLoading] = useState(true);
   const [showRaceModal, setShowRaceModal] = useState(false);
   const [editRace, setEditRace] = useState(null);
-  const [raceForm, setRaceForm] = useState({ race_number: "", name: "", race_date: "", start_time: "" });
+  // FIX 1: removed start_time from raceForm — fleet start times are entered per-fleet in race entry
+  const [raceForm, setRaceForm] = useState({ race_number: "", name: "", race_date: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [entries, setEntries] = useState({});
@@ -100,6 +101,8 @@ export default function RaceEntry({ seriesId, seriesName }) {
     loadFinishesAndResults();
   }, [selectedRace]);
 
+  // FIX 2: restore fleet start times and finish times from saved Finish records
+  // instead of reconstructing finish times from the (now-removed) race-level start_time
   const loadFinishesAndResults = async () => {
     const [fins, res] = await Promise.all([
       api.get(`/races/${selectedRace.id}/finishes`, user.token),
@@ -108,12 +111,24 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setFinishes(fins);
     setResults(res);
 
+    // Restore fleet start times from the start_time stored on each Finish record
+    const restoredFleetStarts = {};
+    fins.forEach(f => {
+      if (f.start_time) {
+        const boat = boats.find(b => b.id === f.boat_id);
+        const fleetName = boat?.fleet || "NFS";
+        if (!restoredFleetStarts[fleetName]) {
+          restoredFleetStarts[fleetName] = f.start_time;
+        }
+      }
+    });
+    setFleetStartTimes(restoredFleetStarts);
+
+    // Use the stored finish_time directly from the Finish record
     const map = {};
     fins.forEach(f => {
       map[f.boat_id] = {
-        finishTime: f.elapsed_seconds != null && selectedRace.start_time
-          ? secondsToTimeOfDay(parseTimeOfDay(selectedRace.start_time) + f.elapsed_seconds)
-          : "",
+        finishTime: f.finish_time || "",
         status: f.status,
       };
     });
@@ -161,14 +176,16 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const openNewRace = () => {
     const nextNum = races.length > 0 ? Math.max(...races.map(r => r.race_number)) + 1 : 1;
     setEditRace(null);
-    setRaceForm({ race_number: nextNum, name: "", race_date: new Date().toISOString().split("T")[0], start_time: "" });
+    // FIX 3: no start_time in new race form
+    setRaceForm({ race_number: nextNum, name: "", race_date: new Date().toISOString().split("T")[0] });
     setError("");
     setShowRaceModal(true);
   };
 
   const openEditRace = (r) => {
     setEditRace(r);
-    setRaceForm({ race_number: r.race_number, name: r.name || "", race_date: r.race_date || "", start_time: r.start_time || "" });
+    // FIX 4: no start_time in edit race form
+    setRaceForm({ race_number: r.race_number, name: r.name || "", race_date: r.race_date || "" });
     setError("");
     setShowRaceModal(true);
   };
@@ -247,6 +264,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
     }
     setSaving(false);
   };
+
   const clearAllResults = async () => {
     if (!confirm("Clear all finish times for this race? Boats will be reset to DNS. This cannot be undone.")) return;
     for (const boat of boats) {
@@ -261,20 +279,19 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setSubmitMsg("All results cleared ✓");
     setTimeout(() => setSubmitMsg(""), 2500);
   };
-const applyFleetStartTime = (fleetName, startTime) => {
-  const fleetBoats = boats.filter(b => (b.fleet || "NFS") === fleetName);
-  setEntries(prev => {
-    const updated = { ...prev };
-    fleetBoats.forEach(boat => {
-      updated[boat.id] = {
-        ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
-      };
+
+  const applyFleetStartTime = (fleetName, startTime) => {
+    const fleetBoats = boats.filter(b => (b.fleet || "NFS") === fleetName);
+    setEntries(prev => {
+      const updated = { ...prev };
+      fleetBoats.forEach(boat => {
+        updated[boat.id] = {
+          ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
+        };
+      });
+      return updated;
     });
-    return updated;
-  });
-  // Update the selected race start time display
-  setSelectedRace(prev => ({ ...prev, start_time: startTime }));
-};
+  };
 
   const resultMap = {};
   results.forEach(r => { resultMap[r.boat_id] = r; });
@@ -364,8 +381,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
                   <button className="btn-ghost-sm danger" onClick={() => deleteRace(selectedRace.id)}>Delete</button>
                 </div>
               </div>
-
-
 
               {/* Pursuit Race Calculator */}
               {isDistance && (
@@ -458,7 +473,8 @@ const applyFleetStartTime = (fleetName, startTime) => {
               onClick={() => {
                 const t = fleetStartTimes[fleetName];
                 if (!t) return;
-                setSelectedRace(prev => ({ ...prev, start_time: t }));
+                // FIX 5: no longer mutate selectedRace.start_time — fleet start is
+                // stored per-Finish record when scoring, not on the Race itself
                 const updated = { ...entries };
                 fleetBoats.forEach(boat => {
                   updated[boat.id] = {
@@ -584,7 +600,8 @@ const applyFleetStartTime = (fleetName, startTime) => {
             const entry = entries[boat.id] || { finishTime: "", status: "FIN" };
             const result = resultMap[boat.id];
             const isFin = entry.status === "FIN";
-            const startTime = fleetStartTimes[fleetName] || selectedRace?.start_time;
+            // FIX 6: use only the fleet start time from state — no fallback to selectedRace.start_time
+            const startTime = fleetStartTimes[fleetName] || null;
             const startSecs = parseTimeOfDay(startTime);
             const finishSecs = parseTimeOfDay(entry.finishTime);
             const elapsed = isFin && startSecs != null && finishSecs != null && finishSecs > startSecs
@@ -695,16 +712,12 @@ const applyFleetStartTime = (fleetName, startTime) => {
                   onChange={e => setRaceForm({ ...raceForm, race_date: e.target.value })} />
               </div>
             </div>
+            {/* FIX 7: Start Time field removed — fleet start times are entered per-fleet in race entry */}
             <div className="field-row">
               <div className="field">
                 <label>Race Name (optional)</label>
                 <input type="text" placeholder="e.g. Spinnaker Race" value={raceForm.name}
                   onChange={e => setRaceForm({ ...raceForm, name: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>Start Time (HH:MM:SS)</label>
-                <input type="text" placeholder="13:00:00" value={raceForm.start_time}
-                  onChange={e => setRaceForm({ ...raceForm, start_time: e.target.value })} />
               </div>
             </div>
             {error && <div className="form-error">{error}</div>}
