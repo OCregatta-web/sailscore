@@ -179,15 +179,21 @@ def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depen
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
+    # FIX: score each fleet separately, passing only that fleet's finishes
+    # so start_time/finish_time from Finish records are correctly matched
     fleets = {}
     for boat in boats:
         fleet = boat.fleet or "NFS"
         if fleet not in fleets:
             fleets[fleet] = []
         fleets[fleet].append(boat)
+    # Build a lookup of finishes by boat_id for fast filtering
+    finish_by_boat = {f.boat_id: f for f in finishes}
     all_results = []
-    for fleet_boats in fleets.values():
-        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race=race))
+    for fleet_name, fleet_boats in fleets.items():
+        fleet_boat_ids = {b.id for b in fleet_boats}
+        fleet_finishes = [f for f in finishes if f.boat_id in fleet_boat_ids]
+        all_results.extend(scoring.compute_race_results(fleet_finishes, fleet_boats, race=race))
     return all_results
 
 @app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
@@ -236,7 +242,8 @@ def public_standings(series_id: int, db: Session = Depends(get_db)):
     standings = scoring.compute_series_standings(series, races, boats, all_finishes)
     return {
         "series": {"id": series.id, "name": series.name, "season": series.season, "throwouts": series.throwouts},
-        "races": [{"id": r.id, "race_number": r.race_number, "name": r.name, "race_date": str(r.race_date) if r.race_date else None, "start_time": r.start_time} for r in races],
+        # FIX: removed start_time from race list — start times are per-fleet on Finish records
+        "races": [{"id": r.id, "race_number": r.race_number, "name": r.name, "race_date": str(r.race_date) if r.race_date else None} for r in races],
         "standings": standings
     }
 
@@ -247,7 +254,8 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    # Score each fleet separately so positions are per-fleet
+    # FIX: score each fleet separately, passing only that fleet's finishes
+    # so start_time/finish_time from Finish records are correctly matched per fleet
     fleets = {}
     for boat in boats:
         fleet = boat.fleet or "NFS"
@@ -255,8 +263,10 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
             fleets[fleet] = []
         fleets[fleet].append(boat)
     all_results = []
-    for fleet_boats in fleets.values():
-        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race=race))
+    for fleet_name, fleet_boats in fleets.items():
+        fleet_boat_ids = {b.id for b in fleet_boats}
+        fleet_finishes = [f for f in finishes if f.boat_id in fleet_boat_ids]
+        all_results.extend(scoring.compute_race_results(fleet_finishes, fleet_boats, race=race))
     return all_results
 
 # ── Public Registration (no auth required) ────────────────────────────────────
@@ -326,6 +336,7 @@ Boat Class:  {reg.boat_class or 'N/A'}
             print(f"Registration email sent, status: {response.status}")
     except Exception as e:
         print(f"Failed to send registration email: {e}")
+
 @app.get("/backup")
 def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     import json
