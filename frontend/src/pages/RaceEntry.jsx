@@ -128,30 +128,59 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setFinishes(fins);
     setResults(res);
 
-    // Restore fleet start times from the start_time stored on each Finish record.
-    // Use the passed-in boatList so we always have a valid boat->fleet mapping.
+    // Build a results lookup by boat_id for fast access
+    const resultByBoat = {};
+    res.forEach(r => { resultByBoat[r.boat_id] = r; });
+
+    // Restore fleet start times. Primary source: finish.start_time stored in DB.
+    // Fallback: derive from finish_time - elapsed_seconds for old records that
+    // were scored before per-fleet start times were saved to Finish records.
     const restoredFleetStarts = {};
     fins.forEach(f => {
+      const boat = currentBoats.find(b => b.id === f.boat_id);
+      const fleetName = boat?.fleet || "NFS";
+      if (restoredFleetStarts[fleetName]) return; // already found for this fleet
+
       if (f.start_time) {
-        const boat = currentBoats.find(b => b.id === f.boat_id);
-        const fleetName = boat?.fleet || "NFS";
-        if (!restoredFleetStarts[fleetName]) {
-          restoredFleetStarts[fleetName] = f.start_time;
+        // New records: start_time saved directly on Finish
+        restoredFleetStarts[fleetName] = f.start_time;
+      } else if (f.elapsed_seconds != null && f.finish_time) {
+        // Old records: derive start = finish_time - elapsed_seconds
+        const finishSecs = parseTimeOfDay(f.finish_time);
+        if (finishSecs !== null) {
+          const startSecs = Math.round(finishSecs - f.elapsed_seconds);
+          if (startSecs >= 0) {
+            restoredFleetStarts[fleetName] = secondsToTimeOfDay(startSecs);
+          }
         }
       }
     });
     setFleetStartTimes(restoredFleetStarts);
 
-    // Restore finish times from the results (which now derive finish_time from
-    // start_time + elapsed in scoring.py, so they're always consistent)
+    // Restore finish times for the entry inputs.
+    // Use the scored result's finish_time (derived from start + elapsed in scoring.py)
+    // when available — this is always correct and consistent regardless of what's in DB.
+    // Fall back to deriving it ourselves from fleet start + elapsed for old records.
     const map = {};
     fins.forEach(f => {
-      // Find the scored result for this boat to get the derived finish_time
-      const scored = res.find(r => r.boat_id === f.boat_id);
-      map[f.boat_id] = {
-        finishTime: scored?.finish_time || f.finish_time || "",
-        status: f.status,
-      };
+      const boat = currentBoats.find(b => b.id === f.boat_id);
+      const fleetName = boat?.fleet || "NFS";
+      const scored = resultByBoat[f.boat_id];
+
+      let finishTime = "";
+      if (scored?.finish_time) {
+        // Scoring.py derived it correctly from start_time + elapsed
+        finishTime = scored.finish_time;
+      } else if (f.elapsed_seconds != null) {
+        // Derive from the fleet start we just restored
+        const startStr = restoredFleetStarts[fleetName];
+        const startSecs = parseTimeOfDay(startStr);
+        if (startSecs !== null) {
+          finishTime = secondsToTimeOfDay(Math.round(startSecs + f.elapsed_seconds));
+        }
+      }
+
+      map[f.boat_id] = { finishTime, status: f.status };
     });
     setEntries(map);
     setDirtyEntries(new Set());
@@ -527,6 +556,8 @@ export default function RaceEntry({ seriesId, seriesName }) {
                 <th>Start Time</th>
                 <th>Status</th>
                 <th>Finish Time (HH:MM:SS)</th>
+                <th>Elapsed</th>
+                <th>Corrected</th>
                 <th>Pos</th>
               </tr>
             </thead>
@@ -535,7 +566,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
                 const entry = entries[boat.id] || { finishTime: "", status: "FIN" };
                 const result = resultMap[boat.id];
                 const isFin = entry.status === "FIN";
-                const boatStart = showPursuitSheet ? (pursuitMap[boat.id] || "—") : "—";
+                // After scoring, prefer the scored start_time; before scoring show pursuit sheet value
+                const scoredStart = result?.start_time || null;
+                const pursuitStart = pursuitMap[boat.id] || null;
+                const displayStart = scoredStart || (showPursuitSheet ? pursuitStart : null);
+                const elapsedDisplay = result?.elapsed_display || null;
+                const correctedDisplay = result?.corrected_display || null;
                 return (
                   <tr key={boat.id} className={result ? "has-result" : ""}>
                     <td><span className="sail-num">{boat.sail_number}</span></td>
@@ -559,8 +595,8 @@ export default function RaceEntry({ seriesId, seriesName }) {
                       </div>
                     </td>
                     <td className="num-col">{boat.phrf_rating}</td>
-                    <td className="num-col mono" style={{ color: showPursuitSheet && pursuitMap[boat.id] ? "#FF6B35" : "#a0aec0", fontWeight: 600 }}>
-                      {boatStart}
+                    <td className="num-col mono" style={{ color: displayStart ? "#FF6B35" : "#a0aec0", fontWeight: 600 }}>
+                      {displayStart || "—"}
                     </td>
                     <td>
                       <select
@@ -585,6 +621,8 @@ export default function RaceEntry({ seriesId, seriesName }) {
                         <span className="na-text">—</span>
                       )}
                     </td>
+                    <td className="num-col mono">{elapsedDisplay || "—"}</td>
+                    <td className="num-col mono">{correctedDisplay || "—"}</td>
                     <td className="num-col">
                       {result?.position != null ? (
                         <span className="pos-badge">
@@ -610,6 +648,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
             <th>Boat / Skipper</th>
             <th>PHRF</th>
             <th>Status</th>
+            <th>Start Time</th>
             <th>Finish Time (HH:MM:SS)</th>
             <th>Elapsed</th>
             <th>Corrected</th>
@@ -621,13 +660,18 @@ export default function RaceEntry({ seriesId, seriesName }) {
             const entry = entries[boat.id] || { finishTime: "", status: "FIN" };
             const result = resultMap[boat.id];
             const isFin = entry.status === "FIN";
-            // FIX 6: use only the fleet start time from state — no fallback to selectedRace.start_time
-            const startTime = fleetStartTimes[fleetName] || null;
-            const startSecs = parseTimeOfDay(startTime);
+
+            // After scoring, prefer values from the scored result (authoritative).
+            // Before scoring, compute elapsed live from the fleet start time input.
+            const displayStartTime = result?.start_time || fleetStartTimes[fleetName] || null;
+            const startSecs = parseTimeOfDay(displayStartTime);
             const finishSecs = parseTimeOfDay(entry.finishTime);
-            const elapsed = isFin && startSecs != null && finishSecs != null && finishSecs > startSecs
+            const liveElapsed = isFin && startSecs != null && finishSecs != null && finishSecs > startSecs
               ? finishSecs - startSecs
               : null;
+            const elapsedDisplay = result?.elapsed_display || (liveElapsed != null ? formatElapsed(liveElapsed) : null);
+            const correctedDisplay = result?.corrected_display || null;
+
             return (
               <tr key={boat.id} className={result ? "has-result" : ""}>
                 <td><span className="sail-num">{boat.sail_number}</span></td>
@@ -661,6 +705,9 @@ export default function RaceEntry({ seriesId, seriesName }) {
                     {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
+                <td className="num-col mono">
+                  {displayStartTime || "—"}
+                </td>
                 <td>
                   {isFin ? (
                     <input
@@ -676,19 +723,19 @@ export default function RaceEntry({ seriesId, seriesName }) {
                   )}
                 </td>
                 <td className="num-col mono">
-                  {elapsed != null ? formatElapsed(elapsed) : "—"}
+                  {elapsedDisplay || "—"}
                 </td>
                 <td className="num-col mono">
-                  {result?.corrected_display || "—"}
+                  {correctedDisplay || "—"}
                 </td>
                 <td className="num-col">
                   {result?.position != null ? (
                     <span className="pos-badge">
                       {result.position === 1 ? "🥇" : result.position === 2 ? "🥈" : result.position === 3 ? "🥉" : `${result.position}th`}
                     </span>
-                  ) : result?.status !== "FIN" ? (
-                    <span className={`status-pill status-${STATUS_COLORS[result?.status] || "gray"}`}>
-                      {result?.status}
+                  ) : result?.status && result.status !== "FIN" ? (
+                    <span className={`status-pill status-${STATUS_COLORS[result.status] || "gray"}`}>
+                      {result.status}
                     </span>
                   ) : "—"}
                 </td>
