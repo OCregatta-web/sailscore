@@ -64,12 +64,13 @@ class BoatOut(BaseModel):
     class Config:
         from_attributes = True
 
+# start_time removed — fleet start times are stored per Finish record, not on the Race
 class RaceCreate(BaseModel):
     race_number: int
     name: Optional[str] = None
     race_date: Optional[str] = None
-    start_time: Optional[str] = None
 
+# start_time removed from RaceOut — not used for scoring or display
 class RaceOut(BaseModel):
     id: int
     race_number: int
@@ -78,11 +79,11 @@ class RaceOut(BaseModel):
     series_id: int
     class Config:
         from_attributes = True
-    start_time: Optional[str] = None
 
 class FinishCreate(BaseModel):
     boat_id: int
     elapsed_seconds: Optional[float] = None
+    start_time: Optional[str] = None
     finish_time: Optional[str] = None
     status: str = "FIN"
 
@@ -91,6 +92,7 @@ class FinishOut(BaseModel):
     race_id: int
     boat_id: int
     elapsed_seconds: Optional[float]
+    start_time: Optional[str] = None
     finish_time: Optional[str] = None
     corrected_seconds: Optional[float]
     status: str
@@ -107,6 +109,7 @@ class RaceResult(BaseModel):
     fleet: Optional[str] = None
     club: Optional[str] = None
     finish_time: Optional[str] = None
+    start_time: Optional[str] = None
     elapsed_seconds: Optional[float]
     corrected_seconds: Optional[float]
     elapsed_display: Optional[str]
@@ -135,6 +138,7 @@ class SeriesStandings(BaseModel):
     throwouts: int
     rows: List[StandingsRow]
     fleet_standings: Dict[str, List[StandingsRow]]
+
 class RegistrationCreate(BaseModel):
     boat_name: str
     sail_number: str
