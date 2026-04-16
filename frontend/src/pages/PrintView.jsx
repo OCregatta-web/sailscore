@@ -136,6 +136,11 @@ export default function PrintView({ seriesId, seriesName }) {
             );
             const raceResults = (allResults[race.id] || []).filter(r => fleetBoatIds.has(r.boat_id));
             if (raceResults.length === 0) return null;
+
+            // Derive the fleet start time from the first finisher's start_time in results.
+            // start_time is now stored per-Finish record (per fleet), not on the Race.
+            const fleetStartTime = raceResults.find(r => r.start_time)?.start_time || null;
+
             return (
               <div key={`${race.id}-${fleetName}`} className="print-page">
                 <div className="print-header">
@@ -145,7 +150,7 @@ export default function PrintView({ seriesId, seriesName }) {
                   </h2>
                   <div className="print-meta">
                     {race.race_date && `${race.race_date} · `}
-                    {race.start_time && `Start: ${race.start_time} · `}
+                    {fleetStartTime && `Start: ${fleetStartTime} · `}
                     Printed {today}
                   </div>
                 </div>
@@ -158,7 +163,6 @@ export default function PrintView({ seriesId, seriesName }) {
                       <th className="col-boat">Boat Name</th>
                       <th className="col-skipper">Skipper</th>
                       <th className="col-rating">PHRF</th>
-                      <th className="col-time">Start Time</th>
                       <th className="col-time">Finish Time</th>
                       <th className="col-time">Elapsed</th>
                       <th className="col-time">Corrected</th>
@@ -175,7 +179,6 @@ export default function PrintView({ seriesId, seriesName }) {
                         <td className="col-boat">{r.boat_name}</td>
                         <td className="col-skipper">{r.skipper}</td>
                         <td className="col-rating">{r.phrf_rating}</td>
-                        <td className="col-time">{race.start_time || "—"}</td>
                         <td className="col-time">{r.finish_time || "—"}</td>
                         <td className="col-time">{r.elapsed_display || "—"}</td>
                         <td className="col-time">{r.corrected_display || "—"}</td>
