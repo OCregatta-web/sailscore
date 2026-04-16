@@ -75,7 +75,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
           user.token
         );
       }
-      await loadFinishesAndResults();
+      await loadFinishesAndResults(boats);
       setSubmitMsg(`${fleetName} fleet scored ✓`);
       setTimeout(() => setSubmitMsg(""), 3000);
     } catch (err) {
@@ -91,19 +91,36 @@ export default function RaceEntry({ seriesId, seriesName }) {
       if (r.length > 0 && !selectedRace) setSelectedRace(r[r.length - 1]);
     }).finally(() => setLoading(false));
 
+  // Returns the fetched boats so callers can pass them directly to loadFinishesAndResults,
+  // avoiding the race condition where boats state isn't set yet when finishes load.
   const loadBoats = () =>
-    api.get(`/series/${seriesId}/boats`, user.token).then(setBoats);
+    api.get(`/series/${seriesId}/boats`, user.token).then(fetchedBoats => {
+      setBoats(fetchedBoats);
+      return fetchedBoats;
+    });
 
-  useEffect(() => { loadRaces(); loadBoats(); }, [seriesId]);
+  useEffect(() => {
+    // Load boats first, then trigger finishes/results once we have the boat list
+    loadRaces();
+    loadBoats().then(fetchedBoats => {
+      // selectedRace isn't set yet on mount — the selectedRace useEffect handles initial load
+    });
+  }, [seriesId]);
 
   useEffect(() => {
     if (!selectedRace) return;
-    loadFinishesAndResults();
+    // Pass current boats state; if still empty, loadBoats again to ensure we have them
+    if (boats.length > 0) {
+      loadFinishesAndResults(boats);
+    } else {
+      loadBoats().then(fetchedBoats => loadFinishesAndResults(fetchedBoats));
+    }
   }, [selectedRace]);
 
-  // FIX 2: restore fleet start times and finish times from saved Finish records
-  // instead of reconstructing finish times from the (now-removed) race-level start_time
-  const loadFinishesAndResults = async () => {
+  // Accept boatList as a parameter to avoid closing over stale boats state.
+  // This prevents the race condition where boats haven't loaded yet when finishes arrive.
+  const loadFinishesAndResults = async (boatList) => {
+    const currentBoats = boatList || boats;
     const [fins, res] = await Promise.all([
       api.get(`/races/${selectedRace.id}/finishes`, user.token),
       api.get(`/races/${selectedRace.id}/results`, user.token),
@@ -111,11 +128,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setFinishes(fins);
     setResults(res);
 
-    // Restore fleet start times from the start_time stored on each Finish record
+    // Restore fleet start times from the start_time stored on each Finish record.
+    // Use the passed-in boatList so we always have a valid boat->fleet mapping.
     const restoredFleetStarts = {};
     fins.forEach(f => {
       if (f.start_time) {
-        const boat = boats.find(b => b.id === f.boat_id);
+        const boat = currentBoats.find(b => b.id === f.boat_id);
         const fleetName = boat?.fleet || "NFS";
         if (!restoredFleetStarts[fleetName]) {
           restoredFleetStarts[fleetName] = f.start_time;
@@ -124,11 +142,14 @@ export default function RaceEntry({ seriesId, seriesName }) {
     });
     setFleetStartTimes(restoredFleetStarts);
 
-    // Use the stored finish_time directly from the Finish record
+    // Restore finish times from the results (which now derive finish_time from
+    // start_time + elapsed in scoring.py, so they're always consistent)
     const map = {};
     fins.forEach(f => {
+      // Find the scored result for this boat to get the derived finish_time
+      const scored = res.find(r => r.boat_id === f.boat_id);
       map[f.boat_id] = {
-        finishTime: f.finish_time || "",
+        finishTime: scored?.finish_time || f.finish_time || "",
         status: f.status,
       };
     });
@@ -275,7 +296,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
     }
     setEntries({});
     setFleetStartTimes({});
-    await loadFinishesAndResults();
+    await loadFinishesAndResults(boats);
     setSubmitMsg("All results cleared ✓");
     setTimeout(() => setSubmitMsg(""), 2500);
   };
