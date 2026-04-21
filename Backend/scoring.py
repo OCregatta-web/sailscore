@@ -57,6 +57,16 @@ def compute_race_results(finishes, boats, race=None, fleet_size=None):
 
         # Use the stored start_time from the Finish record (set per-fleet at scoring time)
         start_time_str = getattr(finish, 'start_time', None)
+        raw_finish_time = getattr(finish, 'finish_time', None)
+
+        # For old records where start_time was never saved, derive it from
+        # finish_time - elapsed_seconds as a fallback.
+        if not start_time_str and finish.elapsed_seconds is not None and raw_finish_time:
+            finish_secs = parse_time_str(raw_finish_time)
+            if finish_secs is not None:
+                derived_start = finish_secs - int(round(finish.elapsed_seconds))
+                if derived_start >= 0:
+                    start_time_str = total_seconds_to_hhmmss(derived_start)
 
         # Always derive finish_time from start_time + elapsed_seconds for consistency.
         # This corrects any stale finish_time values that may have been stored under
