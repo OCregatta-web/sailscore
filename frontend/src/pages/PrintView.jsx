@@ -131,6 +131,11 @@ export default function PrintView({ seriesId, seriesName }) {
         {/* RACE RESULTS */}
         {(printMode === "race" || printMode === "both") && races.map((race, ri) => (
           fleets.map((fleetName, fi) => {
+            const isDistanceRace = (race.name || "").toLowerCase().includes("distance");
+            const isDistanceFleet = fleetName.toLowerCase() === "distance";
+            // Distance races only print for the distance fleet, and vice versa
+            if (isDistanceRace !== isDistanceFleet) return null;
+
             const fleetBoatIds = new Set(
               (standings?.fleet_standings[fleetName] || []).map(r => r.boat_id)
             );
