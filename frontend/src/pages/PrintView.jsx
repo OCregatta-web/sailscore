@@ -65,13 +65,21 @@ export default function PrintView({ seriesId, seriesName }) {
       {/* Printable Content */}
       <div ref={printRef} className="print-content">
         {/* STANDINGS */}
-        {(printMode === "standings" || printMode === "both") && fleets.map((fleetName, fi) => (
+        {(printMode === "standings" || printMode === "both") && fleets.map((fleetName, fi) => {
+          const isDistanceFleet = fleetName.toLowerCase() === "distance";
+          // Show only races relevant to this fleet
+          const fleetRaces = races.filter(r =>
+            isDistanceFleet
+              ? (r.name || "").toLowerCase().includes("distance")
+              : !(r.name || "").toLowerCase().includes("distance")
+          );
+          return (
           <div key={fleetName} className="print-page">
             <div className="print-header">
               <h1 className="print-series-title">{seriesName}</h1>
               <h2 className="print-section-title">{fleetName} Fleet — Series Standings</h2>
               <div className="print-meta">
-                {standings.races_sailed} race{standings.races_sailed !== 1 ? "s" : ""} sailed
+                {fleetRaces.length} race{fleetRaces.length !== 1 ? "s" : ""} sailed
                 {standings.throwouts > 0 && ` · ${standings.throwouts} throwout${standings.throwouts > 1 ? "s" : ""} applied`}
                 {" · "}Printed {today}
               </div>
@@ -85,8 +93,8 @@ export default function PrintView({ seriesId, seriesName }) {
                   <th className="col-boat">Boat Name</th>
                   <th className="col-skipper">Skipper</th>
                   <th className="col-rating">PHRF</th>
-                  {races.map(r => (
-                    <th key={r.id} className="col-race">R{r.race_number}</th>
+                  {fleetRaces.map(r => (
+                    <th key={r.id} className="col-race">{isDistanceFleet ? `D${r.race_number}` : `R${r.race_number}`}</th>
                   ))}
                   <th className="col-pts">Total</th>
                   {standings.throwouts > 0 && <th className="col-pts">Net</th>}
@@ -102,7 +110,7 @@ export default function PrintView({ seriesId, seriesName }) {
                     <td className="col-boat">{row.boat_name}</td>
                     <td className="col-skipper">{row.skipper}</td>
                     <td className="col-rating">{row.phrf_rating}</td>
-                    {races.map(r => {
+                    {fleetRaces.map(r => {
                       const rp = row.race_points[r.id];
                       return (
                         <td key={r.id} className={`col-race ${rp?.thrown_out ? "thrown-out-print" : ""}`}>
@@ -126,7 +134,8 @@ export default function PrintView({ seriesId, seriesName }) {
               <span>Page {fi + 1} of {fleets.length}</span>
             </div>
           </div>
-        ))}
+          );
+        })}
 
         {/* RACE RESULTS */}
         {(printMode === "race" || printMode === "both") && races.map((race, ri) => (
