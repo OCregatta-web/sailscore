@@ -134,10 +134,18 @@ def compute_series_standings(series, races, boats, all_finishes):
     for fleet_name, fleet_boats in fleets.items():
         fleet_size = len(fleet_boats)
         throwouts = series.throwouts
+        is_distance_fleet = fleet_name.lower() == "distance"
+
+        # Only score races relevant to this fleet:
+        # distance races count for the distance fleet, non-distance races for all other fleets
+        fleet_races = [
+            r for r in races
+            if is_distance_fleet == ("distance" in (r.name or "").lower())
+        ]
 
         # Compute per-race results for this fleet only
         race_results_map = {}
-        for race in races:
+        for race in fleet_races:
             finishes = all_finishes.get(race.id, [])
             # Filter to only this fleet's finishes
             fleet_boat_ids = {b.id for b in fleet_boats}
@@ -150,7 +158,7 @@ def compute_series_standings(series, races, boats, all_finishes):
             race_points = {}
             all_pts = []
 
-            for race in races:
+            for race in fleet_races:
                 result = race_results_map.get(race.id, {}).get(boat.id)
                 if result:
                     pts = result.points
