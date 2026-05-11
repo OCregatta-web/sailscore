@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../App";
 import { api } from "../api";
 import Modal from "../components/Modal";
+import * as XLSX from "xlsx";
 
 export default function FleetManager({ seriesId, seriesName }) {
   const { user, navigate } = useAuth();
@@ -18,6 +19,14 @@ export default function FleetManager({ seriesId, seriesName }) {
   const [editingFleet, setEditingFleet] = useState(null);
   const [editFleetName, setEditFleetName] = useState("");
   const [fleetError, setFleetError] = useState("");
+
+  // Import state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importRows, setImportRows] = useState([]);
+  const [importErrors, setImportErrors] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const fileInputRef = useRef();
 
   const loadAll = () => Promise.all([
     api.get(`/series/${seriesId}/boats`, user.token).then(setBoats),
@@ -110,6 +119,104 @@ export default function FleetManager({ seriesId, seriesName }) {
     loadAll();
   };
 
+  // ── XLSX Import ─────────────────────────────────────────────────────────────
+
+  // Maps spreadsheet column names to our field names.
+  // Handles common variations case-insensitively.
+  const mapRow = (raw) => {
+    const r = {};
+    Object.keys(raw).forEach(k => { r[k.trim().toLowerCase()] = raw[k]; });
+    return {
+      boat_name:   String(r["boat"] ?? r["boat_name"] ?? r["boatname"] ?? "").trim(),
+      sail_number: String(r["sailno"] ?? r["sail_number"] ?? r["sail no"] ?? r["sailnumber"] ?? "").trim(),
+      skipper:     String(r["helmname"] ?? r["skipper"] ?? r["helm"] ?? r["skipper_name"] ?? "").trim(),
+      phrf_rating: Number(r["rating"] ?? r["phrf"] ?? r["phrf_rating"] ?? 0),
+      fleet:       String(r["fleet"] ?? "").trim(),
+      club:        String(r["club"] ?? "").trim(),
+      boat_class:  String(r["class"] ?? r["boat_class"] ?? r["boatclass"] ?? "").trim(),
+    };
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const rows = raw.map(mapRow);
+
+        // Validate rows
+        const errors = [];
+        rows.forEach((row, i) => {
+          if (!row.boat_name) errors.push(`Row ${i + 2}: Missing boat name`);
+          if (!row.sail_number) errors.push(`Row ${i + 2}: Missing sail number`);
+          if (!row.skipper) errors.push(`Row ${i + 2}: Missing skipper/helm name`);
+          if (isNaN(row.phrf_rating)) errors.push(`Row ${i + 2}: Invalid PHRF rating`);
+        });
+
+        setImportRows(rows);
+        setImportErrors(errors);
+        setImportResult(null);
+      } catch (err) {
+        setImportErrors([`Could not read file: ${err.message}`]);
+        setImportRows([]);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const updateImportRow = (i, field, value) => {
+    setImportRows(prev => {
+      const updated = [...prev];
+      updated[i] = { ...updated[i], [field]: value };
+      return updated;
+    });
+  };
+
+  const removeImportRow = (i) => {
+    setImportRows(prev => prev.filter((_, idx) => idx !== i));
+  };
+
+  const runImport = async () => {
+    if (importErrors.length > 0) return;
+    setImporting(true);
+    let added = 0, skipped = 0, failed = 0;
+    const existingSailNums = new Set(boats.map(b => b.sail_number));
+
+    for (const row of importRows) {
+      try {
+        if (existingSailNums.has(row.sail_number)) {
+          skipped++;
+          continue;
+        }
+        await api.post(`/series/${seriesId}/boats`, {
+          ...row,
+          phrf_rating: Number(row.phrf_rating),
+        }, user.token);
+        added++;
+      } catch {
+        failed++;
+      }
+    }
+
+    setImportResult({ added, skipped, failed });
+    setImporting(false);
+    if (added > 0) loadAll();
+  };
+
+  const closeImport = () => {
+    setShowImportModal(false);
+    setImportRows([]);
+    setImportErrors([]);
+    setImportResult(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // ── Print Entry List ────────────────────────────────────────────────────────
+
   const printEntryList = () => {
     const printWindow = window.open('', '_blank');
     const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -164,7 +271,6 @@ export default function FleetManager({ seriesId, seriesName }) {
     );
   });
 
-  // Show fleets in defined order, then any unassigned
   const orderedFleetNames = [
     ...fleetNames.filter(f => fleetGroups[f]),
     ...Object.keys(fleetGroups).filter(f => !fleetNames.includes(f))
@@ -182,6 +288,7 @@ export default function FleetManager({ seriesId, seriesName }) {
           <button className="btn-secondary" onClick={printEntryList}>🖨 Print Entry List</button>
           <button className="btn-secondary" onClick={() => navigate("race", { seriesId, seriesName })}>Race Entry →</button>
           {boats.length > 0 && <button className="btn-ghost-sm danger" onClick={clearAllBoats}>🗑 Clear All Boats</button>}
+          <button className="btn-secondary" onClick={() => setShowImportModal(true)}>📥 Import from Excel</button>
           <button className="btn-primary" onClick={() => openNew()}>+ Add Boat</button>
         </div>
       </div>
@@ -239,7 +346,10 @@ export default function FleetManager({ seriesId, seriesName }) {
               <div className="empty-icon">🚢</div>
               <h3>No boats registered</h3>
               <p>Add boats to this series before scoring races.</p>
-              <button className="btn-primary" onClick={() => openNew()}>Add First Boat</button>
+              <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1rem" }}>
+                <button className="btn-secondary" onClick={() => setShowImportModal(true)}>📥 Import from Excel</button>
+                <button className="btn-primary" onClick={() => openNew()}>Add First Boat</button>
+              </div>
             </div>
           ) : (
             <>
@@ -342,6 +452,7 @@ export default function FleetManager({ seriesId, seriesName }) {
         </>
       )}
 
+      {/* ── Add/Edit Boat Modal ── */}
       {showModal && (
         <Modal title={editBoat ? "Edit Boat" : "Add Boat"} onClose={() => setShowModal(false)}>
           <form onSubmit={save}>
@@ -405,6 +516,145 @@ export default function FleetManager({ seriesId, seriesName }) {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* ── Import Modal ── */}
+      {showImportModal && (
+        <Modal title="Import Boats from Excel" onClose={closeImport}>
+          <div style={{ minWidth: "min(800px, 90vw)" }}>
+
+            {/* Step 1: File picker */}
+            {importRows.length === 0 && !importResult && (
+              <div>
+                <p style={{ marginBottom: "1rem", color: "#4a5568", fontSize: "0.9rem" }}>
+                  Select an <strong>.xlsx</strong> file. Expected columns:
+                  <span style={{ fontFamily: "monospace", background: "#f7fafc", padding: "2px 6px", borderRadius: "4px", marginLeft: "6px" }}>
+                    Boat, SailNo, HelmName, Rating, Fleet, Club, Class
+                  </span>
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  style={{ display: "block", marginBottom: "1rem" }}
+                />
+                {importErrors.length > 0 && (
+                  <div className="form-error">
+                    {importErrors.map((e, i) => <div key={i}>{e}</div>)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Preview & edit */}
+            {importRows.length > 0 && !importResult && (
+              <div>
+                <p style={{ marginBottom: "0.75rem", color: "#4a5568", fontSize: "0.9rem" }}>
+                  <strong>{importRows.length}</strong> boats found. Review and edit before importing.
+                  Boats with a sail number already in this series will be skipped.
+                </p>
+                {importErrors.length > 0 && (
+                  <div className="form-error" style={{ marginBottom: "0.75rem" }}>
+                    {importErrors.map((e, i) => <div key={i}>{e}</div>)}
+                  </div>
+                )}
+                <div style={{ maxHeight: "400px", overflowY: "auto", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                    <thead>
+                      <tr style={{ background: "#1a365d", color: "white", position: "sticky", top: 0 }}>
+                        <th style={{ padding: "8px", textAlign: "left" }}>Sail #</th>
+                        <th style={{ padding: "8px", textAlign: "left" }}>Boat Name</th>
+                        <th style={{ padding: "8px", textAlign: "left" }}>Skipper</th>
+                        <th style={{ padding: "8px", textAlign: "left" }}>Fleet</th>
+                        <th style={{ padding: "8px", textAlign: "right" }}>PHRF</th>
+                        <th style={{ padding: "8px", textAlign: "left" }}>Club</th>
+                        <th style={{ padding: "8px", textAlign: "left" }}>Class</th>
+                        <th style={{ padding: "8px" }}></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {importRows.map((row, i) => (
+                        <tr key={i} style={{ background: i % 2 === 0 ? "#f7fafc" : "white", borderBottom: "1px solid #e2e8f0" }}>
+                          {["sail_number", "boat_name", "skipper", "fleet"].map(field => (
+                            <td key={field} style={{ padding: "4px 6px" }}>
+                              <input
+                                style={{ width: "100%", border: "1px solid #cbd5e0", borderRadius: "4px", padding: "3px 5px", fontSize: "0.82rem" }}
+                                value={row[field]}
+                                onChange={e => updateImportRow(i, field, e.target.value)}
+                              />
+                            </td>
+                          ))}
+                          <td style={{ padding: "4px 6px" }}>
+                            <input
+                              style={{ width: "60px", border: "1px solid #cbd5e0", borderRadius: "4px", padding: "3px 5px", fontSize: "0.82rem", textAlign: "right" }}
+                              type="number"
+                              value={row.phrf_rating}
+                              onChange={e => updateImportRow(i, "phrf_rating", e.target.value)}
+                            />
+                          </td>
+                          {["club", "boat_class"].map(field => (
+                            <td key={field} style={{ padding: "4px 6px" }}>
+                              <input
+                                style={{ width: "100%", border: "1px solid #cbd5e0", borderRadius: "4px", padding: "3px 5px", fontSize: "0.82rem" }}
+                                value={row[field]}
+                                onChange={e => updateImportRow(i, field, e.target.value)}
+                              />
+                            </td>
+                          ))}
+                          <td style={{ padding: "4px 6px", textAlign: "center" }}>
+                            <button
+                              onClick={() => removeImportRow(i)}
+                              style={{ color: "#e53e3e", background: "none", border: "none", cursor: "pointer", fontSize: "1rem" }}
+                              title="Remove this row"
+                            >✕</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="modal-footer" style={{ marginTop: "1rem" }}>
+                  <button className="btn-ghost" onClick={closeImport}>Cancel</button>
+                  <button
+                    className="btn-primary"
+                    onClick={runImport}
+                    disabled={importing || importErrors.length > 0}
+                  >
+                    {importing ? "Importing..." : `Import ${importRows.length} Boats`}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Result */}
+            {importResult && (
+              <div style={{ textAlign: "center", padding: "2rem" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>
+                  {importResult.failed === 0 ? "✅" : "⚠️"}
+                </div>
+                <h3 style={{ marginBottom: "1rem" }}>Import Complete</h3>
+                <div style={{ display: "flex", gap: "1.5rem", justifyContent: "center", marginBottom: "1.5rem" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "2rem", fontWeight: 700, color: "#38a169" }}>{importResult.added}</div>
+                    <div style={{ fontSize: "0.85rem", color: "#718096" }}>Added</div>
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: "2rem", fontWeight: 700, color: "#d69e2e" }}>{importResult.skipped}</div>
+                    <div style={{ fontSize: "0.85rem", color: "#718096" }}>Skipped (already exist)</div>
+                  </div>
+                  {importResult.failed > 0 && (
+                    <div style={{ textAlign: "center" }}>
+                      <div style={{ fontSize: "2rem", fontWeight: 700, color: "#e53e3e" }}>{importResult.failed}</div>
+                      <div style={{ fontSize: "0.85rem", color: "#718096" }}>Failed</div>
+                    </div>
+                  )}
+                </div>
+                <button className="btn-primary" onClick={closeImport}>Done</button>
+              </div>
+            )}
+          </div>
         </Modal>
       )}
     </div>
