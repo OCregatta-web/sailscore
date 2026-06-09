@@ -20,7 +20,7 @@ const NOTICES = [
   },
   {
     type: "announcement",
-    date: "April 1, 2026",
+    date: "June 9, 2026",
     title: "Introducing SailScore — Our New Registration & Scoring System",
     message: "The OC Regatta is very excited to be introducing SailScore, a newly developed registration and scoring system built specifically for the OC Regatta. We recognized the need to provide easier, more accurate, and faster scoring results. Our goal was to come up with something that could provide virtually real-time scoring for both around the cans and distance racing. We believe we have done it.\n\nFor around the cans, SailScore can record finish time, calculate elapsed time, calculate corrected time and post fleet results immediately after a race has been completed. These results will be viewable online immediately.\n\nFor distance racing (pursuit style), SailScore will calculate starting times based on PHRF rating and course distance using the ToD calculator. Competitors will download a virtual finish line using GPS tracking on the skipper's cellphone and SailScore will monitor the boat's position and be notified when it crosses the finish line. SailScore will automatically update the results in real-time online.\n\nMore details will be coming in the next few weeks with links and more information on exactly how it all works.",
     docUrl: null,
