@@ -88,6 +88,9 @@ export default function Demo() {
           <button style={s.enterBtn} onClick={enterDemo}>
             Enter Demo →
           </button>
+          <a href="/walkthrough" style={{ ...s.enterBtn, background: "white", color: "#1a365d", border: "2px solid #1a365d", marginTop: "0.75rem", display: "block", textAlign: "center", textDecoration: "none", borderRadius: "10px", padding: "0.9rem" }}>
+            📖 View guided walkthrough first
+          </a>
         </div>
 
         {/* What's included */}
