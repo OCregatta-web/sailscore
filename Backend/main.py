@@ -517,7 +517,7 @@ def seed_demo(db: Session):
     db.commit()
     return series.id
 
-@app.post("/demo/reset")
+@app.api_route("/demo/reset", methods=["GET", "POST"])
 def reset_demo(key: str, db: Session = Depends(get_db)):
     if key != DEMO_RESET_KEY:
         raise HTTPException(status_code=403, detail="Invalid reset key")
