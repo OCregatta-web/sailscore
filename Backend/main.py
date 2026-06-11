@@ -190,14 +190,23 @@ def delete_finish(finish_id: int, db: Session = Depends(get_db), current_user=De
     crud.delete_finish(db, finish_id)
     return {"ok": True}
 
-@app.get("/races/{race_id}/results", response_model=List[schemas.RaceResult])
+@app.get("/races/{race_id}/results")
 def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     race = crud.get_race(db, race_id)
     if not race:
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    return scoring.compute_race_results(finishes, boats)
+    fleets = {}
+    for boat in boats:
+        fleet = boat.fleet or "NFS"
+        if fleet not in fleets:
+            fleets[fleet] = []
+        fleets[fleet].append(boat)
+    all_results = []
+    for fleet_boats in fleets.values():
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race))
+    return all_results
 
 @app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
 def series_standings(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -517,7 +526,7 @@ def seed_demo(db: Session):
     db.commit()
     return series.id
 
-@app.api_route("/demo/reset", methods=["GET", "POST"])
+@app.post("/demo/reset")
 def reset_demo(key: str, db: Session = Depends(get_db)):
     if key != DEMO_RESET_KEY:
         raise HTTPException(status_code=403, detail="Invalid reset key")
