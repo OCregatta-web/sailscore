@@ -5,6 +5,7 @@ import Results from "./pages/Results";
 import Regatta from "./pages/Regatta";
 import NOR from "./pages/NOR";
 import Noticeboard from "./pages/Noticeboard";
+import Demo from "./pages/Demo";
 import "./pages/Results.css";
 import Registrations from "./pages/Registrations";
 import PrintView from "./pages/PrintView";
@@ -58,6 +59,7 @@ export default function App() {
   if (window.location.pathname.startsWith("/regatta")) return <Regatta />;
   if (window.location.pathname.startsWith("/nor")) return <NOR />;
   if (window.location.pathname.startsWith("/noticeboard")) return <Noticeboard />;
+  if (window.location.pathname.startsWith("/demo")) return <Demo />;
 
   // Redirect ocregatta.com root to /regatta
   if (window.location.hostname === "ocregatta.com" || window.location.hostname === "www.ocregatta.com") {

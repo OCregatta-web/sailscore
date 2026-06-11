@@ -3,15 +3,33 @@ import threading
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import StreamingResponse, JSONResponse
+from fastapi.responses import StreamingResponse, JSONResponse, Response
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import timedelta
+from datetime import timedelta, datetime
 from database import get_db, engine
 import models, schemas, crud, scoring, auth
-import io, csv
+import io, csv, time
 
 app = FastAPI(title="SailScore API", version="1.0.0")
+
+def _demo_reset_scheduler():
+    """Resets demo data every 24 hours at midnight."""
+    while True:
+        now = datetime.now()
+        # Sleep until next midnight
+        next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        sleep_secs = (next_midnight - now).total_seconds()
+        time.sleep(sleep_secs)
+        try:
+            from database import SessionLocal
+            db = SessionLocal()
+            seed_demo(db)
+            db.close()
+        except Exception as e:
+            print(f"Demo reset failed: {e}")
+
+threading.Thread(target=_demo_reset_scheduler, daemon=True).start()
 
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
@@ -179,22 +197,7 @@ def race_results(race_id: int, db: Session = Depends(get_db), current_user=Depen
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    # FIX: score each fleet separately, passing only that fleet's finishes
-    # so start_time/finish_time from Finish records are correctly matched
-    fleets = {}
-    for boat in boats:
-        fleet = boat.fleet or "NFS"
-        if fleet not in fleets:
-            fleets[fleet] = []
-        fleets[fleet].append(boat)
-    # Build a lookup of finishes by boat_id for fast filtering
-    finish_by_boat = {f.boat_id: f for f in finishes}
-    all_results = []
-    for fleet_name, fleet_boats in fleets.items():
-        fleet_boat_ids = {b.id for b in fleet_boats}
-        fleet_finishes = [f for f in finishes if f.boat_id in fleet_boat_ids]
-        all_results.extend(scoring.compute_race_results(fleet_finishes, fleet_boats, race=race))
-    return all_results
+    return scoring.compute_race_results(finishes, boats)
 
 @app.get("/series/{series_id}/standings", response_model=schemas.SeriesStandings)
 def series_standings(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -242,7 +245,6 @@ def public_standings(series_id: int, db: Session = Depends(get_db)):
     standings = scoring.compute_series_standings(series, races, boats, all_finishes)
     return {
         "series": {"id": series.id, "name": series.name, "season": series.season, "throwouts": series.throwouts},
-        # FIX: removed start_time from race list — start times are per-fleet on Finish records
         "races": [{"id": r.id, "race_number": r.race_number, "name": r.name, "race_date": str(r.race_date) if r.race_date else None} for r in races],
         "standings": standings
     }
@@ -254,8 +256,7 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    # FIX: score each fleet separately, passing only that fleet's finishes
-    # so start_time/finish_time from Finish records are correctly matched per fleet
+    # Score each fleet separately so positions are per-fleet
     fleets = {}
     for boat in boats:
         fleet = boat.fleet or "NFS"
@@ -263,10 +264,8 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
             fleets[fleet] = []
         fleets[fleet].append(boat)
     all_results = []
-    for fleet_name, fleet_boats in fleets.items():
-        fleet_boat_ids = {b.id for b in fleet_boats}
-        fleet_finishes = [f for f in finishes if f.boat_id in fleet_boat_ids]
-        all_results.extend(scoring.compute_race_results(fleet_finishes, fleet_boats, race=race))
+    for fleet_boats in fleets.values():
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats))
     return all_results
 
 # ── Public Registration (no auth required) ────────────────────────────────────
@@ -336,7 +335,6 @@ Boat Class:  {reg.boat_class or 'N/A'}
             print(f"Registration email sent, status: {response.status}")
     except Exception as e:
         print(f"Failed to send registration email: {e}")
-
 @app.get("/backup")
 def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     import json
@@ -383,17 +381,162 @@ def list_registrations(series_id: int, db: Session = Depends(get_db),
                        current_user=Depends(auth.get_current_user)):
     return crud.get_registrations(db, series_id)
 
-@app.get("/series/{series_id}/export/registrations")
-def export_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
-    regs = crud.get_registrations(db, series_id)
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(["Boat Name", "Sail Number", "Class", "Skipper", "Fleet", "PHRF", "Club", "Email", "Phone"])
-    for r in regs:
-        writer.writerow([r.boat_name, r.sail_number, r.boat_class or "", r.skipper, r.fleet, r.phrf_rating, r.club or "", r.email or "", r.phone or ""])
-    output.seek(0)
-    return StreamingResponse(
-        io.BytesIO(output.getvalue().encode()),
-        media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=registrations_{series_id}.csv"}
+# ── Demo Reset ────────────────────────────────────────────────────────────────
+DEMO_SERIES_NAME = "Lake Breeze Open Regatta"
+DEMO_SERIES_SEASON = "2026"
+DEMO_RESET_KEY = os.environ.get("DEMO_RESET_KEY", "sailscore-demo-2026")
+
+DEMO_BOATS = [
+    {"sail_number": "74111", "boat_name": "Wind Dancer", "skipper": "Sarah Mitchell", "phrf_rating": 72,  "fleet": "FS",       "boat_class": "J35",          "club": "Lake Breeze SC"},
+    {"sail_number": "34201", "boat_name": "Blue Horizon", "skipper": "Tom Reeves",    "phrf_rating": 118, "fleet": "FS",       "boat_class": "C&C 38",       "club": "Royal Harbour YC"},
+    {"sail_number": "55432", "boat_name": "Pegasus",      "skipper": "Kim Andrews",   "phrf_rating": 132, "fleet": "FS",       "boat_class": "C&C 33",       "club": "Lake Breeze SC"},
+    {"sail_number": "22019", "boat_name": "Sea Whisper",  "skipper": "Dave Conroy",   "phrf_rating": 150, "fleet": "FS",       "boat_class": "CS 33",        "club": "Westport SC"},
+    {"sail_number": "3301",  "boat_name": "Midnight Run", "skipper": "Paul Hartley",  "phrf_rating": 162, "fleet": "NFS",      "boat_class": "C&C 30 MkII",  "club": "Royal Harbour YC"},
+    {"sail_number": "4821",  "boat_name": "Tempest",      "skipper": "Jane Fowler",   "phrf_rating": 178, "fleet": "NFS",      "boat_class": "CS 30",        "club": "Lake Breeze SC"},
+    {"sail_number": "9944",  "boat_name": "Osprey",       "skipper": "Rick Tanaka",   "phrf_rating": 191, "fleet": "NFS",      "boat_class": "C&C 29 MkII",  "club": "Westport SC"},
+    {"sail_number": "11203", "boat_name": "Silver Arrow",  "skipper": "Lena Park",    "phrf_rating": 219, "fleet": "NFS",      "boat_class": "Ranger 22",    "club": "Royal Harbour YC"},
+    {"sail_number": "15044", "boat_name": "Resolute",     "skipper": "Mark Evans",    "phrf_rating": 82,  "fleet": "Distance", "boat_class": "N/A 40",       "club": "Lake Breeze SC"},
+    {"sail_number": "52600", "boat_name": "Aurora",       "skipper": "Chris Bell",    "phrf_rating": 54,  "fleet": "Distance", "boat_class": "Beneteau 40.7","club": "Westport SC"},
+    {"sail_number": "4501",  "boat_name": "Endeavour",    "skipper": "Greg Santos",   "phrf_rating": 165, "fleet": "Distance", "boat_class": "CS 30",        "club": "Royal Harbour YC"},
+    {"sail_number": "CAN 88","boat_name": "Meridian",     "skipper": "Amy Zhao",      "phrf_rating": 0,   "fleet": "1-Design", "boat_class": "Etchells",     "club": "Lake Breeze SC"},
+    {"sail_number": "CAN 42","boat_name": "Phantom",      "skipper": "Bill Russo",    "phrf_rating": 0,   "fleet": "1-Design", "boat_class": "Etchells",     "club": "Westport SC"},
+]
+
+DEMO_RACES = [
+    {"race_number": 1, "name": "",          "race_date": "2026-08-15", "start_time": "11:00:00"},
+    {"race_number": 2, "name": "",          "race_date": "2026-08-15", "start_time": "13:00:00"},
+    {"race_number": 3, "name": "Distance Race", "race_date": "2026-08-15", "start_time": "10:00:00"},
+]
+
+# Finish times in seconds elapsed (None = DNS)
+DEMO_FINISHES = {
+    1: {
+        "Wind Dancer":  {"elapsed": 4210, "status": "FIN"},
+        "Blue Horizon": {"elapsed": 4890, "status": "FIN"},
+        "Pegasus":      {"elapsed": 5320, "status": "FIN"},
+        "Sea Whisper":  {"elapsed": 5890, "status": "FIN"},
+        "Midnight Run": {"elapsed": 5100, "status": "FIN"},
+        "Tempest":      {"elapsed": 5430, "status": "FIN"},
+        "Osprey":       {"elapsed": 5780, "status": "FIN"},
+        "Silver Arrow": {"elapsed": 6210, "status": "FIN"},
+        "Meridian":     {"elapsed": 4650, "status": "FIN"},
+        "Phantom":      {"elapsed": 4820, "status": "FIN"},
+    },
+    2: {
+        "Wind Dancer":  {"elapsed": 4050, "status": "FIN"},
+        "Blue Horizon": {"elapsed": 4720, "status": "FIN"},
+        "Pegasus":      {"elapsed": 5100, "status": "FIN"},
+        "Sea Whisper":  {"elapsed": 5600, "status": "FIN"},
+        "Midnight Run": {"elapsed": 4980, "status": "FIN"},
+        "Tempest":      {"elapsed": 5250, "status": "FIN"},
+        "Osprey":       {"elapsed": 5620, "status": "DNS"},
+        "Silver Arrow": {"elapsed": None, "status": "DNS"},
+        "Meridian":     {"elapsed": 4530, "status": "FIN"},
+        "Phantom":      {"elapsed": 4710, "status": "FIN"},
+    },
+    3: {
+        "Resolute": {"elapsed": 12600, "status": "FIN"},
+        "Aurora":   {"elapsed": 11400, "status": "FIN"},
+        "Endeavour":{"elapsed": 14100, "status": "FIN"},
+    },
+}
+
+DEMO_FLEETS = ["FS", "NFS", "Distance", "1-Design"]
+
+def seed_demo(db: Session):
+    from auth import get_password_hash
+    # Find or create demo user
+    demo_user = db.query(models.User).filter(models.User.email == "demo@sailscore.app").first()
+    if not demo_user:
+        demo_user = models.User(
+            email="demo@sailscore.app",
+            name="Demo Race Officer",
+            hashed_password=get_password_hash("demo1234"),
+        )
+        db.add(demo_user)
+        db.commit()
+        db.refresh(demo_user)
+
+    # Remove existing demo series
+    old = db.query(models.Series).filter(
+        models.Series.name == DEMO_SERIES_NAME,
+        models.Series.owner_id == demo_user.id
+    ).first()
+    if old:
+        db.delete(old)
+        db.commit()
+
+    # Create series
+    series = models.Series(
+        name=DEMO_SERIES_NAME,
+        season=DEMO_SERIES_SEASON,
+        throwouts=1,
+        owner_id=demo_user.id,
     )
+    db.add(series)
+    db.commit()
+    db.refresh(series)
+
+    # Create fleets
+    for i, fname in enumerate(DEMO_FLEETS):
+        db.add(models.SeriesFleet(series_id=series.id, name=fname, sort_order=i))
+    db.commit()
+
+    # Create boats
+    boat_map = {}
+    for b in DEMO_BOATS:
+        boat = models.Boat(series_id=series.id, **b)
+        db.add(boat)
+        db.commit()
+        db.refresh(boat)
+        boat_map[b["boat_name"]] = boat
+
+    # Create races and finishes
+    for rd in DEMO_RACES:
+        race = models.Race(series_id=series.id, **rd)
+        db.add(race)
+        db.commit()
+        db.refresh(race)
+
+        finishes = DEMO_FINISHES.get(rd["race_number"], {})
+        for boat_name, f in finishes.items():
+            boat = boat_map.get(boat_name)
+            if not boat:
+                continue
+            elapsed = f["elapsed"]
+            corrected = None
+            if f["status"] == "FIN" and elapsed:
+                corrected = elapsed * (566.431 / (401.431 + boat.phrf_rating)) if boat.phrf_rating > 0 else elapsed
+            db.add(models.Finish(
+                race_id=race.id,
+                boat_id=boat.id,
+                elapsed_seconds=elapsed,
+                status=f["status"],
+                corrected_seconds=corrected,
+            ))
+    db.commit()
+    return series.id
+
+@app.post("/demo/reset")
+def reset_demo(key: str, db: Session = Depends(get_db)):
+    if key != DEMO_RESET_KEY:
+        raise HTTPException(status_code=403, detail="Invalid reset key")
+    series_id = seed_demo(db)
+    return {"ok": True, "series_id": series_id, "message": "Demo reset successfully"}
+
+@app.get("/demo/info")
+def demo_info(db: Session = Depends(get_db)):
+    from auth import get_password_hash
+    demo_user = db.query(models.User).filter(models.User.email == "demo@sailscore.app").first()
+    if not demo_user:
+        return {"ready": False}
+    series = db.query(models.Series).filter(
+        models.Series.name == DEMO_SERIES_NAME,
+        models.Series.owner_id == demo_user.id
+    ).first()
+    return {
+        "ready": series is not None,
+        "series_id": series.id if series else None,
+        "login_email": "demo@sailscore.app",
+        "login_password": "demo1234",
+    }
