@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../App";
 import { api } from "../api";
-
 export default function Login() {
   const { login } = useAuth();
   const [mode, setMode] = useState("login");
@@ -11,8 +10,23 @@ export default function Login() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+
+  // Auto-login if demo credentials are stored in sessionStorage
+  useEffect(() => {
+    const demoMode = sessionStorage.getItem("demo_mode");
+    const demoEmail = sessionStorage.getItem("demo_email");
+    const demoPassword = sessionStorage.getItem("demo_password");
+    if (demoMode === "true" && demoEmail && demoPassword) {
+      sessionStorage.removeItem("demo_mode");
+      sessionStorage.removeItem("demo_email");
+      sessionStorage.removeItem("demo_password");
+      setLoading(true);
+      login(demoEmail, demoPassword)
+        .catch(() => setError("Demo login failed. Please try again."))
+        .finally(() => setLoading(false));
+    }
+  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -39,6 +53,22 @@ export default function Login() {
     }
   };
 
+  if (loading) return (
+    <div className="login-page">
+      <div className="login-bg">
+        <div className="wave wave1" />
+        <div className="wave wave2" />
+        <div className="wave wave3" />
+      </div>
+      <div className="login-card" style={{ textAlign: "center", padding: "3rem" }}>
+        <div className="login-logo">⛵</div>
+        <h2 style={{ marginTop: "1rem", color: "#1a365d" }}>Loading demo...</h2>
+        <p style={{ color: "#718096", marginTop: "0.5rem" }}>Setting up your demo environment</p>
+        <div className="spinner-wrap" style={{ marginTop: "1.5rem" }}><div className="spinner" /></div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="login-page">
       <div className="login-bg">
@@ -46,14 +76,12 @@ export default function Login() {
         <div className="wave wave2" />
         <div className="wave wave3" />
       </div>
-
       <div className="login-card">
         <div className="login-header">
           <div className="login-logo">⛵</div>
           <h1 className="login-title">SailScore</h1>
           <p className="login-subtitle">PHRF Handicap Race Scoring</p>
         </div>
-
         <div className="login-tabs">
           <button
             className={`login-tab ${mode === "login" ? "active" : ""}`}
@@ -64,7 +92,6 @@ export default function Login() {
             onClick={() => { setMode("register"); setError(""); }}
           >Register</button>
         </div>
-
         <form onSubmit={submit} className="login-form">
           {mode === "register" && (
             <>
@@ -106,7 +133,6 @@ export default function Login() {
               </div>
             </>
           )}
-
           <div className="field">
             <label>Email</label>
             <input type="email" placeholder="skipper@club.org" value={form.email} onChange={set("email")} required />
@@ -115,9 +141,7 @@ export default function Login() {
             <label>Password</label>
             <input type="password" placeholder="••••••••" value={form.password} onChange={set("password")} required />
           </div>
-
           {error && <div className="form-error">{error}</div>}
-
           <button type="submit" className="btn-primary btn-full" disabled={loading}>
             {loading ? "..." : mode === "login" ? "Sign In" : "Create Account"}
           </button>
