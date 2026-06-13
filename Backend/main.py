@@ -14,10 +14,8 @@ import io, csv, time
 app = FastAPI(title="SailScore API", version="1.0.0")
 
 def _demo_reset_scheduler():
-    """Resets demo data every 24 hours at midnight."""
     while True:
         now = datetime.now()
-        # Sleep until next midnight
         next_midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
         sleep_secs = (next_midnight - now).total_seconds()
         time.sleep(sleep_secs)
@@ -34,14 +32,7 @@ threading.Thread(target=_demo_reset_scheduler, daemon=True).start()
 @app.middleware("http")
 async def add_cors_headers(request: Request, call_next):
     if request.method == "OPTIONS":
-        return JSONResponse(
-            content={},
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "*",
-                "Access-Control-Allow-Headers": "*",
-            }
-        )
+        return JSONResponse(content={}, headers={"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "*", "Access-Control-Allow-Headers": "*"})
     response = await call_next(request)
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "*"
@@ -49,7 +40,6 @@ async def add_cors_headers(request: Request, call_next):
     return response
 
 models.Base.metadata.create_all(bind=engine)
-# ── Auth ──────────────────────────────────────────────────────────────────────
 
 @app.post("/auth/register", response_model=schemas.UserOut)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -68,8 +58,6 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 @app.get("/auth/me", response_model=schemas.UserOut)
 def me(current_user=Depends(auth.get_current_user)):
     return current_user
-
-# ── Series ────────────────────────────────────────────────────────────────────
 
 @app.post("/series", response_model=schemas.SeriesOut)
 def create_series(series: schemas.SeriesCreate, num_races: int = 0, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -98,7 +86,27 @@ def delete_series(series_id: int, db: Session = Depends(get_db), current_user=De
     crud.delete_series(db, series_id)
     return {"ok": True}
 
-# ── Boats ─────────────────────────────────────────────────────────────────────
+@app.post("/series/{series_id}/clone")
+def clone_series(series_id: int, body: dict, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    source = crud.get_series(db, series_id)
+    if not source:
+        raise HTTPException(404, "Series not found")
+    new_name = body.get("name", f"{source.name} (copy)")
+    new_season = body.get("season", source.season)
+    new_series = models.Series(name=new_name, season=new_season, throwouts=source.throwouts, owner_id=current_user.id)
+    db.add(new_series)
+    db.commit()
+    db.refresh(new_series)
+    for f in crud.get_series_fleets(db, series_id):
+        db.add(models.SeriesFleet(series_id=new_series.id, name=f.name, sort_order=f.sort_order))
+    db.commit()
+    for b in crud.get_boats(db, series_id):
+        db.add(models.Boat(series_id=new_series.id, sail_number=b.sail_number, boat_name=b.boat_name, skipper=b.skipper, phrf_rating=b.phrf_rating, fleet=b.fleet, boat_class=getattr(b, 'boat_class', None), club=getattr(b, 'club', None)))
+    db.commit()
+    for r in crud.get_races(db, series_id):
+        db.add(models.Race(series_id=new_series.id, race_number=r.race_number, name=r.name, race_date=None, start_time=None))
+    db.commit()
+    return {"id": new_series.id, "name": new_series.name}
 
 @app.post("/series/{series_id}/boats", response_model=schemas.BoatOut)
 def add_boat(series_id: int, boat: schemas.BoatCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -116,8 +124,6 @@ def update_boat(boat_id: int, boat: schemas.BoatCreate, db: Session = Depends(ge
 def delete_boat(boat_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     crud.delete_boat(db, boat_id)
     return {"ok": True}
-
-# ── Series Fleets ─────────────────────────────────────────────────────────────
 
 @app.get("/series/{series_id}/fleets")
 def list_fleets(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -149,8 +155,6 @@ def delete_fleet(series_id: int, fleet_id: int, db: Session = Depends(get_db), c
     crud.delete_series_fleet(db, fleet_id, series_id)
     return {"ok": True}
 
-# ── Races ─────────────────────────────────────────────────────────────────────
-
 @app.post("/series/{series_id}/races", response_model=schemas.RaceOut)
 def create_race(series_id: int, race: schemas.RaceCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     return crud.create_race(db, race, series_id)
@@ -174,8 +178,6 @@ def update_race(race_id: int, race: schemas.RaceCreate, db: Session = Depends(ge
 def delete_race(race_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     crud.delete_race(db, race_id)
     return {"ok": True}
-
-# ── Finishes ──────────────────────────────────────────────────────────────────
 
 @app.post("/races/{race_id}/finishes", response_model=schemas.FinishOut)
 def record_finish(race_id: int, finish: schemas.FinishCreate, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -233,10 +235,18 @@ def export_csv(series_id: int, db: Session = Depends(get_db), current_user=Depen
         race_pts = [row.race_points.get(r.id, {}).get("display", "-") for r in races]
         writer.writerow([row.position, row.sail_number, row.boat_name, row.skipper, row.phrf_rating] + race_pts + [row.net_points, row.total_points])
     output.seek(0)
-    return StreamingResponse(output, media_type="text/csv",
-        headers={"Content-Disposition": f"attachment; filename=series_{series_id}_standings.csv"})
+    return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=series_{series_id}_standings.csv"})
 
-# ── Public Results (no auth required) ────────────────────────────────────────
+@app.get("/series/{series_id}/export/registrations")
+def export_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    regs = crud.get_registrations(db, series_id)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Boat Name", "Sail Number", "Class", "Skipper", "Fleet", "PHRF", "Club", "Email", "Phone"])
+    for r in regs:
+        writer.writerow([r.boat_name, r.sail_number, r.boat_class or "", r.skipper, r.fleet, r.phrf_rating, r.club or "", r.email or "", r.phone or ""])
+    output.seek(0)
+    return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=registrations_{series_id}.csv"})
 
 @app.get("/public/series")
 def public_series_list(db: Session = Depends(get_db)):
@@ -265,7 +275,6 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         raise HTTPException(404, "Race not found")
     finishes = crud.get_finishes(db, race_id)
     boats = crud.get_boats(db, race.series_id)
-    # Score each fleet separately so positions are per-fleet
     fleets = {}
     for boat in boats:
         fleet = boat.fleet or "NFS"
@@ -274,15 +283,12 @@ def public_race_results(race_id: int, db: Session = Depends(get_db)):
         fleets[fleet].append(boat)
     all_results = []
     for fleet_boats in fleets.values():
-        all_results.extend(scoring.compute_race_results(finishes, fleet_boats))
+        all_results.extend(scoring.compute_race_results(finishes, fleet_boats, race))
     return all_results
-
-# ── Public Registration (no auth required) ────────────────────────────────────
 
 @app.get("/register/{series_id}/info")
 def registration_info(series_id: int, db: Session = Depends(get_db)):
-    from models import Series
-    series = db.query(Series).filter(Series.id == series_id).first()
+    series = db.query(models.Series).filter(models.Series.id == series_id).first()
     if not series:
         raise HTTPException(404, "Series not found")
     return {"series_id": series.id, "series_name": series.name, "season": series.season}
@@ -294,14 +300,10 @@ def public_registrations(series_id: int, db: Session = Depends(get_db)):
 @app.post("/register/{series_id}")
 async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, db: Session = Depends(get_db)):
     try:
-        from models import Series
-        print(f"Registration attempt for series {series_id}")
-        series = db.query(Series).filter(Series.id == series_id).first()
-        print(f"Series found: {series}")
+        series = db.query(models.Series).filter(models.Series.id == series_id).first()
         if not series:
             raise HTTPException(404, "Series not found")
         result = crud.create_registration(db, reg, series_id)
-        print(f"Registration created: {result.id}")
         threading.Thread(target=send_registration_email, args=(reg, series.name), daemon=True).start()
         return result
     except Exception as e:
@@ -312,12 +314,10 @@ def send_registration_email(reg, series_name: str):
     api_key = os.environ.get("SENDGRID_API_KEY")
     from_email = os.environ.get("SENDGRID_FROM_EMAIL")
     if not api_key or not from_email:
-        print("SendGrid not configured, skipping registration notification")
         return
     try:
         import urllib.request, json
         body = f"""New boat registration received for {series_name}:
-
 Boat Name:   {reg.boat_name}
 Sail Number: {reg.sail_number}
 Skipper:     {reg.skipper}
@@ -328,32 +328,19 @@ Phone:       {reg.phone or 'N/A'}
 Fleet:       {reg.fleet}
 Boat Class:  {reg.boat_class or 'N/A'}
 """
-        payload = json.dumps({
-            "personalizations": [{"to": [{"email": from_email}]}],
-            "from": {"email": from_email},
-            "subject": f"New Registration: {reg.boat_name} — {series_name}",
-            "content": [{"type": "text/plain", "value": body}]
-        }).encode("utf-8")
-        req = urllib.request.Request(
-            "https://api.sendgrid.com/v3/mail/send",
-            data=payload,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            method="POST"
-        )
+        payload = json.dumps({"personalizations": [{"to": [{"email": from_email}]}], "from": {"email": from_email}, "subject": f"New Registration: {reg.boat_name} — {series_name}", "content": [{"type": "text/plain", "value": body}]}).encode("utf-8")
+        req = urllib.request.Request("https://api.sendgrid.com/v3/mail/send", data=payload, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
         with urllib.request.urlopen(req) as response:
             print(f"Registration email sent, status: {response.status}")
     except Exception as e:
         print(f"Failed to send registration email: {e}")
+
 @app.get("/backup")
 def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     import json
     from sqlalchemy import text
-    from datetime import datetime
-    from fastapi.responses import Response
-
     tables = ['users', 'series', 'boats', 'races', 'finishes', 'registrations']
     backup = {}
-
     with engine.connect() as conn:
         for table in tables:
             result = conn.execute(text(f"SELECT * FROM {table}"))
@@ -366,16 +353,9 @@ def backup_database(db: Session = Depends(get_db), current_user=Depends(auth.get
                     row_dict[key] = value
                 rows.append(row_dict)
             backup[table] = rows
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"sailscore_backup_{timestamp}.json"
     content = json.dumps(backup, indent=2)
-
-    return Response(
-        content=content,
-        media_type="application/json",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
-    )
+    return Response(content=content, media_type="application/json", headers={"Content-Disposition": f"attachment; filename=sailscore_backup_{timestamp}.json"})
 
 @app.delete("/series/{series_id}/registrations")
 def clear_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
@@ -386,8 +366,7 @@ def clear_registrations(series_id: int, db: Session = Depends(get_db), current_u
     return {"ok": True}
 
 @app.get("/series/{series_id}/registrations", response_model=List[schemas.RegistrationOut])
-def list_registrations(series_id: int, db: Session = Depends(get_db),
-                       current_user=Depends(auth.get_current_user)):
+def list_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     return crud.get_registrations(db, series_id)
 
 # ── Demo Reset ────────────────────────────────────────────────────────────────
@@ -396,28 +375,27 @@ DEMO_SERIES_SEASON = "2026"
 DEMO_RESET_KEY = os.environ.get("DEMO_RESET_KEY", "sailscore-demo-2026")
 
 DEMO_BOATS = [
-    {"sail_number": "74111", "boat_name": "Wind Dancer", "skipper": "Sarah Mitchell", "phrf_rating": 72,  "fleet": "FS",       "boat_class": "J35",          "club": "Lake Breeze SC"},
-    {"sail_number": "34201", "boat_name": "Blue Horizon", "skipper": "Tom Reeves",    "phrf_rating": 118, "fleet": "FS",       "boat_class": "C&C 38",       "club": "Royal Harbour YC"},
-    {"sail_number": "55432", "boat_name": "Pegasus",      "skipper": "Kim Andrews",   "phrf_rating": 132, "fleet": "FS",       "boat_class": "C&C 33",       "club": "Lake Breeze SC"},
-    {"sail_number": "22019", "boat_name": "Sea Whisper",  "skipper": "Dave Conroy",   "phrf_rating": 150, "fleet": "FS",       "boat_class": "CS 33",        "club": "Westport SC"},
-    {"sail_number": "3301",  "boat_name": "Midnight Run", "skipper": "Paul Hartley",  "phrf_rating": 162, "fleet": "NFS",      "boat_class": "C&C 30 MkII",  "club": "Royal Harbour YC"},
-    {"sail_number": "4821",  "boat_name": "Tempest",      "skipper": "Jane Fowler",   "phrf_rating": 178, "fleet": "NFS",      "boat_class": "CS 30",        "club": "Lake Breeze SC"},
-    {"sail_number": "9944",  "boat_name": "Osprey",       "skipper": "Rick Tanaka",   "phrf_rating": 191, "fleet": "NFS",      "boat_class": "C&C 29 MkII",  "club": "Westport SC"},
-    {"sail_number": "11203", "boat_name": "Silver Arrow",  "skipper": "Lena Park",    "phrf_rating": 219, "fleet": "NFS",      "boat_class": "Ranger 22",    "club": "Royal Harbour YC"},
-    {"sail_number": "15044", "boat_name": "Resolute",     "skipper": "Mark Evans",    "phrf_rating": 82,  "fleet": "Distance", "boat_class": "N/A 40",       "club": "Lake Breeze SC"},
-    {"sail_number": "52600", "boat_name": "Aurora",       "skipper": "Chris Bell",    "phrf_rating": 54,  "fleet": "Distance", "boat_class": "Beneteau 40.7","club": "Westport SC"},
-    {"sail_number": "4501",  "boat_name": "Endeavour",    "skipper": "Greg Santos",   "phrf_rating": 165, "fleet": "Distance", "boat_class": "CS 30",        "club": "Royal Harbour YC"},
-    {"sail_number": "CAN 88","boat_name": "Meridian",     "skipper": "Amy Zhao",      "phrf_rating": 0,   "fleet": "1-Design", "boat_class": "Etchells",     "club": "Lake Breeze SC"},
-    {"sail_number": "CAN 42","boat_name": "Phantom",      "skipper": "Bill Russo",    "phrf_rating": 0,   "fleet": "1-Design", "boat_class": "Etchells",     "club": "Westport SC"},
+    {"sail_number": "74111", "boat_name": "Wind Dancer",  "skipper": "Sarah Mitchell", "phrf_rating": 72,  "fleet": "FS",       "boat_class": "J35",           "club": "Lake Breeze SC"},
+    {"sail_number": "34201", "boat_name": "Blue Horizon",  "skipper": "Tom Reeves",    "phrf_rating": 118, "fleet": "FS",       "boat_class": "C&C 38",        "club": "Royal Harbour YC"},
+    {"sail_number": "55432", "boat_name": "Pegasus",       "skipper": "Kim Andrews",   "phrf_rating": 132, "fleet": "FS",       "boat_class": "C&C 33",        "club": "Lake Breeze SC"},
+    {"sail_number": "22019", "boat_name": "Sea Whisper",   "skipper": "Dave Conroy",   "phrf_rating": 150, "fleet": "FS",       "boat_class": "CS 33",         "club": "Westport SC"},
+    {"sail_number": "3301",  "boat_name": "Midnight Run",  "skipper": "Paul Hartley",  "phrf_rating": 162, "fleet": "NFS",      "boat_class": "C&C 30 MkII",   "club": "Royal Harbour YC"},
+    {"sail_number": "4821",  "boat_name": "Tempest",       "skipper": "Jane Fowler",   "phrf_rating": 178, "fleet": "NFS",      "boat_class": "CS 30",         "club": "Lake Breeze SC"},
+    {"sail_number": "9944",  "boat_name": "Osprey",        "skipper": "Rick Tanaka",   "phrf_rating": 191, "fleet": "NFS",      "boat_class": "C&C 29 MkII",   "club": "Westport SC"},
+    {"sail_number": "11203", "boat_name": "Silver Arrow",  "skipper": "Lena Park",     "phrf_rating": 219, "fleet": "NFS",      "boat_class": "Ranger 22",     "club": "Royal Harbour YC"},
+    {"sail_number": "15044", "boat_name": "Resolute",      "skipper": "Mark Evans",    "phrf_rating": 82,  "fleet": "Distance", "boat_class": "N/A 40",        "club": "Lake Breeze SC"},
+    {"sail_number": "52600", "boat_name": "Aurora",        "skipper": "Chris Bell",    "phrf_rating": 54,  "fleet": "Distance", "boat_class": "Beneteau 40.7", "club": "Westport SC"},
+    {"sail_number": "4501",  "boat_name": "Endeavour",     "skipper": "Greg Santos",   "phrf_rating": 165, "fleet": "Distance", "boat_class": "CS 30",         "club": "Royal Harbour YC"},
+    {"sail_number": "CAN 88","boat_name": "Meridian",      "skipper": "Amy Zhao",      "phrf_rating": 0,   "fleet": "1-Design", "boat_class": "Etchells",      "club": "Lake Breeze SC"},
+    {"sail_number": "CAN 42","boat_name": "Phantom",       "skipper": "Bill Russo",    "phrf_rating": 0,   "fleet": "1-Design", "boat_class": "Etchells",      "club": "Westport SC"},
 ]
 
 DEMO_RACES = [
-    {"race_number": 1, "name": "",          "race_date": "2026-08-15", "start_time": "11:00:00"},
-    {"race_number": 2, "name": "",          "race_date": "2026-08-15", "start_time": "13:00:00"},
-    {"race_number": 3, "name": "Distance Race", "race_date": "2026-08-15", "start_time": "10:00:00"},
+    {"race_number": 1, "name": "",             "race_date": "2026-08-15", "start_time": "11:00:00"},
+    {"race_number": 2, "name": "",             "race_date": "2026-08-15", "start_time": "13:00:00"},
+    {"race_number": 3, "name": "Distance Race","race_date": "2026-08-15", "start_time": "10:00:00"},
 ]
 
-# Finish times in seconds elapsed (None = DNS)
 DEMO_FINISHES = {
     1: {
         "Wind Dancer":  {"elapsed": 4210, "status": "FIN"},
@@ -444,9 +422,9 @@ DEMO_FINISHES = {
         "Phantom":      {"elapsed": 4710, "status": "FIN"},
     },
     3: {
-        "Resolute": {"elapsed": 12600, "status": "FIN"},
-        "Aurora":   {"elapsed": 11400, "status": "FIN"},
-        "Endeavour":{"elapsed": 14100, "status": "FIN"},
+        "Resolute":  {"elapsed": 12600, "status": "FIN"},
+        "Aurora":    {"elapsed": 11400, "status": "FIN"},
+        "Endeavour": {"elapsed": 14100, "status": "FIN"},
     },
 }
 
@@ -454,44 +432,23 @@ DEMO_FLEETS = ["FS", "NFS", "Distance", "1-Design"]
 
 def seed_demo(db: Session):
     from auth import get_password_hash
-    # Find or create demo user
     demo_user = db.query(models.User).filter(models.User.email == "demo@sailscore.app").first()
     if not demo_user:
-        demo_user = models.User(
-            email="demo@sailscore.app",
-            name="Demo Race Officer",
-            hashed_password=get_password_hash("demo1234"),
-        )
+        demo_user = models.User(email="demo@sailscore.app", name="Demo Race Officer", hashed_password=get_password_hash("demo1234"))
         db.add(demo_user)
         db.commit()
         db.refresh(demo_user)
-
-    # Remove existing demo series
-    old = db.query(models.Series).filter(
-        models.Series.name == DEMO_SERIES_NAME,
-        models.Series.owner_id == demo_user.id
-    ).first()
+    old = db.query(models.Series).filter(models.Series.name == DEMO_SERIES_NAME, models.Series.owner_id == demo_user.id).first()
     if old:
         db.delete(old)
         db.commit()
-
-    # Create series
-    series = models.Series(
-        name=DEMO_SERIES_NAME,
-        season=DEMO_SERIES_SEASON,
-        throwouts=1,
-        owner_id=demo_user.id,
-    )
+    series = models.Series(name=DEMO_SERIES_NAME, season=DEMO_SERIES_SEASON, throwouts=1, owner_id=demo_user.id)
     db.add(series)
     db.commit()
     db.refresh(series)
-
-    # Create fleets
     for i, fname in enumerate(DEMO_FLEETS):
         db.add(models.SeriesFleet(series_id=series.id, name=fname, sort_order=i))
     db.commit()
-
-    # Create boats
     boat_map = {}
     for b in DEMO_BOATS:
         boat = models.Boat(series_id=series.id, **b)
@@ -499,14 +456,11 @@ def seed_demo(db: Session):
         db.commit()
         db.refresh(boat)
         boat_map[b["boat_name"]] = boat
-
-    # Create races and finishes
     for rd in DEMO_RACES:
         race = models.Race(series_id=series.id, **rd)
         db.add(race)
         db.commit()
         db.refresh(race)
-
         finishes = DEMO_FINISHES.get(rd["race_number"], {})
         for boat_name, f in finishes.items():
             boat = boat_map.get(boat_name)
@@ -516,17 +470,11 @@ def seed_demo(db: Session):
             corrected = None
             if f["status"] == "FIN" and elapsed:
                 corrected = elapsed * (566.431 / (401.431 + boat.phrf_rating)) if boat.phrf_rating > 0 else elapsed
-            db.add(models.Finish(
-                race_id=race.id,
-                boat_id=boat.id,
-                elapsed_seconds=elapsed,
-                status=f["status"],
-                corrected_seconds=corrected,
-            ))
+            db.add(models.Finish(race_id=race.id, boat_id=boat.id, elapsed_seconds=elapsed, status=f["status"], corrected_seconds=corrected))
     db.commit()
     return series.id
 
-@app.post("/demo/reset")
+@app.api_route("/demo/reset", methods=["GET", "POST"])
 def reset_demo(key: str, db: Session = Depends(get_db)):
     if key != DEMO_RESET_KEY:
         raise HTTPException(status_code=403, detail="Invalid reset key")
@@ -535,17 +483,8 @@ def reset_demo(key: str, db: Session = Depends(get_db)):
 
 @app.get("/demo/info")
 def demo_info(db: Session = Depends(get_db)):
-    from auth import get_password_hash
     demo_user = db.query(models.User).filter(models.User.email == "demo@sailscore.app").first()
     if not demo_user:
         return {"ready": False}
-    series = db.query(models.Series).filter(
-        models.Series.name == DEMO_SERIES_NAME,
-        models.Series.owner_id == demo_user.id
-    ).first()
-    return {
-        "ready": series is not None,
-        "series_id": series.id if series else None,
-        "login_email": "demo@sailscore.app",
-        "login_password": "demo1234",
-    }
+    series = db.query(models.Series).filter(models.Series.name == DEMO_SERIES_NAME, models.Series.owner_id == demo_user.id).first()
+    return {"ready": series is not None, "series_id": series.id if series else None, "login_email": "demo@sailscore.app", "login_password": "demo1234"}
