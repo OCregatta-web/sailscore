@@ -73,12 +73,11 @@ export default function Dashboard() {
     setSaving(true);
     setError("");
     try {
+      // Only send fields the backend schema expects
       const body = {
-        ...form,
+        name: form.name,
+        season: form.season,
         throwouts: Number(form.throwouts),
-        // Only include distance-race sub-fields when relevant
-        start_type: form.race_type === "distance" ? form.start_type : null,
-        fleet_sails: form.race_type === "distance" ? form.fleet_sails : null,
       };
       if (editSeries) {
         await api.put(`/series/${editSeries.id}`, body, user.token);
@@ -159,34 +158,18 @@ export default function Dashboard() {
                 {s.race_type === "distance" ? (
                   <>
                     <span style={{ background: "#ebf4ff", color: "#2b6cb0", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>Distance Race</span>
-                    {s.start_type && (
-                      <span style={{ background: "#f0fff4", color: "#276749", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
-                        {s.start_type === "pursuit" ? "Pursuit Start" : "Fleet Start"}
-                      </span>
-                    )}
-                    {s.fleet_sails && (
-                      <span style={{ background: "#fff5f5", color: "#9b2c2c", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
-                        {s.fleet_sails === "flying" ? "Flying Sails" : "Non-Flying Sails"}
-                      </span>
-                    )}
+                    {s.start_type && <span style={{ background: "#f0fff4", color: "#276749", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>{s.start_type === "pursuit" ? "Pursuit Start" : "Fleet Start"}</span>}
+                    {s.fleet_sails && <span style={{ background: "#fff5f5", color: "#9b2c2c", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>{s.fleet_sails === "flying" ? "Flying Sails" : "Non-Flying Sails"}</span>}
                   </>
                 ) : s.race_type === "around_the_cans" ? (
                   <span style={{ background: "#ebf4ff", color: "#2b6cb0", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>Around the Cans</span>
                 ) : null}
               </div>
               <div className="series-actions">
-                <button className="btn-action" onClick={() => navigate("registrations", { seriesId: s.id, seriesName: s.name })}>
-                  📋 Registrations
-                </button>
-                <button className="btn-action" onClick={() => navigate("fleet", { seriesId: s.id, seriesName: s.name })}>
-                  🚢 Fleet
-                </button>
-                <button className="btn-action" onClick={() => navigate("race", { seriesId: s.id, seriesName: s.name })}>
-                  🏁 Race Entry
-                </button>
-                <button className="btn-action" onClick={() => navigate("standings", { seriesId: s.id, seriesName: s.name })}>
-                  📊 Standings
-                </button>
+                <button className="btn-action" onClick={() => navigate("registrations", { seriesId: s.id, seriesName: s.name })}>📋 Registrations</button>
+                <button className="btn-action" onClick={() => navigate("fleet", { seriesId: s.id, seriesName: s.name })}>🚢 Fleet</button>
+                <button className="btn-action" onClick={() => navigate("race", { seriesId: s.id, seriesName: s.name })}>🏁 Race Entry</button>
+                <button className="btn-action" onClick={() => navigate("standings", { seriesId: s.id, seriesName: s.name })}>📊 Standings</button>
               </div>
               <div className="series-footer">
                 <button className="btn-ghost-sm" onClick={() => openEdit(s)}>Edit</button>
@@ -214,41 +197,22 @@ export default function Dashboard() {
             <div className="field">
               <label>Race Type</label>
               <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
-                {[
-                  { value: "around_the_cans", label: "🔁 Around the Cans" },
-                  { value: "distance", label: "🧭 Distance Race" },
-                ].map(opt => (
+                {[{ value: "around_the_cans", label: "🔁 Around the Cans" }, { value: "distance", label: "🧭 Distance Race" }].map(opt => (
                   <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: form.race_type === opt.value ? 600 : 400 }}>
-                    <input
-                      type="radio"
-                      name="race_type"
-                      value={opt.value}
-                      checked={form.race_type === opt.value}
-                      onChange={e => setForm({ ...form, race_type: e.target.value })}
-                    />
+                    <input type="radio" name="race_type" value={opt.value} checked={form.race_type === opt.value} onChange={e => setForm({ ...form, race_type: e.target.value })} />
                     {opt.label}
                   </label>
                 ))}
               </div>
             </div>
-
             {form.race_type === "distance" && (
               <div style={{ background: "#f7fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "0.85rem 1rem", display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "0.25rem" }}>
                 <div className="field" style={{ margin: 0 }}>
                   <label>Start Type</label>
                   <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
-                    {[
-                      { value: "pursuit", label: "🏃 Pursuit" },
-                      { value: "fleet", label: "🚩 Fleet Start" },
-                    ].map(opt => (
+                    {[{ value: "pursuit", label: "🏃 Pursuit" }, { value: "fleet", label: "🚩 Fleet Start" }].map(opt => (
                       <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: form.start_type === opt.value ? 600 : 400 }}>
-                        <input
-                          type="radio"
-                          name="start_type"
-                          value={opt.value}
-                          checked={form.start_type === opt.value}
-                          onChange={e => setForm({ ...form, start_type: e.target.value })}
-                        />
+                        <input type="radio" name="start_type" value={opt.value} checked={form.start_type === opt.value} onChange={e => setForm({ ...form, start_type: e.target.value })} />
                         {opt.label}
                       </label>
                     ))}
@@ -257,18 +221,9 @@ export default function Dashboard() {
                 <div className="field" style={{ margin: 0 }}>
                   <label>Fleet Sails</label>
                   <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
-                    {[
-                      { value: "flying", label: "🪁 Flying Sails" },
-                      { value: "non_flying", label: "⛵ Non-Flying Sails" },
-                    ].map(opt => (
+                    {[{ value: "flying", label: "🪁 Flying Sails" }, { value: "non_flying", label: "⛵ Non-Flying Sails" }].map(opt => (
                       <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: form.fleet_sails === opt.value ? 600 : 400 }}>
-                        <input
-                          type="radio"
-                          name="fleet_sails"
-                          value={opt.value}
-                          checked={form.fleet_sails === opt.value}
-                          onChange={e => setForm({ ...form, fleet_sails: e.target.value })}
-                        />
+                        <input type="radio" name="fleet_sails" value={opt.value} checked={form.fleet_sails === opt.value} onChange={e => setForm({ ...form, fleet_sails: e.target.value })} />
                         {opt.label}
                       </label>
                     ))}
@@ -276,7 +231,6 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
-
             <div className="field">
               <label>Throwouts (worst races to drop)</label>
               <input type="number" min="0" max="10" value={form.throwouts}
@@ -294,9 +248,7 @@ export default function Dashboard() {
             {error && <div className="form-error">{error}</div>}
             <div className="modal-footer">
               <button type="button" className="btn-ghost" onClick={() => setShowModal(false)}>Cancel</button>
-              <button type="submit" className="btn-primary" disabled={saving}>
-                {saving ? "Saving..." : "Save Series"}
-              </button>
+              <button type="submit" className="btn-primary" disabled={saving}>{saving ? "Saving..." : "Save Series"}</button>
             </div>
           </form>
         </Modal>
@@ -310,13 +262,11 @@ export default function Dashboard() {
           <form onSubmit={cloneSeries}>
             <div className="field">
               <label>New Series Name</label>
-              <input type="text" value={cloneForm.name}
-                onChange={e => setCloneForm({ ...cloneForm, name: e.target.value })} required />
+              <input type="text" value={cloneForm.name} onChange={e => setCloneForm({ ...cloneForm, name: e.target.value })} required />
             </div>
             <div className="field">
               <label>Season</label>
-              <input type="text" placeholder="e.g. 2027" value={cloneForm.season}
-                onChange={e => setCloneForm({ ...cloneForm, season: e.target.value })} />
+              <input type="text" placeholder="e.g. 2027" value={cloneForm.season} onChange={e => setCloneForm({ ...cloneForm, season: e.target.value })} />
             </div>
             <div style={{ background: "#f0f4f8", borderRadius: "8px", padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#4a5568", marginBottom: "1rem", lineHeight: 1.6 }}>
               <strong>Copied:</strong> fleets, boats (with PHRF ratings and clubs), race structure<br />
@@ -325,9 +275,7 @@ export default function Dashboard() {
             {cloneError && <div className="form-error">{cloneError}</div>}
             <div className="modal-footer">
               <button type="button" className="btn-ghost" onClick={() => setShowCloneModal(false)}>Cancel</button>
-              <button type="submit" className="btn-primary" disabled={cloning}>
-                {cloning ? "Cloning..." : "📋 Clone Series"}
-              </button>
+              <button type="submit" className="btn-primary" disabled={cloning}>{cloning ? "Cloning..." : "📋 Clone Series"}</button>
             </div>
           </form>
         </Modal>
