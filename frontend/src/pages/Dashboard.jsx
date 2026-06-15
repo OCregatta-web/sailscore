@@ -155,23 +155,25 @@ export default function Dashboard() {
                   {s.throwouts > 0 ? `${s.throwouts} throwout${s.throwouts > 1 ? "s" : ""}` : "No throwouts"}
                 </div>
               </div>
-              {s.race_type && (
-                <div style={{ fontSize: "0.78rem", color: "#718096", marginTop: "0.25rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-                  <span style={{ background: "#ebf4ff", color: "#2b6cb0", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
-                    {s.race_type === "distance" ? "Distance Race" : "Around the Cans"}
-                  </span>
-                  {s.race_type === "distance" && s.start_type && (
-                    <span style={{ background: "#f0fff4", color: "#276749", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
-                      {s.start_type === "pursuit" ? "Pursuit Start" : "Fleet Start"}
-                    </span>
-                  )}
-                  {s.race_type === "distance" && s.fleet_sails && (
-                    <span style={{ background: "#fff5f5", color: "#9b2c2c", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
-                      {s.fleet_sails === "flying" ? "Flying Sails" : "Non-Flying Sails"}
-                    </span>
-                  )}
-                </div>
-              )}
+              <div style={{ fontSize: "0.78rem", color: "#718096", marginTop: "0.25rem", display: "flex", gap: "0.5rem", flexWrap: "wrap", minHeight: "1rem" }}>
+                {s.race_type === "distance" ? (
+                  <>
+                    <span style={{ background: "#ebf4ff", color: "#2b6cb0", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>Distance Race</span>
+                    {s.start_type && (
+                      <span style={{ background: "#f0fff4", color: "#276749", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
+                        {s.start_type === "pursuit" ? "Pursuit Start" : "Fleet Start"}
+                      </span>
+                    )}
+                    {s.fleet_sails && (
+                      <span style={{ background: "#fff5f5", color: "#9b2c2c", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
+                        {s.fleet_sails === "flying" ? "Flying Sails" : "Non-Flying Sails"}
+                      </span>
+                    )}
+                  </>
+                ) : s.race_type === "around_the_cans" ? (
+                  <span style={{ background: "#ebf4ff", color: "#2b6cb0", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>Around the Cans</span>
+                ) : null}
+              </div>
               <div className="series-actions">
                 <button className="btn-action" onClick={() => navigate("registrations", { seriesId: s.id, seriesName: s.name })}>
                   📋 Registrations
