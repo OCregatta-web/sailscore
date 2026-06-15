@@ -8,7 +8,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editSeries, setEditSeries] = useState(null);
-  const [form, setForm] = useState({ name: "", season: "", throwouts: 0, num_races: 10 });
+  const [form, setForm] = useState({ name: "", season: "", throwouts: 0, num_races: 10, race_type: "around_the_cans", start_type: "fleet", fleet_sails: "non_flying" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [backing_up, setBackingUp] = useState(false);
@@ -46,14 +46,14 @@ export default function Dashboard() {
 
   const openNew = () => {
     setEditSeries(null);
-    setForm({ name: "", season: new Date().getFullYear().toString(), throwouts: 0, num_races: 10 });
+    setForm({ name: "", season: new Date().getFullYear().toString(), throwouts: 0, num_races: 10, race_type: "around_the_cans", start_type: "fleet", fleet_sails: "non_flying" });
     setError("");
     setShowModal(true);
   };
 
   const openEdit = (s) => {
     setEditSeries(s);
-    setForm({ name: s.name, season: s.season || "", throwouts: s.throwouts, num_races: 0 });
+    setForm({ name: s.name, season: s.season || "", throwouts: s.throwouts, num_races: 0, race_type: s.race_type || "around_the_cans", start_type: s.start_type || "fleet", fleet_sails: s.fleet_sails || "non_flying" });
     setError("");
     setShowModal(true);
   };
@@ -73,7 +73,13 @@ export default function Dashboard() {
     setSaving(true);
     setError("");
     try {
-      const body = { ...form, throwouts: Number(form.throwouts) };
+      const body = {
+        ...form,
+        throwouts: Number(form.throwouts),
+        // Only include distance-race sub-fields when relevant
+        start_type: form.race_type === "distance" ? form.start_type : null,
+        fleet_sails: form.race_type === "distance" ? form.fleet_sails : null,
+      };
       if (editSeries) {
         await api.put(`/series/${editSeries.id}`, body, user.token);
       } else {
@@ -149,6 +155,24 @@ export default function Dashboard() {
                   {s.throwouts > 0 ? `${s.throwouts} throwout${s.throwouts > 1 ? "s" : ""}` : "No throwouts"}
                 </div>
               </div>
+              {s.race_type && (
+                <div style={{ fontSize: "0.78rem", color: "#718096", marginTop: "0.25rem", display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  <span style={{ background: "#ebf4ff", color: "#2b6cb0", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
+                    {s.race_type === "distance" ? "Distance Race" : "Around the Cans"}
+                  </span>
+                  {s.race_type === "distance" && s.start_type && (
+                    <span style={{ background: "#f0fff4", color: "#276749", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
+                      {s.start_type === "pursuit" ? "Pursuit Start" : "Fleet Start"}
+                    </span>
+                  )}
+                  {s.race_type === "distance" && s.fleet_sails && (
+                    <span style={{ background: "#fff5f5", color: "#9b2c2c", borderRadius: "4px", padding: "2px 8px", fontWeight: 600 }}>
+                      {s.fleet_sails === "flying" ? "Flying Sails" : "Non-Flying Sails"}
+                    </span>
+                  )}
+                </div>
+              )}
+              </div>
               <div className="series-actions">
                 <button className="btn-action" onClick={() => navigate("registrations", { seriesId: s.id, seriesName: s.name })}>
                   📋 Registrations
@@ -186,6 +210,72 @@ export default function Dashboard() {
               <input type="text" placeholder="e.g. 2025" value={form.season}
                 onChange={e => setForm({ ...form, season: e.target.value })} />
             </div>
+            <div className="field">
+              <label>Race Type</label>
+              <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
+                {[
+                  { value: "around_the_cans", label: "🔁 Around the Cans" },
+                  { value: "distance", label: "🧭 Distance Race" },
+                ].map(opt => (
+                  <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: form.race_type === opt.value ? 600 : 400 }}>
+                    <input
+                      type="radio"
+                      name="race_type"
+                      value={opt.value}
+                      checked={form.race_type === opt.value}
+                      onChange={e => setForm({ ...form, race_type: e.target.value })}
+                    />
+                    {opt.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {form.race_type === "distance" && (
+              <div style={{ background: "#f7fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "0.85rem 1rem", display: "flex", flexDirection: "column", gap: "0.85rem", marginBottom: "0.25rem" }}>
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Start Type</label>
+                  <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
+                    {[
+                      { value: "pursuit", label: "🏃 Pursuit" },
+                      { value: "fleet", label: "🚩 Fleet Start" },
+                    ].map(opt => (
+                      <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: form.start_type === opt.value ? 600 : 400 }}>
+                        <input
+                          type="radio"
+                          name="start_type"
+                          value={opt.value}
+                          checked={form.start_type === opt.value}
+                          onChange={e => setForm({ ...form, start_type: e.target.value })}
+                        />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Fleet Sails</label>
+                  <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.25rem" }}>
+                    {[
+                      { value: "flying", label: "🪁 Flying Sails" },
+                      { value: "non_flying", label: "⛵ Non-Flying Sails" },
+                    ].map(opt => (
+                      <label key={opt.value} style={{ display: "flex", alignItems: "center", gap: "0.4rem", cursor: "pointer", fontSize: "0.9rem", fontWeight: form.fleet_sails === opt.value ? 600 : 400 }}>
+                        <input
+                          type="radio"
+                          name="fleet_sails"
+                          value={opt.value}
+                          checked={form.fleet_sails === opt.value}
+                          onChange={e => setForm({ ...form, fleet_sails: e.target.value })}
+                        />
+                        {opt.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="field">
               <label>Throwouts (worst races to drop)</label>
               <input type="number" min="0" max="10" value={form.throwouts}
