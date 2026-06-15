@@ -113,8 +113,12 @@ export default function Dashboard() {
 
   const deleteSeries = async (id) => {
     if (!confirm("Delete this series and all its races? This cannot be undone.")) return;
-    await api.delete(`/series/${id}`, user.token);
-    load();
+    try {
+      await api.delete(`/series/${id}`, user.token);
+      load();
+    } catch (err) {
+      alert("Delete failed: " + err.message);
+    }
   };
 
   return (
