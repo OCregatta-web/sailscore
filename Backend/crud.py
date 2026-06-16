@@ -43,6 +43,9 @@ def update_series(db: Session, series_id: int, series: schemas.SeriesCreate):
     return db_series
 
 def delete_series(db: Session, series_id: int):
+    # Delete series_fleets first (no cascade on this table)
+    db.query(models.SeriesFleet).filter(models.SeriesFleet.series_id == series_id).delete()
+    db.commit()
     db_series = get_series(db, series_id)
     db.delete(db_series)
     db.commit()
@@ -109,11 +112,9 @@ def upsert_finish(db: Session, finish: schemas.FinishCreate, race_id: int):
     if finish.status == "FIN" and finish.elapsed_seconds is not None:
         boat = get_boat(db, finish.boat_id)
         if boat:
-            corrected = finish.elapsed_seconds * (566.431 / (401.431 + boat.phrf_rating))
+            corrected = finish.elapsed_seconds * (650 / (650 + boat.phrf_rating))
     if existing:
         existing.elapsed_seconds = finish.elapsed_seconds
-        existing.start_time = getattr(finish, 'start_time', None)
-        existing.finish_time = getattr(finish, 'finish_time', None)
         existing.status = finish.status
         existing.corrected_seconds = corrected
         db.commit()
@@ -123,8 +124,6 @@ def upsert_finish(db: Session, finish: schemas.FinishCreate, race_id: int):
         db_finish = models.Finish(
             race_id=race_id, boat_id=finish.boat_id,
             elapsed_seconds=finish.elapsed_seconds,
-            start_time=getattr(finish, 'start_time', None),
-            finish_time=getattr(finish, 'finish_time', None),
             status=finish.status, corrected_seconds=corrected
         )
         db.add(db_finish)
