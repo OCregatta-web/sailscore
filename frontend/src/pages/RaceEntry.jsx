@@ -26,7 +26,10 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [dirtyEntries, setDirtyEntries] = useState(new Set());
 
   const [scoringAll, setScoringAll] = useState(false);
-  const [mode, setMode] = useState("buoy"); // "buoy" | "distance"
+  const [mode, setMode] = useState("buoy");
+  const [pursuitFirstStart, setPursuitFirstStart] = useState("10:00:00");
+  const [pursuitDuration, setPursuitDuration] = useState(90);
+  const [showPursuitSheet, setShowPursuitSheet] = useState(false);
 
   const scoreAllFleets = async () => {
     const fleetGroups = (typeof visibleBoats !== 'undefined' ? visibleBoats : boats).reduce((groups, boat) => {
