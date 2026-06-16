@@ -24,15 +24,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [submitMsg, setSubmitMsg] = useState("");
   const [scoringFleet, setScoringFleet] = useState({});
   const [dirtyEntries, setDirtyEntries] = useState(new Set());
-  const [scoringAll, setScoringAll] = useState(false);
 
-  // Pursuit race state
-  const [pursuitFirstStart, setPursuitFirstStart] = useState("10:00:00");
-  const [pursuitDuration, setPursuitDuration] = useState(90);
-  const [showPursuitSheet, setShowPursuitSheet] = useState(false);
+  const [scoringAll, setScoringAll] = useState(false);
+  const [mode, setMode] = useState("buoy"); // "buoy" | "distance"
 
   const scoreAllFleets = async () => {
-    const fleetGroups = visibleBoats.reduce((groups, boat) => {
+    const fleetGroups = (typeof visibleBoats !== 'undefined' ? visibleBoats : boats).reduce((groups, boat) => {
       const fleet = boat.fleet || "NFS";
       if (!groups[fleet]) groups[fleet] = [];
       groups[fleet].push(boat);
@@ -270,16 +267,14 @@ const applyFleetStartTime = (fleetName, startTime) => {
     ? boats.filter(b => (b.fleet || "").toLowerCase().startsWith("distance"))
     : boats.filter(b => !(b.fleet || "").toLowerCase().startsWith("distance"));
 
-  // Pursuit Race Calculator - TOD (Time on Distance)
   const calcPursuitStarts = () => {
     if (!pursuitFirstStart || !pursuitDuration || visibleBoats.length === 0) return [];
-    const distanceNM = pursuitDuration; // reusing field as distance in NM
+    const distanceNM = pursuitDuration;
     const sorted = [...visibleBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
     const slowestPHRF = sorted[0].phrf_rating;
     const [fh, fm, fs] = pursuitFirstStart.split(":").map(Number);
     const firstStartSecs = fh * 3600 + fm * 60 + (fs || 0);
     return sorted.map(boat => {
-      // TOD offset: (slowest_PHRF - this_PHRF) * distance / 60  (in seconds)
       const offsetSecs = Math.round((slowestPHRF - boat.phrf_rating) * distanceNM / 60);
       const startSecs = firstStartSecs + offsetSecs;
       const h = Math.floor(startSecs / 3600);
@@ -289,7 +284,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
       return { ...boat, pursuitStart: startTime, offsetSecs };
     });
   };
-
   const pursuitStarts = isDistance ? calcPursuitStarts() : [];
 
   return (
@@ -301,6 +295,10 @@ const applyFleetStartTime = (fleetName, startTime) => {
           <p className="page-subtitle">Race Entry</p>
         </div>
         <div className="header-actions">
+          <div style={{ display: "flex", gap: "0.5rem", background: "#f0f4f8", borderRadius: "8px", padding: "4px" }}>
+            <button onClick={() => setMode("buoy")} style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: !isDistance ? "#1a365d" : "transparent", color: !isDistance ? "white" : "#4a5568" }}>Buoy Races</button>
+            <button onClick={() => setMode("distance")} style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: isDistance ? "#1a365d" : "transparent", color: isDistance ? "white" : "#4a5568" }}>Distance Race</button>
+          </div>
           <button className="btn-secondary" onClick={() => navigate("standings", { seriesId, seriesName })}>Standings →</button>
           <button className="btn-primary" onClick={openNewRace}>+ New Race</button>
         </div>
@@ -382,7 +380,6 @@ const applyFleetStartTime = (fleetName, startTime) => {
                         style={{ padding: "0.4rem 0.6rem", borderRadius: "6px", border: "1px solid #cbd5e0", fontSize: "0.9rem", width: "100px" }} />
                     </div>
                   </div>
-
                   {showPursuitSheet && pursuitStarts.length > 0 && (
                     <div style={{ marginTop: "1rem" }}>
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem", background: "white", borderRadius: "8px", overflow: "hidden" }}>
@@ -392,7 +389,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Sail #</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Boat</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Skipper</th>
-                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Club</th>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Fleet</th>
                             <th style={{ padding: "8px 12px", textAlign: "right" }}>PHRF</th>
                             <th style={{ padding: "8px 12px", textAlign: "right" }}>Offset</th>
                           </tr>
@@ -401,22 +398,22 @@ const applyFleetStartTime = (fleetName, startTime) => {
                           {pursuitStarts.map((b, i) => {
                             const offsetMin = Math.floor(b.offsetSecs / 60);
                             const offsetSec = b.offsetSecs % 60;
-                            const offsetStr = `+${offsetMin}:${String(offsetSec).padStart(2,"0")}`;
                             return (
-                            <tr key={b.id} style={{ background: i % 2 === 0 ? "#f7fafc" : "white", borderBottom: "1px solid #e2e8f0" }}>
-                              <td style={{ padding: "8px 12px", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
-                              <td style={{ padding: "8px 12px", fontWeight: 600 }}>{b.sail_number}</td>
-                              <td style={{ padding: "8px 12px" }}>{b.boat_name}</td>
-                              <td style={{ padding: "8px 12px" }}>{b.skipper}</td>
-                              <td style={{ padding: "8px 12px" }}>{b.club || "—"}</td>
-                              <td style={{ padding: "8px 12px", textAlign: "right" }}>{b.phrf_rating}</td>
-                              <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "monospace", color: "#718096" }}>{i === 0 ? "—" : offsetStr}</td>
-                            </tr>
-                          )})}
+                              <tr key={b.id} style={{ background: i % 2 === 0 ? "#f7fafc" : "white", borderBottom: "1px solid #e2e8f0" }}>
+                                <td style={{ padding: "8px 12px", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
+                                <td style={{ padding: "8px 12px", fontWeight: 600 }}>{b.sail_number}</td>
+                                <td style={{ padding: "8px 12px" }}>{b.boat_name}</td>
+                                <td style={{ padding: "8px 12px" }}>{b.skipper}</td>
+                                <td style={{ padding: "8px 12px" }}>{b.fleet}</td>
+                                <td style={{ padding: "8px 12px", textAlign: "right" }}>{b.phrf_rating}</td>
+                                <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "monospace", color: "#718096" }}>{i === 0 ? "—" : `+${offsetMin}:${String(offsetSec).padStart(2,"0")}`}</td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                       <div style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "#718096" }}>
-                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD · Offset = (PHRF_slow − PHRF_boat) × distance ÷ 60
+                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD
                       </div>
                     </div>
                   )}
