@@ -90,7 +90,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
   const rows = standings?.rows || [];
   const fleets = getFleets(rows);
 
-  const isDistanceFleet = activeFleet?.toLowerCase() === "distance";
+  const isDistanceFleet = activeFleet?.toLowerCase().startsWith("distance");
   const fleetRaces = races.filter(r =>
     isDistanceFleet
       ? (r.name || "").toLowerCase().includes("distance")
@@ -158,8 +158,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     {isDistanceFleet ? "D1" : `R${r.race_number}`}
                   </th>
                 ))}
-                {!isDistanceFleet && <th>Net</th>}
-                {!isDistanceFleet && <th>Total</th>}
+                <th>Net</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -185,8 +185,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       </td>
                     );
                   })}
-                  {!isDistanceFleet && <td className="net-pts-cell">{row.net_points}</td>}
-                  {!isDistanceFleet && <td>{row.total_points}</td>}
+                  <td className="net-pts-cell">{row.net_points}</td>
+                  <td>{row.total_points}</td>
                 </tr>
               ))}
               {fleetRows.length === 0 && (
@@ -218,7 +218,6 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     <th>Skipper</th>
                     <th>Club</th>
                     <th>Fleet</th>
-                    <th>Start Time</th>
                     <th>Finish Time</th>
                     <th>Elapsed</th>
                     <th>Corrected</th>
@@ -239,10 +238,9 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.skipper}</td>
                       <td>{row.club ?? "—"}</td>
                       <td>{row.fleet ?? "—"}</td>
-                      <td className="mono">{row.start_time ?? "—"}</td>
-                      <td className="mono">{row.finish_time ?? "—"}</td>
-                      <td className="mono">{row.elapsed_display ?? "—"}</td>
-                      <td className="mono">{row.corrected_display ?? "—"}</td>
+                      <td>{row.finish_time ?? "—"}</td>
+                      <td>{row.elapsed_display ?? "—"}</td>
+                      <td>{row.corrected_display ?? "—"}</td>
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>
                     </tr>
                   ))}

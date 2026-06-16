@@ -17,8 +17,7 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const [loading, setLoading] = useState(true);
   const [showRaceModal, setShowRaceModal] = useState(false);
   const [editRace, setEditRace] = useState(null);
-  // FIX 1: removed start_time from raceForm — fleet start times are entered per-fleet in race entry
-  const [raceForm, setRaceForm] = useState({ race_number: "", name: "", race_date: "" });
+  const [raceForm, setRaceForm] = useState({ race_number: "", name: "", race_date: "", start_time: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [entries, setEntries] = useState({});
@@ -57,25 +56,18 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setScoringFleet(prev => ({ ...prev, [fleetName]: true }));
     try {
       for (const boat of fleetBoats) {
+        // Only save boats the user has actually modified
+        if (!dirtyEntries.has(boat.id)) continue;
         const entry = entries[boat.id];
-        const status = entry?.status || "DNS";
+        if (!entry) continue;
+        const status = entry.status || "DNS";
         const elapsed = status === "FIN" ? getElapsed(boat.id) : null;
-        const finish_time = status === "FIN" ? (entry?.finishTime || null) : null;
-        // Use per-boat pursuit start for distance fleet, otherwise fleet start time
-        const boatFleet = boat.fleet || "NFS";
-        let start_time = null;
-        if (boatFleet.toLowerCase() === "distance") {
-          const pursuitBoat = pursuitStarts.find(p => p.id === boat.id);
-          start_time = pursuitBoat?.pursuitStart || null;
-        } else {
-          start_time = fleetStartTimes[fleetName] || null;
-        }
         await api.post(`/races/${selectedRace.id}/finishes`,
-          { boat_id: boat.id, elapsed_seconds: elapsed, start_time, finish_time, status },
+          { boat_id: boat.id, elapsed_seconds: elapsed, status },
           user.token
         );
       }
-      await loadFinishesAndResults(boats);
+      await loadFinishesAndResults();
       setSubmitMsg(`${fleetName} fleet scored ✓`);
       setTimeout(() => setSubmitMsg(""), 3000);
     } catch (err) {
@@ -91,36 +83,17 @@ export default function RaceEntry({ seriesId, seriesName }) {
       if (r.length > 0 && !selectedRace) setSelectedRace(r[r.length - 1]);
     }).finally(() => setLoading(false));
 
-  // Returns the fetched boats so callers can pass them directly to loadFinishesAndResults,
-  // avoiding the race condition where boats state isn't set yet when finishes load.
   const loadBoats = () =>
-    api.get(`/series/${seriesId}/boats`, user.token).then(fetchedBoats => {
-      setBoats(fetchedBoats);
-      return fetchedBoats;
-    });
+    api.get(`/series/${seriesId}/boats`, user.token).then(setBoats);
 
-  useEffect(() => {
-    // Load boats first, then trigger finishes/results once we have the boat list
-    loadRaces();
-    loadBoats().then(fetchedBoats => {
-      // selectedRace isn't set yet on mount — the selectedRace useEffect handles initial load
-    });
-  }, [seriesId]);
+  useEffect(() => { loadRaces(); loadBoats(); }, [seriesId]);
 
   useEffect(() => {
     if (!selectedRace) return;
-    // Pass current boats state; if still empty, loadBoats again to ensure we have them
-    if (boats.length > 0) {
-      loadFinishesAndResults(boats);
-    } else {
-      loadBoats().then(fetchedBoats => loadFinishesAndResults(fetchedBoats));
-    }
+    loadFinishesAndResults();
   }, [selectedRace]);
 
-  // Accept boatList as a parameter to avoid closing over stale boats state.
-  // This prevents the race condition where boats haven't loaded yet when finishes arrive.
-  const loadFinishesAndResults = async (boatList) => {
-    const currentBoats = boatList || boats;
+  const loadFinishesAndResults = async () => {
     const [fins, res] = await Promise.all([
       api.get(`/races/${selectedRace.id}/finishes`, user.token),
       api.get(`/races/${selectedRace.id}/results`, user.token),
@@ -128,59 +101,14 @@ export default function RaceEntry({ seriesId, seriesName }) {
     setFinishes(fins);
     setResults(res);
 
-    // Build a results lookup by boat_id for fast access
-    const resultByBoat = {};
-    res.forEach(r => { resultByBoat[r.boat_id] = r; });
-
-    // Restore fleet start times. Primary source: finish.start_time stored in DB.
-    // Fallback: derive from finish_time - elapsed_seconds for old records that
-    // were scored before per-fleet start times were saved to Finish records.
-    const restoredFleetStarts = {};
-    fins.forEach(f => {
-      const boat = currentBoats.find(b => b.id === f.boat_id);
-      const fleetName = boat?.fleet || "NFS";
-      if (restoredFleetStarts[fleetName]) return; // already found for this fleet
-
-      if (f.start_time) {
-        // New records: start_time saved directly on Finish
-        restoredFleetStarts[fleetName] = f.start_time;
-      } else if (f.elapsed_seconds != null && f.finish_time) {
-        // Old records: derive start = finish_time - elapsed_seconds
-        const finishSecs = parseTimeOfDay(f.finish_time);
-        if (finishSecs !== null) {
-          const startSecs = Math.round(finishSecs - f.elapsed_seconds);
-          if (startSecs >= 0) {
-            restoredFleetStarts[fleetName] = secondsToTimeOfDay(startSecs);
-          }
-        }
-      }
-    });
-    setFleetStartTimes(restoredFleetStarts);
-
-    // Restore finish times for the entry inputs.
-    // Use the scored result's finish_time (derived from start + elapsed in scoring.py)
-    // when available — this is always correct and consistent regardless of what's in DB.
-    // Fall back to deriving it ourselves from fleet start + elapsed for old records.
     const map = {};
     fins.forEach(f => {
-      const boat = currentBoats.find(b => b.id === f.boat_id);
-      const fleetName = boat?.fleet || "NFS";
-      const scored = resultByBoat[f.boat_id];
-
-      let finishTime = "";
-      if (scored?.finish_time) {
-        // Scoring.py derived it correctly from start_time + elapsed
-        finishTime = scored.finish_time;
-      } else if (f.elapsed_seconds != null) {
-        // Derive from the fleet start we just restored
-        const startStr = restoredFleetStarts[fleetName];
-        const startSecs = parseTimeOfDay(startStr);
-        if (startSecs !== null) {
-          finishTime = secondsToTimeOfDay(Math.round(startSecs + f.elapsed_seconds));
-        }
-      }
-
-      map[f.boat_id] = { finishTime, status: f.status };
+      map[f.boat_id] = {
+        finishTime: f.elapsed_seconds != null && selectedRace.start_time
+          ? secondsToTimeOfDay(parseTimeOfDay(selectedRace.start_time) + f.elapsed_seconds)
+          : "",
+        status: f.status,
+      };
     });
     setEntries(map);
     setDirtyEntries(new Set());
@@ -204,38 +132,29 @@ export default function RaceEntry({ seriesId, seriesName }) {
   };
 
   const getElapsed = (boatId) => {
-    const boat = boats.find(b => b.id === boatId);
-    const fleetName = boat?.fleet || "NFS";
-    const entry = entries[boatId] || {};
-    if (entry.status !== "FIN" && entry.status) return null;
-    let startTime;
-    if (fleetName.toLowerCase() === "distance") {
-      // Use this boat's individual pursuit start time
-      const pursuitBoat = pursuitStarts.find(p => p.id === boatId);
-      startTime = pursuitBoat?.pursuitStart || null;
-    } else {
-      startTime = fleetStartTimes[fleetName] || null;
-    }
-    const startSecs = parseTimeOfDay(startTime);
-    const finishSecs = parseTimeOfDay(entry.finishTime);
-    if (startSecs === null || finishSecs === null) return null;
-    const elapsed = finishSecs - startSecs;
-    return elapsed > 0 ? elapsed : null;
-  };
+  const boat = boats.find(b => b.id === boatId);
+  const fleetName = boat?.fleet || "NFS";
+  const entry = entries[boatId] || {};
+  if (entry.status !== "FIN" && entry.status) return null;
+  const startTime = fleetStartTimes[fleetName] || selectedRace?.start_time;
+  const startSecs = parseTimeOfDay(startTime);
+  const finishSecs = parseTimeOfDay(entry.finishTime);
+  if (startSecs === null || finishSecs === null) return null;
+  const elapsed = finishSecs - startSecs;
+  return elapsed > 0 ? elapsed : null;
+};
 
   const openNewRace = () => {
     const nextNum = races.length > 0 ? Math.max(...races.map(r => r.race_number)) + 1 : 1;
     setEditRace(null);
-    // FIX 3: no start_time in new race form
-    setRaceForm({ race_number: nextNum, name: "", race_date: new Date().toISOString().split("T")[0] });
+    setRaceForm({ race_number: nextNum, name: "", race_date: new Date().toISOString().split("T")[0], start_time: "" });
     setError("");
     setShowRaceModal(true);
   };
 
   const openEditRace = (r) => {
     setEditRace(r);
-    // FIX 4: no start_time in edit race form
-    setRaceForm({ race_number: r.race_number, name: r.name || "", race_date: r.race_date || "" });
+    setRaceForm({ race_number: r.race_number, name: r.name || "", race_date: r.race_date || "", start_time: r.start_time || "" });
     setError("");
     setShowRaceModal(true);
   };
@@ -314,7 +233,6 @@ export default function RaceEntry({ seriesId, seriesName }) {
     }
     setSaving(false);
   };
-
   const clearAllResults = async () => {
     if (!confirm("Clear all finish times for this race? Boats will be reset to DNS. This cannot be undone.")) return;
     for (const boat of boats) {
@@ -325,44 +243,44 @@ export default function RaceEntry({ seriesId, seriesName }) {
     }
     setEntries({});
     setFleetStartTimes({});
-    await loadFinishesAndResults(boats);
+    await loadFinishesAndResults();
     setSubmitMsg("All results cleared ✓");
     setTimeout(() => setSubmitMsg(""), 2500);
   };
-
-  const applyFleetStartTime = (fleetName, startTime) => {
-    const fleetBoats = boats.filter(b => (b.fleet || "NFS") === fleetName);
-    setEntries(prev => {
-      const updated = { ...prev };
-      fleetBoats.forEach(boat => {
-        updated[boat.id] = {
-          ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
-        };
-      });
-      return updated;
+const applyFleetStartTime = (fleetName, startTime) => {
+  const fleetBoats = boats.filter(b => (b.fleet || "NFS") === fleetName);
+  setEntries(prev => {
+    const updated = { ...prev };
+    fleetBoats.forEach(boat => {
+      updated[boat.id] = {
+        ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
+      };
     });
-  };
+    return updated;
+  });
+  // Update the selected race start time display
+  setSelectedRace(prev => ({ ...prev, start_time: startTime }));
+};
 
   const resultMap = {};
   results.forEach(r => { resultMap[r.boat_id] = r; });
 
-  const distanceBoats = boats.filter(b => (b.fleet || "").toLowerCase() === "distance");
-  const isDistance = (selectedRace?.name || "").toLowerCase().includes("distance");
+  const isDistance = mode === "distance";
   const visibleBoats = isDistance
-    ? distanceBoats
-    : boats.filter(b => (b.fleet || "").toLowerCase() !== "distance");
+    ? boats.filter(b => (b.fleet || "").toLowerCase().startsWith("distance"))
+    : boats.filter(b => !(b.fleet || "").toLowerCase().startsWith("distance"));
 
   // Pursuit Race Calculator - TOD (Time on Distance)
   const calcPursuitStarts = () => {
-    if (!pursuitFirstStart || !pursuitDuration || distanceBoats.length === 0) return [];
+    if (!pursuitFirstStart || !pursuitDuration || visibleBoats.length === 0) return [];
     const distanceNM = pursuitDuration; // reusing field as distance in NM
-    const sorted = [...distanceBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
+    const sorted = [...visibleBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
     const slowestPHRF = sorted[0].phrf_rating;
     const [fh, fm, fs] = pursuitFirstStart.split(":").map(Number);
     const firstStartSecs = fh * 3600 + fm * 60 + (fs || 0);
     return sorted.map(boat => {
-      // TOD offset: (slowest_PHRF - this_PHRF) * distance  (in seconds, PHRF is sec/NM)
-      const offsetSecs = Math.round((slowestPHRF - boat.phrf_rating) * distanceNM);
+      // TOD offset: (slowest_PHRF - this_PHRF) * distance / 60  (in seconds)
+      const offsetSecs = Math.round((slowestPHRF - boat.phrf_rating) * distanceNM / 60);
       const startSecs = firstStartSecs + offsetSecs;
       const h = Math.floor(startSecs / 3600);
       const m = Math.floor((startSecs % 3600) / 60);
@@ -424,6 +342,9 @@ export default function RaceEntry({ seriesId, seriesName }) {
                   </h2>
                   <div className="race-meta">
                     {selectedRace.race_date && <span className="race-date">{selectedRace.race_date}</span>}
+                    {selectedRace.start_time && (
+                      <span className="race-start">🚦 Start: <strong>{selectedRace.start_time}</strong></span>
+                    )}
                   </div>
                 </div>
                 <div className="race-entry-actions">
@@ -431,6 +352,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
                   <button className="btn-ghost-sm danger" onClick={() => deleteRace(selectedRace.id)}>Delete</button>
                 </div>
               </div>
+
+              {!selectedRace.start_time && (
+                <div className="start-time-warning">
+                  ⚠️ No start time set for this race. <button className="link-btn" onClick={() => openEditRace(selectedRace)}>Add start time</button>
+                </div>
+              )}
 
               {/* Pursuit Race Calculator */}
               {isDistance && (
@@ -461,29 +388,35 @@ export default function RaceEntry({ seriesId, seriesName }) {
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.875rem", background: "white", borderRadius: "8px", overflow: "hidden" }}>
                         <thead>
                           <tr style={{ background: "#1a365d", color: "white" }}>
+                            <th style={{ padding: "8px 12px", textAlign: "left" }}>Start Time</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Sail #</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Boat</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Skipper</th>
                             <th style={{ padding: "8px 12px", textAlign: "left" }}>Club</th>
                             <th style={{ padding: "8px 12px", textAlign: "right" }}>PHRF</th>
-                            <th style={{ padding: "8px 12px", textAlign: "right" }}>Start Time</th>
+                            <th style={{ padding: "8px 12px", textAlign: "right" }}>Offset</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {pursuitStarts.map((b, i) => (
+                          {pursuitStarts.map((b, i) => {
+                            const offsetMin = Math.floor(b.offsetSecs / 60);
+                            const offsetSec = b.offsetSecs % 60;
+                            const offsetStr = `+${offsetMin}:${String(offsetSec).padStart(2,"0")}`;
+                            return (
                             <tr key={b.id} style={{ background: i % 2 === 0 ? "#f7fafc" : "white", borderBottom: "1px solid #e2e8f0" }}>
+                              <td style={{ padding: "8px 12px", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
                               <td style={{ padding: "8px 12px", fontWeight: 600 }}>{b.sail_number}</td>
                               <td style={{ padding: "8px 12px" }}>{b.boat_name}</td>
                               <td style={{ padding: "8px 12px" }}>{b.skipper}</td>
                               <td style={{ padding: "8px 12px" }}>{b.club || "—"}</td>
                               <td style={{ padding: "8px 12px", textAlign: "right" }}>{b.phrf_rating}</td>
-                              <td style={{ padding: "8px 12px", textAlign: "right", fontWeight: 700, color: "#FF6B35", fontFamily: "monospace" }}>{b.pursuitStart}</td>
+                              <td style={{ padding: "8px 12px", textAlign: "right", fontFamily: "monospace", color: "#718096" }}>{i === 0 ? "—" : offsetStr}</td>
                             </tr>
-                          ))}
+                          )})}
                         </tbody>
                       </table>
                       <div style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "#718096" }}>
-                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD · Offset = (PHRF_slow − PHRF_boat) × distance
+                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD · Offset = (PHRF_slow − PHRF_boat) × distance ÷ 60
                       </div>
                     </div>
                   )}
@@ -508,139 +441,36 @@ export default function RaceEntry({ seriesId, seriesName }) {
     <div key={fleetName} className="fleet-entry-block">
       <div className="fleet-entry-header">
         <span className="fleet-entry-title">{fleetName} Fleet</span>
-        {fleetName.toLowerCase() !== "distance" && (
-          <div className="fleet-start-controls">
-            <label className="fleet-start-label">Fleet Start Time:</label>
-            <input
-              className="time-input"
-              type="text"
-              placeholder="13:00:00"
-              value={fleetStartTimes[fleetName] || ""}
-              onChange={e => setFleetStartTimes(prev => ({ ...prev, [fleetName]: e.target.value }))}
-            />
-            <button
-              className="btn-apply-start"
-              onClick={() => {
-                const t = fleetStartTimes[fleetName];
-                if (!t) return;
-                // FIX 5: no longer mutate selectedRace.start_time — fleet start is
-                // stored per-Finish record when scoring, not on the Race itself
-                const updated = { ...entries };
-                fleetBoats.forEach(boat => {
-                  updated[boat.id] = {
-                    ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
-                  };
-                });
-                setEntries(updated);
-                setSubmitMsg(`Start time ${t} applied to ${fleetName} fleet ✓`);
-                setTimeout(() => setSubmitMsg(""), 2500);
-              }}
-            >
-              Apply to {fleetName}
-            </button>
-          </div>
-        )}
+        <div className="fleet-start-controls">
+          <label className="fleet-start-label">Fleet Start Time:</label>
+          <input
+            className="time-input"
+            type="text"
+            placeholder="13:00:00"
+            value={fleetStartTimes[fleetName] || ""}
+            onChange={e => setFleetStartTimes(prev => ({ ...prev, [fleetName]: e.target.value }))}
+          />
+          <button
+            className="btn-apply-start"
+            onClick={() => {
+              const t = fleetStartTimes[fleetName];
+              if (!t) return;
+              setSelectedRace(prev => ({ ...prev, start_time: t }));
+              const updated = { ...entries };
+              fleetBoats.forEach(boat => {
+                updated[boat.id] = {
+                  ...(updated[boat.id] || { finishTime: "", status: "FIN" }),
+                };
+              });
+              setEntries(updated);
+              setSubmitMsg(`Start time ${t} applied to ${fleetName} fleet ✓`);
+              setTimeout(() => setSubmitMsg(""), 2500);
+            }}
+          >
+            Apply to {fleetName}
+          </button>
+        </div>
       </div>
-      {fleetName.toLowerCase() === "distance" ? (() => {
-        // Sort distance boats by pursuit start time order (slowest PHRF first)
-        const pursuitMap = {};
-        pursuitStarts.forEach(b => { pursuitMap[b.id] = b.pursuitStart; });
-        const sortedBoats = [...fleetBoats].sort((a, b) => b.phrf_rating - a.phrf_rating);
-        return (
-          <table className="entry-table">
-            <thead>
-              <tr>
-                <th>Sail #</th>
-                <th>Boat / Skipper</th>
-                <th>PHRF</th>
-                <th>Start Time</th>
-                <th>Status</th>
-                <th>Finish Time (HH:MM:SS)</th>
-                <th>Elapsed</th>
-                <th>Corrected</th>
-                <th>Pos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedBoats.map(boat => {
-                const entry = entries[boat.id] || { finishTime: "", status: "FIN" };
-                const result = resultMap[boat.id];
-                const isFin = entry.status === "FIN";
-                // After scoring, prefer the scored start_time; before scoring show pursuit sheet value
-                const scoredStart = result?.start_time || null;
-                const pursuitStart = pursuitMap[boat.id] || null;
-                const displayStart = scoredStart || (showPursuitSheet ? pursuitStart : null);
-                const elapsedDisplay = result?.elapsed_display || null;
-                const correctedDisplay = result?.corrected_display || null;
-                return (
-                  <tr key={boat.id} className={result ? "has-result" : ""}>
-                    <td><span className="sail-num">{boat.sail_number}</span></td>
-                    <td>
-                      <div className="boat-cell">
-                        <button
-                          className="boat-name-btn"
-                          onClick={() => {
-                            const now = new Date();
-                            const h = String(now.getHours()).padStart(2, "0");
-                            const m = String(now.getMinutes()).padStart(2, "0");
-                            const s = String(now.getSeconds()).padStart(2, "0");
-                            setEntry(boat.id, "finishTime", `${h}:${m}:${s}`);
-                            setEntry(boat.id, "status", "FIN");
-                          }}
-                          title="Click to stamp finish time"
-                        >
-                          {boat.boat_name}
-                        </button>
-                        <span className="skipper-name">{boat.skipper}</span>
-                      </div>
-                    </td>
-                    <td className="num-col">{boat.phrf_rating}</td>
-                    <td className="num-col mono" style={{ color: displayStart ? "#FF6B35" : "#a0aec0", fontWeight: 600 }}>
-                      {displayStart || "—"}
-                    </td>
-                    <td>
-                      <select
-                        className={`status-select status-${STATUS_COLORS[entry.status] || "gray"}`}
-                        value={entry.status || "FIN"}
-                        onChange={e => setEntry(boat.id, "status", e.target.value)}
-                      >
-                        {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </td>
-                    <td>
-                      {isFin ? (
-                        <input
-                          className="time-input"
-                          type="text"
-                          placeholder="14:23:45"
-                          value={entry.finishTime}
-                          onChange={e => setEntry(boat.id, "finishTime", e.target.value)}
-                          onKeyDown={e => e.key === "Enter" && submitFinish(boat.id)}
-                        />
-                      ) : (
-                        <span className="na-text">—</span>
-                      )}
-                    </td>
-                    <td className="num-col mono">{elapsedDisplay || "—"}</td>
-                    <td className="num-col mono">{correctedDisplay || "—"}</td>
-                    <td className="num-col">
-                      {result?.position != null ? (
-                        <span className="pos-badge">
-                          {result.position === 1 ? "🥇" : result.position === 2 ? "🥈" : result.position === 3 ? "🥉" : `${result.position}th`}
-                        </span>
-                      ) : result?.status && result.status !== "FIN" ? (
-                        <span className={`status-pill status-${STATUS_COLORS[result.status] || "gray"}`}>
-                          {result.status}
-                        </span>
-                      ) : "—"}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        );
-      })() : (
       <table className="entry-table">
         <thead>
           <tr>
@@ -648,7 +478,6 @@ export default function RaceEntry({ seriesId, seriesName }) {
             <th>Boat / Skipper</th>
             <th>PHRF</th>
             <th>Status</th>
-            <th>Start Time</th>
             <th>Finish Time (HH:MM:SS)</th>
             <th>Elapsed</th>
             <th>Corrected</th>
@@ -660,18 +489,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
             const entry = entries[boat.id] || { finishTime: "", status: "FIN" };
             const result = resultMap[boat.id];
             const isFin = entry.status === "FIN";
-
-            // After scoring, prefer values from the scored result (authoritative).
-            // Before scoring, compute elapsed live from the fleet start time input.
-            const displayStartTime = result?.start_time || fleetStartTimes[fleetName] || null;
-            const startSecs = parseTimeOfDay(displayStartTime);
+            const startTime = fleetStartTimes[fleetName] || selectedRace?.start_time;
+            const startSecs = parseTimeOfDay(startTime);
             const finishSecs = parseTimeOfDay(entry.finishTime);
-            const liveElapsed = isFin && startSecs != null && finishSecs != null && finishSecs > startSecs
+            const elapsed = isFin && startSecs != null && finishSecs != null && finishSecs > startSecs
               ? finishSecs - startSecs
               : null;
-            const elapsedDisplay = result?.elapsed_display || (liveElapsed != null ? formatElapsed(liveElapsed) : null);
-            const correctedDisplay = result?.corrected_display || null;
-
             return (
               <tr key={boat.id} className={result ? "has-result" : ""}>
                 <td><span className="sail-num">{boat.sail_number}</span></td>
@@ -705,9 +528,6 @@ export default function RaceEntry({ seriesId, seriesName }) {
                     {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </td>
-                <td className="num-col mono">
-                  {displayStartTime || "—"}
-                </td>
                 <td>
                   {isFin ? (
                     <input
@@ -723,19 +543,19 @@ export default function RaceEntry({ seriesId, seriesName }) {
                   )}
                 </td>
                 <td className="num-col mono">
-                  {elapsedDisplay || "—"}
+                  {elapsed != null ? formatElapsed(elapsed) : "—"}
                 </td>
                 <td className="num-col mono">
-                  {correctedDisplay || "—"}
+                  {result?.corrected_display || "—"}
                 </td>
                 <td className="num-col">
                   {result?.position != null ? (
                     <span className="pos-badge">
                       {result.position === 1 ? "🥇" : result.position === 2 ? "🥈" : result.position === 3 ? "🥉" : `${result.position}th`}
                     </span>
-                  ) : result?.status && result.status !== "FIN" ? (
-                    <span className={`status-pill status-${STATUS_COLORS[result.status] || "gray"}`}>
-                      {result.status}
+                  ) : result?.status !== "FIN" ? (
+                    <span className={`status-pill status-${STATUS_COLORS[result?.status] || "gray"}`}>
+                      {result?.status}
                     </span>
                   ) : "—"}
                 </td>
@@ -744,7 +564,6 @@ export default function RaceEntry({ seriesId, seriesName }) {
           })}
         </tbody>
       </table>
-      )}
     </div>
   ))}
 </div>
@@ -780,12 +599,16 @@ export default function RaceEntry({ seriesId, seriesName }) {
                   onChange={e => setRaceForm({ ...raceForm, race_date: e.target.value })} />
               </div>
             </div>
-            {/* FIX 7: Start Time field removed — fleet start times are entered per-fleet in race entry */}
             <div className="field-row">
               <div className="field">
                 <label>Race Name (optional)</label>
                 <input type="text" placeholder="e.g. Spinnaker Race" value={raceForm.name}
                   onChange={e => setRaceForm({ ...raceForm, name: e.target.value })} />
+              </div>
+              <div className="field">
+                <label>Start Time (HH:MM:SS)</label>
+                <input type="text" placeholder="13:00:00" value={raceForm.start_time}
+                  onChange={e => setRaceForm({ ...raceForm, start_time: e.target.value })} />
               </div>
             </div>
             {error && <div className="form-error">{error}</div>}

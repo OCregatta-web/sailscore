@@ -84,7 +84,7 @@ export default function Standings({ seriesId, seriesName }) {
           </div>
 
           {Object.entries(standings.fleet_standings).map(([fleetName, rows]) => {
-            const isDistanceFleet = fleetName.toLowerCase() === "distance";
+            const isDistanceFleet = fleetName.toLowerCase().startsWith("distance");
             const fleetRaces = races.filter(r =>
               isDistanceFleet
                 ? (r.name || "").toLowerCase().includes("distance")
@@ -108,8 +108,8 @@ export default function Standings({ seriesId, seriesName }) {
                           {r.race_date && <div className="race-th-date">{r.race_date}</div>}
                         </th>
                       ))}
-                      {!isDistanceFleet && <th className="num-col">Total</th>}
-                      {!isDistanceFleet && standings.throwouts > 0 && <th className="num-col net-col">Net</th>}
+                      <th className="num-col">Total</th>
+                      {standings.throwouts > 0 && <th className="num-col net-col">Net</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -138,16 +138,14 @@ export default function Standings({ seriesId, seriesName }) {
                             </td>
                           );
                         })}
-                        {!isDistanceFleet && (
-                          <td className="num-col total-pts">
-                            {standings.throwouts > 0 ? (
-                              <span className="pts-muted">{row.total_points}</span>
-                            ) : (
-                              <strong>{row.total_points}</strong>
-                            )}
-                          </td>
-                        )}
-                        {!isDistanceFleet && standings.throwouts > 0 && (
+                        <td className="num-col total-pts">
+                          {standings.throwouts > 0 ? (
+                            <span className="pts-muted">{row.total_points}</span>
+                          ) : (
+                            <strong>{row.total_points}</strong>
+                          )}
+                        </td>
+                        {standings.throwouts > 0 && (
                           <td className="num-col net-col net-pts">
                             <strong>{row.net_points}</strong>
                           </td>
