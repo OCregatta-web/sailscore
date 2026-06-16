@@ -278,7 +278,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
     const [fh, fm, fs] = pursuitFirstStart.split(":").map(Number);
     const firstStartSecs = fh * 3600 + fm * 60 + (fs || 0);
     return sorted.map(boat => {
-      const offsetSecs = Math.round((slowestPHRF - boat.phrf_rating) * distanceNM / 60);
+      const offsetSecs = Math.round((slowestPHRF - boat.phrf_rating) * distanceNM);
       const startSecs = firstStartSecs + offsetSecs;
       const h = Math.floor(startSecs / 3600);
       const m = Math.floor((startSecs % 3600) / 60);
@@ -416,7 +416,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                         </tbody>
                       </table>
                       <div style={{ marginTop: "0.75rem", fontSize: "0.75rem", color: "#718096" }}>
-                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD
+                        First start {pursuitFirstStart} · Course distance {pursuitDuration} NM · PHRF-LO TOD · Offset = (PHRF_slow − PHRF_boat) × distance
                       </div>
                     </div>
                   )}
