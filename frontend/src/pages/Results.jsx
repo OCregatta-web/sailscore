@@ -66,16 +66,33 @@ function SeriesResults({ series: seriesMeta, onBack }) {
       .finally(() => setRaceDetailLoading(false));
   };
 
-  useEffect(() => {
-    fetchPublic(`/public/series/${seriesMeta.id}/standings`)
+  const loadStandings = (isInitial = false) => {
+    return fetchPublic(`/public/series/${seriesMeta.id}/standings`)
       .then(d => {
         setData(d);
-        // Set first fleet with boats as default
-        const fleets = getFleets(d.standings?.rows || []);
-        if (fleets.length > 0) setActiveFleet(fleets[0]);
+        if (isInitial) {
+          const fleets = getFleets(d.standings?.rows || []);
+          if (fleets.length > 0) setActiveFleet(fleets[0]);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (isInitial) setLoading(false); });
+  };
+
+  useEffect(() => {
+    loadStandings(true);
+    // Auto-refresh every 15 seconds
+    const interval = setInterval(() => loadStandings(false), 15000);
+    return () => clearInterval(interval);
   }, [seriesMeta.id]);
+
+  // Also refresh race detail when it's open
+  useEffect(() => {
+    if (!activeRace) return;
+    const interval = setInterval(() => {
+      fetchPublic(`/public/races/${activeRace.id}/results`).then(setRaceDetail);
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [activeRace]);
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -90,7 +107,7 @@ function SeriesResults({ series: seriesMeta, onBack }) {
   const rows = standings?.rows || [];
   const fleets = getFleets(rows);
 
-  const isDistanceFleet = activeFleet?.toLowerCase().startsWith("distance");
+  const isDistanceFleet = activeFleet?.toLowerCase() === "distance";
   const fleetRaces = races.filter(r =>
     isDistanceFleet
       ? (r.name || "").toLowerCase().includes("distance")
@@ -116,6 +133,13 @@ function SeriesResults({ series: seriesMeta, onBack }) {
           {copied ? "✓ Copied!" : "🔗 Copy Link"}
         </button>
       </div>
+
+      {/* Live indicator */}
+      <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'8px', fontSize:'12px', color:'#6b7fa3'}}>
+        <span style={{width:'8px',height:'8px',borderRadius:'50%',background:'#00c9a7',display:'inline-block',animation:'pulse 2s ease-in-out infinite'}}></span>
+        Live — refreshing every 15 seconds
+      </div>
+      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
 
       {/* Fleet tabs */}
       {fleets.length > 1 && (
@@ -158,8 +182,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     {isDistanceFleet ? "D1" : `R${r.race_number}`}
                   </th>
                 ))}
-                <th>Net</th>
-                <th>Total</th>
+                {!isDistanceFleet && <th>Net</th>}
+                {!isDistanceFleet && <th>Total</th>}
               </tr>
             </thead>
             <tbody>
@@ -185,8 +209,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       </td>
                     );
                   })}
-                  <td className="net-pts-cell">{row.net_points}</td>
-                  <td>{row.total_points}</td>
+                  {!isDistanceFleet && <td className="net-pts-cell">{row.net_points}</td>}
+                  {!isDistanceFleet && <td>{row.total_points}</td>}
                 </tr>
               ))}
               {fleetRows.length === 0 && (
@@ -219,8 +243,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                     <th>Club</th>
                     <th>Fleet</th>
                     <th>Finish Time</th>
-                    <th>Elapsed</th>
-                    <th>Corrected</th>
+                    {!isDistanceFleet && <th>Elapsed</th>}
+                    {!isDistanceFleet && <th>Corrected</th>}
                     <th>Points</th>
                   </tr>
                 </thead>
@@ -239,8 +263,8 @@ function SeriesResults({ series: seriesMeta, onBack }) {
                       <td>{row.club ?? "—"}</td>
                       <td>{row.fleet ?? "—"}</td>
                       <td>{row.finish_time ?? "—"}</td>
-                      <td>{row.elapsed_display ?? "—"}</td>
-                      <td>{row.corrected_display ?? "—"}</td>
+                      {!isDistanceFleet && <td>{row.elapsed_display ?? "—"}</td>}
+                      {!isDistanceFleet && <td>{row.corrected_display ?? "—"}</td>}
                       <td>{row.status !== "FIN" ? `${row.status} (${Math.round(row.points)})` : Math.round(row.points)}</td>
                     </tr>
                   ))}
