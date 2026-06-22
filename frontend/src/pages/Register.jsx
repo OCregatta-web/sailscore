@@ -121,11 +121,9 @@ export default function Register() {
             <div className="reg-summary-row"><span>Fleet</span><strong>{form.fleet}</strong></div>
             <div className="reg-summary-row"><span>PHRF</span><strong>{form.phrf_rating}</strong></div>
           </div>
-          {seriesId === "3" && (
           <a href="/regatta" style={{ display: "block", textAlign: "center", marginTop: "1.5rem", padding: "0.85rem", borderRadius: "8px", border: "1px solid #cbd5e0", color: "#4a5568", textDecoration: "none", fontWeight: 600, fontSize: "0.95rem" }}>
             ← Back to Regatta
           </a>
-          )}
         </div>
       </div>
     </div>
@@ -176,7 +174,7 @@ export default function Register() {
 
           {form.phrf_rating !== "" && !isNaN(Number(form.phrf_rating)) && (
             <div className="rating-preview">
-              ToT factor: <strong>{(566.431 / (401.431 + Number(form.phrf_rating))).toFixed(4)}</strong>
+              ToT factor: <strong>{(565.431 / (400.431 + Number(form.phrf_rating))).toFixed(4)}</strong>
               <span className="hint"> — corrected = elapsed × factor</span>
             </div>
           )}
@@ -210,11 +208,9 @@ export default function Register() {
             {saving ? "Registering..." : "Register My Boat"}
           </button>
 
-          {seriesId === "3" && (
           <a href="/regatta" style={{ display: "block", textAlign: "center", marginTop: "0.75rem", padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e0", color: "#4a5568", textDecoration: "none", fontWeight: 600, fontSize: "0.95rem" }}>
             ← Back to Regatta
           </a>
-          )}
         </form>
       </div>
     </div>

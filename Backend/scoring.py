@@ -1,8 +1,8 @@
 from typing import List, Dict, Optional
 import schemas, models
 
-TOT_A = 566.431
-TOT_B = 401.431
+TOT_A = 565.431
+TOT_B = 400.431
 
 def phrf_corrected_time(elapsed_seconds: float, phrf_rating: int) -> float:
     return elapsed_seconds * (TOT_A / (TOT_B + phrf_rating))
@@ -16,74 +16,44 @@ def seconds_to_display(seconds: Optional[float]) -> Optional[str]:
     s = total % 60
     return f"{h}:{m:02d}:{s:02d}"
 
-def parse_time_str(t: Optional[str]) -> Optional[int]:
-    """Parse HH:MM:SS or HH:MM into total seconds. Returns None if invalid."""
-    if not t:
-        return None
-    parts = t.strip().split(":")
-    try:
-        nums = [int(p) for p in parts]
-    except ValueError:
-        return None
-    if len(nums) == 3:
-        return nums[0] * 3600 + nums[1] * 60 + nums[2]
-    if len(nums) == 2:
-        return nums[0] * 3600 + nums[1] * 60
-    return None
-
-def total_seconds_to_hhmmss(total: int) -> str:
-    h = total // 3600
-    m = (total % 3600) // 60
-    s = total % 60
-    return f"{h:02d}:{m:02d}:{s:02d}"
-
 def penalty_points(status: str, fleet_size: int) -> float:
     if status == "DSQ":
         return fleet_size + 2
     return fleet_size + 1
 
-def compute_race_results(finishes, boats, race=None, fleet_size=None):
+def compute_race_results(finishes, boats, race=None):
     boat_map = {b.id: b for b in boats}
-    if fleet_size is None:
-        fleet_size = len(boats)
+    fleet_size = len(boats)
     finish_map = {f.boat_id: f for f in finishes}
     results = []
+
+    # Parse start time for finish time calculation
+    start_seconds = None
+    if race and race.start_time:
+        try:
+            parts = race.start_time.split(":")
+            start_seconds = int(parts[0]) * 3600 + int(parts[1]) * 60 + (int(parts[2]) if len(parts) > 2 else 0)
+        except Exception:
+            pass
 
     for finish in finishes:
         boat = boat_map.get(finish.boat_id)
         if not boat:
             continue
         corrected = None
-
-        # Use the stored start_time from the Finish record (set per-fleet at scoring time)
-        start_time_str = getattr(finish, 'start_time', None)
-        raw_finish_time = getattr(finish, 'finish_time', None)
-
-        # For old records where start_time was never saved, derive it from
-        # finish_time - elapsed_seconds as a fallback.
-        if not start_time_str and finish.elapsed_seconds is not None and raw_finish_time:
-            finish_secs = parse_time_str(raw_finish_time)
-            if finish_secs is not None:
-                derived_start = finish_secs - int(round(finish.elapsed_seconds))
-                if derived_start >= 0:
-                    start_time_str = total_seconds_to_hhmmss(derived_start)
-
-        # Always derive finish_time from start_time + elapsed_seconds for consistency.
-        # This corrects any stale finish_time values that may have been stored under
-        # the old race-level start_time system.
         finish_time_str = None
         if finish.status == "FIN" and finish.elapsed_seconds is not None:
             corrected = phrf_corrected_time(finish.elapsed_seconds, boat.phrf_rating)
-            start_secs = parse_time_str(start_time_str)
-            if start_secs is not None:
-                finish_time_str = total_seconds_to_hhmmss(start_secs + int(round(finish.elapsed_seconds)))
-
+            if start_seconds is not None:
+                total = start_seconds + int(finish.elapsed_seconds)
+                h, rem = divmod(total, 3600)
+                m, s = divmod(rem, 60)
+                finish_time_str = f"{h:02d}:{m:02d}:{s:02d}"
         results.append({
             "boat_id": boat.id, "sail_number": boat.sail_number,
             "boat_name": boat.boat_name, "skipper": boat.skipper,
             "phrf_rating": boat.phrf_rating, "fleet": boat.fleet,
             "club": getattr(boat, 'club', None),
-            "start_time": start_time_str,
             "finish_time": finish_time_str,
             "elapsed_seconds": finish.elapsed_seconds,
             "corrected_seconds": corrected,
@@ -99,7 +69,6 @@ def compute_race_results(finishes, boats, race=None, fleet_size=None):
                 "boat_name": boat.boat_name, "skipper": boat.skipper,
                 "phrf_rating": boat.phrf_rating, "fleet": boat.fleet,
                 "club": getattr(boat, 'club', None),
-                "start_time": None,
                 "finish_time": None,
                 "elapsed_seconds": None, "corrected_seconds": None,
                 "elapsed_display": None, "corrected_display": None,
@@ -134,23 +103,12 @@ def compute_series_standings(series, races, boats, all_finishes):
     for fleet_name, fleet_boats in fleets.items():
         fleet_size = len(fleet_boats)
         throwouts = series.throwouts
-        is_distance_fleet = fleet_name.lower() == "distance"
-
-        # Only score races relevant to this fleet:
-        # distance races count for the distance fleet, non-distance races for all other fleets
-        fleet_races = [
-            r for r in races
-            if is_distance_fleet == ("distance" in (r.name or "").lower())
-        ]
 
         # Compute per-race results for this fleet only
         race_results_map = {}
-        for race in fleet_races:
+        for race in races:
             finishes = all_finishes.get(race.id, [])
-            # Filter to only this fleet's finishes
-            fleet_boat_ids = {b.id for b in fleet_boats}
-            fleet_finishes = [f for f in finishes if f.boat_id in fleet_boat_ids]
-            results = compute_race_results(fleet_finishes, fleet_boats, race=race, fleet_size=fleet_size)
+            results = compute_race_results(finishes, fleet_boats)
             race_results_map[race.id] = {r.boat_id: r for r in results}
 
         rows = []
@@ -158,7 +116,7 @@ def compute_series_standings(series, races, boats, all_finishes):
             race_points = {}
             all_pts = []
 
-            for race in fleet_races:
+            for race in races:
                 result = race_results_map.get(race.id, {}).get(boat.id)
                 if result:
                     pts = result.points
