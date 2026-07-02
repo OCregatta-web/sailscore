@@ -35,7 +35,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const updates = [
   { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
   { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
-  { date: "May 12", text: "Over 90% full. Only 3 spots left!" },
+  { date: "March 22", text: "WOW! Already 2/3 full. Great initial response! Only 17 spots left." },
 ];
 
 const schedule = [
@@ -176,7 +176,7 @@ export default function Regatta() {
             <div style={styles.registerLeft}>
               <h3 style={styles.registerTitle}>Ready to race?</h3>
               <p style={styles.registerText}>
-                Already 75% full! Register soon or risk missing out on a great day on and off the water!
+                Just over six weeks to the 2026 OC Regatta. The fleets are shaping up nicely and we are over 90% full. Register quick or you might miss out!
               </p>
               <div style={styles.freeRegatta}>🎉 This is a FREE regatta — 10 years running with no entry fees!</div>
               <ul style={styles.registerList}>
