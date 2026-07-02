@@ -1,25 +1,20 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../App";
 import { api } from "../api";
-
 export default function Registrations({ seriesId, seriesName }) {
   const { user, navigate } = useAuth();
   const [registrations, setRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     api.get(`/series/${seriesId}/registrations`, user.token)
       .then(setRegistrations)
       .finally(() => setLoading(false));
   }, [seriesId]);
-
   const regLink = `${window.location.origin}/register?series=${seriesId}`;
-
   const copyLink = () => {
     navigator.clipboard.writeText(regLink);
     alert("Registration link copied to clipboard!");
   };
-
   const downloadCSV = () => {
     const headers = ["Boat Name", "Skipper", "Email"];
     const rows = registrations.map(r => [
@@ -36,7 +31,12 @@ export default function Registrations({ seriesId, seriesName }) {
     a.click();
     URL.revokeObjectURL(url);
   };
-
+  const emailAll = () => {
+    const emails = registrations.map(r => r.email).filter(Boolean).join(",");
+    const subject = encodeURIComponent(`${seriesName} — Important Update`);
+    const body = encodeURIComponent(`Dear Skippers,\n\n\n\nSee you on the water!\nOC Regatta Committee\nwww.ocregatta.com`);
+    window.open(`https://mail.google.com/mail/?view=cm&bcc=${encodeURIComponent(emails)}&su=${subject}&body=${body}`, "_blank");
+  };
   return (
     <div className="page">
       <div className="page-header">
@@ -47,16 +47,20 @@ export default function Registrations({ seriesId, seriesName }) {
         </div>
         <div style={{ display: "flex", gap: "0.5rem" }}>
           {registrations.length > 0 && (
-            <button className="btn-secondary" onClick={downloadCSV}>
-              ⬇ Download CSV
-            </button>
+            <>
+              <button className="btn-secondary" onClick={emailAll}>
+                ✉️ Email All
+              </button>
+              <button className="btn-secondary" onClick={downloadCSV}>
+                ⬇ Download CSV
+              </button>
+            </>
           )}
           <button className="btn-secondary" onClick={() => navigate("fleet", { seriesId, seriesName })}>
             View Fleet →
           </button>
         </div>
       </div>
-
       {/* Registration link */}
       <div className="reg-link-card">
         <div className="reg-link-info">
@@ -66,7 +70,6 @@ export default function Registrations({ seriesId, seriesName }) {
         </div>
         <button className="btn-primary" onClick={copyLink}>Copy Link</button>
       </div>
-
       {loading ? (
         <div className="spinner-wrap"><div className="spinner" /></div>
       ) : registrations.length === 0 ? (
