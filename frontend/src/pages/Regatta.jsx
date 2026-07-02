@@ -33,9 +33,9 @@ const REGATTA_SERIES_ID = 3;
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const updates = [
-  { date: "March 20", text: "Registration is now open! Don't miss out on our 10th anniversary of offering a true OPEN regatta! FREE to the first 50 boats to register." },
   { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
-  { date: "March 22", text: "WOW! Already 2/3 full. Great initial response! Only 17 spots left." },
+  { date: "July 2", text: "We are now over 90% full, only 3 spots left!" },
+  { date: "July 2", text: "Introducing the OC Regatta SailScoring system. Getting results to you online faster. Live updates between races!" },
 ];
 
 const schedule = [
