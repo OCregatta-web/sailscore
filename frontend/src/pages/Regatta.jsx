@@ -34,7 +34,7 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const updates = [
   { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
-  { date: "July 2", text: "We are now over 90% full, only 3 spots left!" },
+  { date: "July 13", text: "🎉 THE 2026 OC REGATTA IS NOW FULL!", bold: true },
   { date: "July 2", text: "Introducing the OC Regatta SailScoring system. Getting results to you online faster. Live updates between races!" },
 ];
 
@@ -146,7 +146,7 @@ export default function Regatta() {
           {updates.map((u, i) => (
             <div key={i} style={styles.updateItem}>
               <span style={styles.updateDate}>{u.date}</span>
-              <span style={styles.updateText}>{u.text}</span>
+              <span style={u.bold ? { ...styles.updateText, fontSize: "1.4rem", fontWeight: 900, color: "#FFD166", textTransform: "uppercase", letterSpacing: "0.03em" } : styles.updateText}>{u.text}</span>
               {u.link && <a href={u.link} style={styles.updateBtn}>{u.linkText}</a>}
             </div>
           ))}
