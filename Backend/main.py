@@ -316,7 +316,8 @@ def send_registration_email(reg, series_name: str):
         print("Resend API key not configured, skipping registration notification")
         return
     try:
-        import urllib.request, json
+        import resend
+        resend.api_key = api_key
         body = f"""New boat registration received for {series_name}:
 
 Boat Name:   {reg.boat_name}
@@ -329,27 +330,14 @@ Phone:       {reg.phone or 'N/A'}
 Fleet:       {reg.fleet}
 Boat Class:  {reg.boat_class or 'N/A'}
 """
-        payload = json.dumps({
+        params = {
             "from": "OC Regatta <noreply@ocregatta.com>",
             "to": ["alex@mcmillin.ca"],
             "subject": f"New Registration: {reg.boat_name} — {series_name}",
-            "text": body
-        }).encode("utf-8")
-        req = urllib.request.Request(
-            "https://api.resend.com/emails",
-            data=payload,
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-                "User-Agent": "python-urllib/3.11",
-            },
-            method="POST"
-        )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            print(f"Registration email sent via Resend, status: {response.status}")
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode()
-        print(f"Failed to send registration email: {e.code} {error_body}")
+            "text": body,
+        }
+        response = resend.Emails.send(params)
+        print(f"Registration email sent via Resend: {response}")
     except Exception as e:
         print(f"Failed to send registration email: {e}")
 
