@@ -343,6 +343,9 @@ Boat Class:  {reg.boat_class or 'N/A'}
         )
         with urllib.request.urlopen(req) as response:
             print(f"Registration email sent via Resend, status: {response.status}")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode()
+        print(f"Failed to send registration email: {e.code} {error_body}")
     except Exception as e:
         print(f"Failed to send registration email: {e}")
 
