@@ -338,10 +338,14 @@ Boat Class:  {reg.boat_class or 'N/A'}
         req = urllib.request.Request(
             "https://api.resend.com/emails",
             data=payload,
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "python-urllib/3.11",
+            },
             method="POST"
         )
-        with urllib.request.urlopen(req) as response:
+        with urllib.request.urlopen(req, timeout=10) as response:
             print(f"Registration email sent via Resend, status: {response.status}")
     except urllib.error.HTTPError as e:
         error_body = e.read().decode()
