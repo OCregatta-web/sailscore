@@ -330,7 +330,7 @@ Fleet:       {reg.fleet}
 Boat Class:  {reg.boat_class or 'N/A'}
 """
         payload = json.dumps({
-            "from": "SailScore <onboarding@resend.dev>",
+            "from": "OC Regatta <noreply@ocregatta.com>",
             "to": ["alex@mcmillin.ca"],
             "subject": f"New Registration: {reg.boat_name} — {series_name}",
             "text": body
