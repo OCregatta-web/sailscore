@@ -311,13 +311,14 @@ async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, d
         raise HTTPException(500, str(e))
 
 def send_registration_email(reg, series_name: str):
-    api_key = os.environ.get("SENDGRID_API_KEY")
-    from_email = os.environ.get("SENDGRID_FROM_EMAIL")
-    if not api_key or not from_email:
+    api_key = os.environ.get("RESEND_API_KEY")
+    if not api_key:
+        print("Resend API key not configured, skipping registration notification")
         return
     try:
         import urllib.request, json
         body = f"""New boat registration received for {series_name}:
+
 Boat Name:   {reg.boat_name}
 Sail Number: {reg.sail_number}
 Skipper:     {reg.skipper}
@@ -328,10 +329,20 @@ Phone:       {reg.phone or 'N/A'}
 Fleet:       {reg.fleet}
 Boat Class:  {reg.boat_class or 'N/A'}
 """
-        payload = json.dumps({"personalizations": [{"to": [{"email": from_email}]}], "from": {"email": from_email}, "subject": f"New Registration: {reg.boat_name} — {series_name}", "content": [{"type": "text/plain", "value": body}]}).encode("utf-8")
-        req = urllib.request.Request("https://api.sendgrid.com/v3/mail/send", data=payload, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, method="POST")
+        payload = json.dumps({
+            "from": "SailScore <onboarding@resend.dev>",
+            "to": ["alex@mcmillin.ca"],
+            "subject": f"New Registration: {reg.boat_name} — {series_name}",
+            "text": body
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=payload,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            method="POST"
+        )
         with urllib.request.urlopen(req) as response:
-            print(f"Registration email sent, status: {response.status}")
+            print(f"Registration email sent via Resend, status: {response.status}")
     except Exception as e:
         print(f"Failed to send registration email: {e}")
 
