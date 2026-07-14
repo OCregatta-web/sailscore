@@ -176,7 +176,7 @@ export default function Regatta() {
             <div style={styles.registerLeft}>
               <h3 style={styles.registerTitle}>Registration is now closed</h3>
               <p style={styles.registerText}>
-                Thank you to all 47 boats that have registered for the 2026 OC Regatta. We are now full!
+                Thank you to all boats that have registered for the 2026 OC Regatta. We are now full!
               </p>
               <div style={{ ...styles.freeRegatta, background: "#fff3f3", borderColor: "#e53e3e", color: "#c53030" }}>🚫 Registration is now closed. We are now full.</div>
               <ul style={styles.registerList}>
