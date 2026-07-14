@@ -100,7 +100,7 @@ export default function Regatta() {
       <nav style={styles.nav}>
         <span style={styles.navBrand}>⛵ OCOR 2026</span>
         <div style={styles.navLinks}>
-          {["schedule", "register", "results", "photos", "sponsors", "contact"].map(s => (
+          {["schedule", "results", "photos", "sponsors", "contact"].map(s => (
             <button key={s} style={styles.navLink} onClick={() => scrollTo(s)}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
             </button>
@@ -128,8 +128,8 @@ export default function Regatta() {
             Saturday, August 15, 2026
           </div>
           <div style={styles.heroCtas}>
-            <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}`} style={styles.ctaPrimary}>
-              Register Now →
+            <a href={`https://sailscore.vercel.app/results?series=${REGATTA_SERIES_ID}`} style={styles.ctaPrimary}>
+              View Results →
             </a>
             <button style={styles.ctaSecondary} onClick={() => scrollTo("schedule")}>
               View Schedule
@@ -174,20 +174,17 @@ export default function Regatta() {
           <SectionHeader emoji="📋" title="Register Your Boat" color="#06D6A0" />
           <div style={styles.registerCard}>
             <div style={styles.registerLeft}>
-              <h3 style={styles.registerTitle}>Ready to race?</h3>
+              <h3 style={styles.registerTitle}>Registration is now closed</h3>
               <p style={styles.registerText}>
-                Just over six weeks to the 2026 OC Regatta. The fleets are shaping up nicely and we are over 90% full. Register quick or you might miss out!
+                Thank you to all 47 boats that have registered for the 2026 OC Regatta. We are now full!
               </p>
-              <div style={styles.freeRegatta}>🎉 This is a FREE regatta — 10 years running with no entry fees!</div>
+              <div style={{ ...styles.freeRegatta, background: "#fff3f3", borderColor: "#e53e3e", color: "#c53030" }}>🚫 Registration is now closed. We are now full.</div>
               <ul style={styles.registerList}>
                 <li>✅ Online registration</li>
                 <li>✅ Fleet assignment by Aug 10</li>
                 <li>✅ Skippers' package at sign-in</li>
                 <li>✅ Post-race pool party included</li>
               </ul>
-              <a href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}`} style={styles.registerBtn}>
-                Register Online →
-              </a>
               <button onClick={toggleBoatList} style={{ ...styles.registerBtn, background: "white", color: "#06D6A0", border: "2px solid #06D6A0", marginTop: "0.75rem", cursor: "pointer", fontFamily: "inherit", display: "block", width: "fit-content" }}>
                 {showBoatList ? "▲ Hide Registered Boats" : "👀 View Registered Boats"}
               </button>
