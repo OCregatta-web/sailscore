@@ -32,13 +32,18 @@ export default function Registrations({ seriesId, seriesName }) {
     if (!confirmed) return;
     setTogglingClosed(true);
     try {
-      const updated = await api.put(`/series/${seriesId}`, {
+      await api.put(`/series/${seriesId}`, {
         name: series.name,
         season: series.season,
         throwouts: series.throwouts,
         registration_closed: closing,
       }, user.token);
-      setSeries(updated);
+      // Re-fetch rather than trust the PUT response shape, so the banner
+      // always reflects what's actually saved.
+      const fresh = await api.get(`/series/${seriesId}`, user.token);
+      setSeries(fresh);
+    } catch (err) {
+      alert("Couldn't update registration status: " + (err.message || "unknown error"));
     } finally {
       setTogglingClosed(false);
     }
