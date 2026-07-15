@@ -396,6 +396,13 @@ def list_registrations(series_id: int, db: Session = Depends(get_db), current_us
 def list_waitlist(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     return crud.get_waitlist(db, series_id)
 
+@app.delete("/registrations/{registration_id}")
+def delete_registration(registration_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    ok = crud.delete_registration(db, registration_id)
+    if not ok:
+        raise HTTPException(404, "Registration not found")
+    return {"ok": True}
+
 @app.post("/series/{series_id}/registrations/{registration_id}/promote", response_model=schemas.RegistrationOut)
 def promote_registration(series_id: int, registration_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     result = crud.promote_registration(db, registration_id)

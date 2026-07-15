@@ -59,6 +59,20 @@ export default function Registrations({ seriesId, seriesName }) {
     }
   };
 
+  const [removingId, setRemovingId] = useState(null);
+
+  const removeFromWaitlist = async (reg) => {
+    const confirmed = window.confirm(`Remove ${reg.boat_name} (${reg.sail_number}) from the waitlist?`);
+    if (!confirmed) return;
+    setRemovingId(reg.id);
+    try {
+      await api.delete(`/registrations/${reg.id}`, user.token);
+      await loadWaitlist();
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
   const [cleaningUp, setCleaningUp] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -299,9 +313,17 @@ export default function Registrations({ seriesId, seriesName }) {
                     <button
                       className="btn-secondary"
                       onClick={() => promote(r.id)}
-                      disabled={promotingId === r.id}
+                      disabled={promotingId === r.id || removingId === r.id}
                     >
                       {promotingId === r.id ? "Promoting..." : "↑ Promote"}
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      onClick={() => removeFromWaitlist(r)}
+                      disabled={promotingId === r.id || removingId === r.id}
+                      style={{ marginLeft: "0.5rem", color: "#c53030" }}
+                    >
+                      {removingId === r.id ? "Removing..." : "✕ Remove"}
                     </button>
                   </td>
                 </tr>

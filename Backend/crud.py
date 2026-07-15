@@ -265,6 +265,15 @@ def get_waitlist(db: Session, series_id: int):
     ).order_by(models.Registration.created_at).all()
 
 
+def delete_registration(db: Session, registration_id: int):
+    reg = db.query(models.Registration).filter(models.Registration.id == registration_id).first()
+    if not reg:
+        return False
+    db.delete(reg)
+    db.commit()
+    return True
+
+
 def promote_registration(db: Session, registration_id: int):
     reg = db.query(models.Registration).filter(models.Registration.id == registration_id).first()
     if not reg:
