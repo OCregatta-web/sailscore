@@ -73,6 +73,15 @@ def update_boat(db: Session, boat_id: int, boat: schemas.BoatCreate):
 
 def delete_boat(db: Session, boat_id: int):
     db_boat = get_boat(db, boat_id)
+    if not db_boat:
+        return
+    # Deleting a boat from the fleet should also remove its registration
+    # record, so the Registrations admin page stays in sync with who's
+    # actually in the fleet (e.g. test boats removed during setup).
+    db.query(models.Registration).filter(
+        models.Registration.series_id == db_boat.series_id,
+        models.Registration.sail_number == db_boat.sail_number
+    ).delete()
     db.delete(db_boat)
     db.commit()
 
@@ -244,6 +253,28 @@ def promote_registration(db: Session, registration_id: int):
     db.refresh(reg)
     _sync_boat_from_registration(db, reg, reg.series_id)
     return reg
+
+
+def find_stale_registrations(db: Session, series_id: int):
+    """Confirmed (non-waitlist) registrations whose boat no longer exists in
+    the fleet — e.g. test boats that were deleted from Fleet Manager before
+    boat deletion also cleaned up the registration record."""
+    boat_sail_numbers = {b.sail_number for b in get_boats(db, series_id)}
+    return [
+        r for r in db.query(models.Registration).filter(
+            models.Registration.series_id == series_id,
+            models.Registration.is_waitlist == False
+        ).all()
+        if r.sail_number not in boat_sail_numbers
+    ]
+
+
+def cleanup_stale_registrations(db: Session, series_id: int):
+    stale = find_stale_registrations(db, series_id)
+    for reg in stale:
+        db.delete(reg)
+    db.commit()
+    return len(stale)
 def get_series_fleets(db: Session, series_id: int):
     return db.query(models.SeriesFleet).filter(
         models.SeriesFleet.series_id == series_id

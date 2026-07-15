@@ -58,6 +58,28 @@ export default function Registrations({ seriesId, seriesName }) {
       setPromotingId(null);
     }
   };
+
+  const [cleaningUp, setCleaningUp] = useState(false);
+
+  const cleanupStale = async () => {
+    setCleaningUp(true);
+    try {
+      const stale = await api.get(`/series/${seriesId}/registrations/stale`, user.token);
+      if (stale.length === 0) {
+        alert("No stale registrations found — everything matches the fleet.");
+        return;
+      }
+      const names = stale.map(r => `${r.boat_name} (${r.sail_number})`).join("\n");
+      const confirmed = window.confirm(
+        `${stale.length} registration${stale.length !== 1 ? "s" : ""} no longer match a boat in the fleet:\n\n${names}\n\nRemove these from Registrations?`
+      );
+      if (!confirmed) return;
+      await api.post(`/series/${seriesId}/registrations/cleanup`, {}, user.token);
+      await loadRegistrations();
+    } finally {
+      setCleaningUp(false);
+    }
+  };
   const regLink = `${window.location.origin}/register?series=${seriesId}`;
   const copyLink = () => {
     navigator.clipboard.writeText(regLink);
@@ -101,6 +123,9 @@ export default function Registrations({ seriesId, seriesName }) {
               </button>
               <button className="btn-secondary" onClick={downloadCSV}>
                 ⬇ Download CSV
+              </button>
+              <button className="btn-secondary" onClick={cleanupStale} disabled={cleaningUp}>
+                {cleaningUp ? "Checking..." : "🧹 Clean Up Stale Entries"}
               </button>
             </>
           )}

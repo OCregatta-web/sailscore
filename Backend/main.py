@@ -403,6 +403,15 @@ def promote_registration(series_id: int, registration_id: int, db: Session = Dep
         raise HTTPException(404, "Registration not found")
     return result
 
+@app.get("/series/{series_id}/registrations/stale", response_model=List[schemas.RegistrationOut])
+def preview_stale_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.find_stale_registrations(db, series_id)
+
+@app.post("/series/{series_id}/registrations/cleanup")
+def cleanup_stale_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    removed = crud.cleanup_stale_registrations(db, series_id)
+    return {"removed": removed}
+
 # ── Demo Reset ────────────────────────────────────────────────────────────────
 DEMO_SERIES_NAME = "Lake Breeze Open Regatta"
 DEMO_SERIES_SEASON = "2026"
