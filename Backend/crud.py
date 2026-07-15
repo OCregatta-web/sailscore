@@ -138,30 +138,10 @@ def delete_finish(db: Session, finish_id: int):
     f = db.query(models.Finish).filter(models.Finish.id == finish_id).first()
     db.delete(f)
     db.commit()
-def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id: int):
-    # Check for existing registration with same sail number
-    existing_reg = db.query(models.Registration).filter(
-        models.Registration.series_id == series_id,
-        models.Registration.sail_number == reg.sail_number
-    ).first()
-
-    if existing_reg:
-        # Update existing registration
-        for k, v in reg.model_dump().items():
-            setattr(existing_reg, k, v)
-        db.commit()
-        db.refresh(existing_reg)
-        db_reg = existing_reg
-    else:
-        # Create new registration
-        db_reg = models.Registration(
-            series_id=series_id, **reg.model_dump()
-        )
-        db.add(db_reg)
-        db.commit()
-        db.refresh(db_reg)
-
-    # Update or create boat in fleet
+def _sync_boat_from_registration(db: Session, reg, series_id: int):
+    """Create/update the boat in the fleet and enter it (as DNS) in existing
+    races. Shared by create_registration and promote_registration — only
+    ever called for non-waitlisted registrations."""
     existing_boat = db.query(models.Boat).filter(
         models.Boat.series_id == series_id,
         models.Boat.sail_number == reg.sail_number
@@ -206,12 +186,64 @@ def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id:
                 corrected_seconds=None
             ))
     db.commit()
+    return boat_id
 
+
+def create_registration(db: Session, reg: schemas.RegistrationCreate, series_id: int):
+    # Check for existing registration with same sail number
+    existing_reg = db.query(models.Registration).filter(
+        models.Registration.series_id == series_id,
+        models.Registration.sail_number == reg.sail_number
+    ).first()
+
+    if existing_reg:
+        # Update existing registration
+        for k, v in reg.model_dump().items():
+            setattr(existing_reg, k, v)
+        db.commit()
+        db.refresh(existing_reg)
+        db_reg = existing_reg
+    else:
+        # Create new registration
+        db_reg = models.Registration(
+            series_id=series_id, **reg.model_dump()
+        )
+        db.add(db_reg)
+        db.commit()
+        db.refresh(db_reg)
+
+    # Waitlisted registrations are held for later promotion — they don't
+    # get a boat added to the fleet or entered into races yet.
+    if db_reg.is_waitlist:
+        return db_reg
+
+    _sync_boat_from_registration(db, db_reg, series_id)
     return db_reg
+
+
 def get_registrations(db: Session, series_id: int):
     return db.query(models.Registration).filter(
-        models.Registration.series_id == series_id
+        models.Registration.series_id == series_id,
+        models.Registration.is_waitlist == False
     ).order_by(models.Registration.boat_name).all()
+
+
+def get_waitlist(db: Session, series_id: int):
+    return db.query(models.Registration).filter(
+        models.Registration.series_id == series_id,
+        models.Registration.is_waitlist == True
+    ).order_by(models.Registration.created_at).all()
+
+
+def promote_registration(db: Session, registration_id: int):
+    reg = db.query(models.Registration).filter(models.Registration.id == registration_id).first()
+    if not reg:
+        return None
+    reg.is_waitlist = False
+    db.commit()
+    db.refresh(reg)
+    _sync_boat_from_registration(db, reg, reg.series_id)
+    return reg
 def get_series_fleets(db: Session, series_id: int):
     return db.query(models.SeriesFleet).filter(
         models.SeriesFleet.series_id == series_id

@@ -291,7 +291,12 @@ def registration_info(series_id: int, db: Session = Depends(get_db)):
     series = db.query(models.Series).filter(models.Series.id == series_id).first()
     if not series:
         raise HTTPException(404, "Series not found")
-    return {"series_id": series.id, "series_name": series.name, "season": series.season}
+    return {
+        "series_id": series.id,
+        "series_name": series.name,
+        "season": series.season,
+        "registration_closed": series.registration_closed,
+    }
 
 @app.get("/register/{series_id}/registrations")
 def public_registrations(series_id: int, db: Session = Depends(get_db)):
@@ -303,6 +308,17 @@ async def submit_registration(series_id: int, reg: schemas.RegistrationCreate, d
         series = db.query(models.Series).filter(models.Series.id == series_id).first()
         if not series:
             raise HTTPException(404, "Series not found")
+        # Registration being closed always wins over whatever the client sent —
+        # this is the actual enforcement point, the frontend toggle is just UX.
+        # Exception: someone already confirmed (not waitlisted) editing their
+        # own details shouldn't get bumped onto the waitlist by this.
+        existing_reg = db.query(models.Registration).filter(
+            models.Registration.series_id == series_id,
+            models.Registration.sail_number == reg.sail_number
+        ).first()
+        already_confirmed = existing_reg is not None and not existing_reg.is_waitlist
+        if series.registration_closed and not reg.is_waitlist and not already_confirmed:
+            reg = reg.model_copy(update={"is_waitlist": True})
         result = crud.create_registration(db, reg, series_id)
         threading.Thread(target=send_registration_email, args=(reg, series.name), daemon=True).start()
         return result
@@ -318,7 +334,8 @@ def send_registration_email(reg, series_name: str):
     try:
         import resend
         resend.api_key = api_key
-        body = f"""New boat registration received for {series_name}:
+        label = "New WAITLIST entry" if reg.is_waitlist else "New boat registration"
+        body = f"""{label} received for {series_name}:
 
 Boat Name:   {reg.boat_name}
 Sail Number: {reg.sail_number}
@@ -333,7 +350,7 @@ Boat Class:  {reg.boat_class or 'N/A'}
         params = {
             "from": "OC Regatta <noreply@ocregatta.com>",
             "to": ["alex@mcmillin.ca"],
-            "subject": f"New Registration: {reg.boat_name} — {series_name}",
+            "subject": f"{label}: {reg.boat_name} — {series_name}",
             "text": body,
         }
         response = resend.Emails.send(params)
@@ -374,6 +391,17 @@ def clear_registrations(series_id: int, db: Session = Depends(get_db), current_u
 @app.get("/series/{series_id}/registrations", response_model=List[schemas.RegistrationOut])
 def list_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     return crud.get_registrations(db, series_id)
+
+@app.get("/series/{series_id}/waitlist", response_model=List[schemas.RegistrationOut])
+def list_waitlist(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    return crud.get_waitlist(db, series_id)
+
+@app.post("/series/{series_id}/registrations/{registration_id}/promote", response_model=schemas.RegistrationOut)
+def promote_registration(series_id: int, registration_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    result = crud.promote_registration(db, registration_id)
+    if not result:
+        raise HTTPException(404, "Registration not found")
+    return result
 
 # ── Demo Reset ────────────────────────────────────────────────────────────────
 DEMO_SERIES_NAME = "Lake Breeze Open Regatta"

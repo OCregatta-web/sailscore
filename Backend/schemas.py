@@ -32,12 +32,14 @@ class SeriesCreate(BaseModel):
     name: str
     season: Optional[str] = None
     throwouts: int = 0
+    registration_closed: bool = False
 
 class SeriesOut(BaseModel):
     id: int
     name: str
     season: Optional[str]
     throwouts: int
+    registration_closed: bool = False
     owner_id: int
     class Config:
         from_attributes = True
@@ -149,6 +151,7 @@ class RegistrationCreate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     boat_class: Optional[str] = None
+    is_waitlist: bool = False
 
 class RegistrationOut(BaseModel):
     id: int
@@ -162,6 +165,7 @@ class RegistrationOut(BaseModel):
     email: Optional[str]
     phone: Optional[str]
     boat_class: Optional[str]
+    is_waitlist: bool = False
     created_at: Optional[datetime] = None
     class Config:
         from_attributes = True
