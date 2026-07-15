@@ -13,6 +13,7 @@ export default function Register() {
     email: "", phone: "", boat_class: "",
   });
   const [submitted, setSubmitted] = useState(false);
+  const [wasWaitlist, setWasWaitlist] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [registrations, setRegistrations] = useState([]);
@@ -61,6 +62,8 @@ export default function Register() {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
+  const closed = !!seriesInfo?.registration_closed;
+
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -69,12 +72,13 @@ export default function Register() {
       const res = await fetch(`${BASE}/register/${seriesId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, phrf_rating: Number(form.phrf_rating) }),
+        body: JSON.stringify({ ...form, phrf_rating: Number(form.phrf_rating), is_waitlist: closed }),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.detail || "Registration failed");
       }
+      setWasWaitlist(closed);
       setSubmitted(true);
       fetchRegistrations();
     } catch (err) {
@@ -108,12 +112,16 @@ export default function Register() {
     <div className="reg-page">
       <div className="reg-card">
         <div className="reg-header">
-          <div className="reg-logo">🎉</div>
-          <h1 className="reg-title">You're Registered!</h1>
+          <div className="reg-logo">{wasWaitlist ? "⏳" : "🎉"}</div>
+          <h1 className="reg-title">{wasWaitlist ? "You're on the Waitlist!" : "You're Registered!"}</h1>
           <p className="reg-subtitle">{seriesInfo.series_name} {seriesInfo.season}</p>
         </div>
         <div className="reg-success">
-          <p>Your boat has been added to the fleet. See you on the water!</p>
+          <p>
+            {wasWaitlist
+              ? "The fleet is currently full. We'll reach out by email or phone if a spot opens up."
+              : "Your boat has been added to the fleet. See you on the water!"}
+          </p>
           <div className="reg-summary">
             <div className="reg-summary-row"><span>Boat</span><strong>{form.boat_name}</strong></div>
             <div className="reg-summary-row"><span>Sail #</span><strong>{form.sail_number}</strong></div>
@@ -136,9 +144,15 @@ export default function Register() {
           <div className="reg-logo">⛵</div>
           <h1 className="reg-title">{seriesInfo.series_name}</h1>
           <p className="reg-subtitle">
-            {seriesInfo.season && `${seriesInfo.season} · `}Boat Registration
+            {seriesInfo.season && `${seriesInfo.season} · `}{closed ? "Waitlist" : "Boat Registration"}
           </p>
         </div>
+
+        {closed && (
+          <div className="reg-closed-banner" style={{ background: "#fff8e1", border: "1px solid #f0d878", borderRadius: "8px", padding: "0.85rem 1rem", marginBottom: "1.25rem", color: "#7a5c00", fontSize: "0.9rem" }}>
+            ⏳ Registration is currently full. Fill out the form below to join the waitlist — we'll be in touch if a spot opens up.
+          </div>
+        )}
 
         <form onSubmit={submit} className="reg-form">
           <div className="reg-section-title">Boat Information</div>
@@ -205,7 +219,7 @@ export default function Register() {
           {error && <div className="form-error">{error}</div>}
 
           <button type="submit" className="btn-primary btn-full" disabled={saving}>
-            {saving ? "Registering..." : "Register My Boat"}
+            {saving ? (closed ? "Joining Waitlist..." : "Registering...") : (closed ? "Join Waitlist" : "Register My Boat")}
           </button>
 
           <a href="/regatta" style={{ display: "block", textAlign: "center", marginTop: "0.75rem", padding: "0.75rem", borderRadius: "8px", border: "1px solid #cbd5e0", color: "#4a5568", textDecoration: "none", fontWeight: 600, fontSize: "0.95rem" }}>
