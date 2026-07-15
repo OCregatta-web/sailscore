@@ -62,7 +62,8 @@ export default function Register() {
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  const closed = !!seriesInfo?.registration_closed;
+  const closed = !!seriesInfo?.registration_closed
+    || new URLSearchParams(window.location.search).get("waitlist") === "1";
 
   const submit = async (e) => {
     e.preventDefault();

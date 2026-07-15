@@ -179,6 +179,12 @@ export default function Regatta() {
                 Thank you to all boats that have registered for the 2026 OC Regatta. We are now full!
               </p>
               <div style={{ ...styles.freeRegatta, background: "#fff3f3", borderColor: "#e53e3e", color: "#c53030" }}>🚫 Registration is now closed. We are now full.</div>
+              <a
+                href={`https://sailscore.vercel.app/register?series=${REGATTA_SERIES_ID}&waitlist=1`}
+                style={{ ...styles.registerBtn, background: "#FFD166", color: "#1a1a2e", marginBottom: "1rem", display: "block", width: "fit-content" }}
+              >
+                ⏳ Join the Waitlist
+              </a>
               <ul style={styles.registerList}>
                 <li>✅ Online registration</li>
                 <li>✅ Fleet assignment by Aug 10</li>
