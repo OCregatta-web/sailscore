@@ -23,13 +23,20 @@ export default function Registrations({ seriesId, seriesName }) {
 
   const toggleRegistrationClosed = async () => {
     if (!series) return;
+    const closing = !series.registration_closed;
+    const confirmed = window.confirm(
+      closing
+        ? "Close registration? New signups will go to the waitlist instead of the fleet."
+        : "Reopen registration? New signups will be added directly to the fleet again."
+    );
+    if (!confirmed) return;
     setTogglingClosed(true);
     try {
       const updated = await api.put(`/series/${seriesId}`, {
         name: series.name,
         season: series.season,
         throwouts: series.throwouts,
-        registration_closed: !series.registration_closed,
+        registration_closed: closing,
       }, user.token);
       setSeries(updated);
     } finally {
@@ -92,33 +99,63 @@ export default function Registrations({ seriesId, seriesName }) {
               </button>
             </>
           )}
-          {series && (
-            <button
-              className="btn-secondary"
-              onClick={toggleRegistrationClosed}
-              disabled={togglingClosed}
-              style={series.registration_closed ? { background: "#fff8e1", borderColor: "#f0d878", color: "#7a5c00" } : undefined}
-            >
-              {togglingClosed
-                ? "Updating..."
-                : series.registration_closed
-                  ? "🔒 Registration Closed — Reopen"
-                  : "🔓 Registration Open — Close"}
-            </button>
-          )}
           <button className="btn-secondary" onClick={() => navigate("fleet", { seriesId, seriesName })}>
             View Fleet →
           </button>
         </div>
       </div>
+      {/* Registration status */}
+      {series && (
+        <div
+          className="reg-link-card"
+          style={{
+            background: series.registration_closed ? "#fff8e1" : "#f0fdf9",
+            border: `1px solid ${series.registration_closed ? "#f0d878" : "#b7ebde"}`,
+          }}
+        >
+          <div className="reg-link-info">
+            <div className="reg-link-title">
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "0.15rem 0.6rem",
+                  borderRadius: "20px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  marginRight: "0.5rem",
+                  color: "white",
+                  background: series.registration_closed ? "#c53030" : "#06b58a",
+                }}
+              >
+                {series.registration_closed ? "CLOSED" : "OPEN"}
+              </span>
+              Registration is currently {series.registration_closed ? "closed" : "open"}
+            </div>
+            <div className="reg-link-desc">
+              {series.registration_closed
+                ? "New skippers are being added to the waitlist instead of the fleet."
+                : "Skippers who use your link are added straight to the fleet."}
+            </div>
+          </div>
+          <button
+            className="btn-secondary"
+            onClick={toggleRegistrationClosed}
+            disabled={togglingClosed}
+          >
+            {togglingClosed
+              ? "Updating..."
+              : series.registration_closed
+                ? "Reopen Registration"
+                : "Close Registration"}
+          </button>
+        </div>
+      )}
       {/* Registration link */}
       <div className="reg-link-card">
         <div className="reg-link-info">
           <div className="reg-link-title">📋 Skipper Registration Link</div>
           <div className="reg-link-desc">
-            {series?.registration_closed
-              ? "Registration is closed — skippers using this link will be added to the waitlist instead."
-              : "Share this link with skippers to self-register. Their boat is automatically added to the fleet."}
+            Share this link with skippers to self-register.
           </div>
           <div className="reg-link-url">{regLink}</div>
         </div>
