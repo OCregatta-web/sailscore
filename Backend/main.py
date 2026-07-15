@@ -412,6 +412,24 @@ def cleanup_stale_registrations(series_id: int, db: Session = Depends(get_db), c
     removed = crud.cleanup_stale_registrations(db, series_id)
     return {"removed": removed}
 
+@app.get("/series/{series_id}/registrations/mismatched")
+def preview_mismatched_registrations(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    pairs = crud.find_mismatched_registrations(db, series_id)
+    return [
+        {
+            "registration_id": r.id,
+            "sail_number": r.sail_number,
+            "old_boat_name": r.boat_name,
+            "new_boat_name": b.boat_name,
+        }
+        for r, b in pairs
+    ]
+
+@app.post("/series/{series_id}/registrations/sync")
+def sync_registrations_with_fleet(series_id: int, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
+    updated = crud.sync_registrations_with_fleet(db, series_id)
+    return {"updated": updated}
+
 # ── Demo Reset ────────────────────────────────────────────────────────────────
 DEMO_SERIES_NAME = "Lake Breeze Open Regatta"
 DEMO_SERIES_SEASON = "2026"

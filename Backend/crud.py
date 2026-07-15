@@ -65,10 +65,31 @@ def get_boat(db: Session, boat_id: int):
 
 def update_boat(db: Session, boat_id: int, boat: schemas.BoatCreate):
     db_boat = get_boat(db, boat_id)
+    if not db_boat:
+        return None
+    old_sail_number = db_boat.sail_number
     for k, v in boat.model_dump().items():
         setattr(db_boat, k, v)
     db.commit()
     db.refresh(db_boat)
+
+    # Keep the matching registration record in sync with edits made in
+    # Fleet Manager (boat name, class, rating, sail number, etc.), so the
+    # Registrations page doesn't keep showing the original signup details.
+    reg = db.query(models.Registration).filter(
+        models.Registration.series_id == db_boat.series_id,
+        models.Registration.sail_number == old_sail_number
+    ).first()
+    if reg:
+        reg.boat_name = db_boat.boat_name
+        reg.sail_number = db_boat.sail_number
+        reg.skipper = db_boat.skipper
+        reg.phrf_rating = db_boat.phrf_rating
+        reg.fleet = db_boat.fleet
+        reg.boat_class = db_boat.boat_class
+        reg.club = db_boat.club
+        db.commit()
+
     return db_boat
 
 def delete_boat(db: Session, boat_id: int):
@@ -255,7 +276,37 @@ def promote_registration(db: Session, registration_id: int):
     return reg
 
 
-def find_stale_registrations(db: Session, series_id: int):
+def find_mismatched_registrations(db: Session, series_id: int):
+    """Confirmed registrations whose boat still exists in the fleet, but
+    whose stored details (name, class, rating, etc.) have drifted out of
+    sync — e.g. edits made directly in Fleet Manager."""
+    boats_by_sail = {b.sail_number: b for b in get_boats(db, series_id)}
+    pairs = []
+    for r in db.query(models.Registration).filter(
+        models.Registration.series_id == series_id,
+        models.Registration.is_waitlist == False
+    ).all():
+        b = boats_by_sail.get(r.sail_number)
+        if b and (
+            r.boat_name != b.boat_name or r.skipper != b.skipper or
+            r.phrf_rating != b.phrf_rating or r.fleet != b.fleet or
+            r.boat_class != b.boat_class or r.club != b.club
+        ):
+            pairs.append((r, b))
+    return pairs
+
+
+def sync_registrations_with_fleet(db: Session, series_id: int):
+    pairs = find_mismatched_registrations(db, series_id)
+    for r, b in pairs:
+        r.boat_name = b.boat_name
+        r.skipper = b.skipper
+        r.phrf_rating = b.phrf_rating
+        r.fleet = b.fleet
+        r.boat_class = b.boat_class
+        r.club = b.club
+    db.commit()
+    return len(pairs)
     """Confirmed (non-waitlist) registrations whose boat no longer exists in
     the fleet — e.g. test boats that were deleted from Fleet Manager before
     boat deletion also cleaned up the registration record."""

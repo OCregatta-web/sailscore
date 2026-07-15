@@ -60,6 +60,7 @@ export default function Registrations({ seriesId, seriesName }) {
   };
 
   const [cleaningUp, setCleaningUp] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   const cleanupStale = async () => {
     setCleaningUp(true);
@@ -78,6 +79,26 @@ export default function Registrations({ seriesId, seriesName }) {
       await loadRegistrations();
     } finally {
       setCleaningUp(false);
+    }
+  };
+
+  const syncWithFleet = async () => {
+    setSyncing(true);
+    try {
+      const mismatched = await api.get(`/series/${seriesId}/registrations/mismatched`, user.token);
+      if (mismatched.length === 0) {
+        alert("Everything's already in sync with the fleet.");
+        return;
+      }
+      const changes = mismatched.map(m => `${m.sail_number}: "${m.old_boat_name}" → "${m.new_boat_name}"`).join("\n");
+      const confirmed = window.confirm(
+        `${mismatched.length} registration${mismatched.length !== 1 ? "s" : ""} out of sync with the fleet:\n\n${changes}\n\nUpdate Registrations to match the fleet?`
+      );
+      if (!confirmed) return;
+      await api.post(`/series/${seriesId}/registrations/sync`, {}, user.token);
+      await loadRegistrations();
+    } finally {
+      setSyncing(false);
     }
   };
   const regLink = `${window.location.origin}/register?series=${seriesId}`;
@@ -126,6 +147,9 @@ export default function Registrations({ seriesId, seriesName }) {
               </button>
               <button className="btn-secondary" onClick={cleanupStale} disabled={cleaningUp}>
                 {cleaningUp ? "Checking..." : "🧹 Clean Up Stale Entries"}
+              </button>
+              <button className="btn-secondary" onClick={syncWithFleet} disabled={syncing}>
+                {syncing ? "Checking..." : "🔄 Sync with Fleet"}
               </button>
             </>
           )}
