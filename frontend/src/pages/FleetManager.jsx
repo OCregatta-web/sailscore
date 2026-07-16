@@ -235,6 +235,7 @@ export default function FleetManager({ seriesId, seriesName }) {
           <td>${b.fleet || '—'}</td>
           <td>${b.phrf_rating}</td>
           <td>${b.boat_class || '—'}</td>
+          <td>${b.club || '—'}</td>
         </tr>
       `).join('');
     printWindow.document.write(`<!DOCTYPE html><html><head><title>${seriesName} — Entry List</title>
@@ -249,7 +250,7 @@ export default function FleetManager({ seriesId, seriesName }) {
       tr.even td { background: #f9f9f9; }</style></head><body>
       <div class="header"><div class="title">${seriesName}</div><div class="subtitle">Official Entry List</div>
       <div class="meta">${boats.length} boat${boats.length !== 1 ? 's' : ''} registered · Printed ${today}</div></div>
-      <table><thead><tr><th>#</th><th>Sail #</th><th>Boat Name</th><th>Skipper</th><th>Fleet</th><th>PHRF</th><th>Class</th></tr></thead>
+      <table><thead><tr><th>#</th><th>Sail #</th><th>Boat Name</th><th>Skipper</th><th>Fleet</th><th>PHRF</th><th>Class</th><th>Club</th></tr></thead>
       <tbody>${rows}</tbody></table>
       <script>window.onload = function() { window.print(); }<\/script></body></html>`);
     printWindow.document.close();
