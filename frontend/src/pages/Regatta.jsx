@@ -34,7 +34,6 @@ const REGATTA_SERIES_ID = 3;
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const updates = [
-  { date: "March 20", text: "Notice of Race now available!", link: "/nor", linkText: "View NOR →" },
   { date: "July 13", text: "🎉 THE 2026 OC REGATTA IS NOW FULL!", bold: true },
   { date: "July 2", text: "Introducing the OC Regatta SailScoring system. Getting results to you online faster. Live updates between races!" },
 ];
