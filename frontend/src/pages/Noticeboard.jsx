@@ -5,13 +5,6 @@
 
 const NOTICES = [
   {
-    type: "announcement",
-    date: "March 20, 2026",
-    title: "Registration is Now Open!",
-    message: "Online registration is now open for the 2026 Oakville Club Open Regatta. Register at ocregatta.com. Limited to 50 boats — first come, first served.",
-    docUrl: null,
-  },
-  {
     type: "document",
     date: "March 20, 2026",
     title: "Notice of Race Available",
@@ -23,6 +16,13 @@ const NOTICES = [
     date: "June 9, 2026",
     title: "Introducing SailScore — Our New Registration & Scoring System",
     message: "The OC Regatta is very excited to be introducing SailScore, a newly developed registration and scoring system built specifically for the OC Regatta. We recognized the need to provide easier, more accurate, and faster scoring results. Our goal was to come up with something that could provide virtually real-time scoring for both around the cans and distance racing. We believe we have done it.\n\nFor around the cans, SailScore can record finish time, calculate elapsed time, calculate corrected time and post fleet results immediately after a race has been completed. These results will be viewable online immediately.\n\nFor distance racing (pursuit style), SailScore will calculate starting times based on PHRF rating and course distance using the ToD calculator. Competitors will download a virtual finish line using GPS tracking on the skipper's cellphone and SailScore will monitor the boat's position and be notified when it crosses the finish line. SailScore will automatically update the results in real-time online.\n\nMore details will be coming in the next few weeks with links and more information on exactly how it all works.",
+    docUrl: null,
+  },
+  {
+    type: "announcement",
+    date: "July 17, 2026",
+    title: "2026 OC Regatta is FULL!",
+    message: "We are very proud to announce we are once again fully subscribed, actually over subscribed, we have 52 boats registered in 7 fleets. It's going to be another fantastic OC Regatta!",
     docUrl: null,
   },
 ];
