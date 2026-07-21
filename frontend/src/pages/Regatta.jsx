@@ -296,14 +296,14 @@ export default function Regatta() {
             <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
               <img src={sponsorNND} alt="Nurse Next Door" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
             </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
+              <img src={sponsorLD} alt="LD Landscape & Renovation" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
             <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
               <img src={sponsorKerrStreet} alt="Kerr St Cafe" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
             </div>
             <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
               <img src={sponsorRRG} alt="ReSearch Recruitment Group" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
-            </div>
-            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
-              <img src={sponsorLD} alt="LD Landscape & Renovation" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
             </div>
           </div>
           <div style={styles.sponsorCta}>
