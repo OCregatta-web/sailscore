@@ -345,7 +345,7 @@ export default function Regatta() {
             <div style={styles.contactAvatar}>AM</div>
             <div style={styles.contactInfo}>
               <div style={styles.contactName}>Alex McMillin</div>
-              <div style={styles.contactRole}>Race Officer & Event Organizer</div>
+              <div style={styles.contactRole}>Event Organizer</div>
               <a href="mailto:alex@mcmillin.ca" style={styles.contactEmail}>alex@mcmillin.ca</a>
             </div>
           </div>
