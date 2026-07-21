@@ -157,6 +157,31 @@ export default function Regatta() {
 
       <div style={styles.container}>
 
+        {/* Sponsors */}
+        <section id="sponsors" style={styles.section}>
+          <SectionHeader emoji="🤝" title="Our Sponsors" color="#118AB2" />
+          <div style={styles.sponsorsGrid}>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
+              <img src={sponsorOC} alt="The Oakville Club" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
+              <img src={sponsorNND} alt="Nurse Next Door" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
+              <img src={sponsorLD} alt="LD Landscape & Renovation" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
+              <img src={sponsorKerrStreet} alt="Kerr St Cafe" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
+              <img src={sponsorRRG} alt="ReSearch Recruitment Group" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+          </div>
+          <div style={styles.sponsorCta}>
+            <p>Interested in sponsoring? <a href="mailto:alex@mcmillin.ca" style={styles.sponsorLink}>Get in touch →</a></p>
+          </div>
+        </section>
+
         {/* Schedule */}
         <section id="schedule" style={styles.section}>
           <SectionHeader emoji="🗓" title="Race Day Schedule" color="#FF6B35" />
@@ -283,31 +308,6 @@ export default function Regatta() {
                 <img src={src} alt={`Past regatta photo ${i + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "12px", display: "block" }} />
               </div>
             ))}
-          </div>
-        </section>
-
-        {/* Sponsors */}
-        <section id="sponsors" style={styles.section}>
-          <SectionHeader emoji="🤝" title="Our Sponsors" color="#118AB2" />
-          <div style={styles.sponsorsGrid}>
-            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-              <img src={sponsorOC} alt="The Oakville Club" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
-            </div>
-            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
-              <img src={sponsorNND} alt="Nurse Next Door" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
-            </div>
-            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
-              <img src={sponsorLD} alt="LD Landscape & Renovation" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
-            </div>
-            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-              <img src={sponsorKerrStreet} alt="Kerr St Cafe" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
-            </div>
-            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
-              <img src={sponsorRRG} alt="ReSearch Recruitment Group" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
-            </div>
-          </div>
-          <div style={styles.sponsorCta}>
-            <p>Interested in sponsoring? <a href="mailto:alex@mcmillin.ca" style={styles.sponsorLink}>Get in touch →</a></p>
           </div>
         </section>
 
