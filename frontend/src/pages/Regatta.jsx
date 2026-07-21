@@ -4,6 +4,8 @@ import mapImg from "../assets/map.jpg";
 import sponsorNND from "../assets/sponsor-nnd.png";
 import sponsorOC from "../assets/sponsor-oc.png";
 import sponsorKerrStreet from "../assets/sponsor-kerr-street-cafe.png";
+import sponsorRRG from "../assets/sponsor-rrg.png";
+import sponsorLD from "../assets/sponsor-ld-landscape.png";
 
 import photo1 from "../assets/allegro-2.jpg";
 import photo2 from "../assets/Blackbird2.jpg";
@@ -296,6 +298,12 @@ export default function Regatta() {
             </div>
             <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
               <img src={sponsorKerrStreet} alt="Kerr St Cafe" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem" }}>
+              <img src={sponsorRRG} alt="ReSearch Recruitment Group" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
+            </div>
+            <div style={{ ...styles.sponsorCard, ...sponsorStyles["platinum"], display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", background: "#111" }}>
+              <img src={sponsorLD} alt="LD Landscape & Renovation" style={{ maxHeight: "80px", maxWidth: "100%", objectFit: "contain" }} />
             </div>
           </div>
           <div style={styles.sponsorCta}>
