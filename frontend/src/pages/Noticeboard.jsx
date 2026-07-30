@@ -25,6 +25,20 @@ const NOTICES = [
     message: "We are very proud to announce we are once again fully subscribed, actually over subscribed, we have 52 boats registered in 7 fleets. It's going to be another fantastic OC Regatta!",
     docUrl: null,
   },
+  {
+    type: "announcement",
+    date: "July 30, 2026",
+    title: "Dinner Tickets Now Available!",
+    message: "Dinner tickets are now available for purchase. We are bringing back our famous southwest chicken fajitas, assorted cold salads, fries, and more. Cost is $40/person.\n\nTo order your tickets — which will be included in your race kit at registration Friday evening — contact Shelley Trauzzi at 905-845-0231 ext. 0. Payment must be made at the time of order. Please include your boat name when ordering.\n\nFor each ticket purchased you get an entry into the Yeti prize package courtesy of Nurse Next Door.",
+    docUrl: null,
+  },
+  {
+    type: "announcement",
+    date: "July 30, 2026",
+    title: "Dock Slip Requests for the Weekend",
+    message: "To request a slip for the weekend, please contact Paul Carter (pcarter@oakvilleclub.com). Preference will be given to boats coming from outside the Oakville area.",
+    docUrl: null,
+  },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
