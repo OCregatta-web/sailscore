@@ -289,6 +289,68 @@ const applyFleetStartTime = (fleetName, startTime) => {
   };
   const pursuitStarts = isDistance ? calcPursuitStarts() : [];
 
+  // ── Print Scoring Sheets ─────────────────────────────────────────────────
+  const printScoringSheets = () => {
+    const printWindow = window.open('', '_blank');
+    const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+
+    const fleetGroups = visibleBoats.reduce((groups, boat) => {
+      const fleet = boat.fleet || "NFS";
+      if (!groups[fleet]) groups[fleet] = [];
+      groups[fleet].push(boat);
+      return groups;
+    }, {});
+
+    const fleetBlocks = Object.entries(fleetGroups).map(([fleetName, fleetBoats], idx, arr) => {
+      const rows = fleetBoats
+        .slice()
+        .sort((a, b) => (a.sail_number || "").localeCompare(b.sail_number || "", undefined, { numeric: true }))
+        .map((b, i) => `
+          <tr class="${i % 2 === 0 ? 'even' : 'odd'}">
+            <td><strong>${b.sail_number}</strong></td>
+            <td>${b.boat_name}</td>
+            <td class="blank-cell"></td>
+          </tr>
+        `).join('');
+      return `
+        <div class="fleet-block" ${idx < arr.length - 1 ? 'style="page-break-after: always;"' : ''}>
+          <div class="fleet-header">
+            <div class="fleet-name">${fleetName} Fleet</div>
+            <div class="start-time-box">Fleet Start Time: <span class="fill-line"></span></div>
+          </div>
+          <table>
+            <thead><tr><th>Sail #</th><th>Boat Name</th><th>Finish Time</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><title>${seriesName} — Race ${selectedRace.race_number} Scoring Sheets</title>
+      <style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: Arial, sans-serif; font-size: 13px; padding: 1.5cm; }
+      .header { text-align: center; margin-bottom: 1.25rem; border-bottom: 2px solid #000; padding-bottom: 1rem; }
+      .title { font-size: 22px; font-weight: 800; margin-bottom: 0.25rem; }
+      .subtitle { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 0.25rem; }
+      .meta { font-size: 11px; color: #666; }
+      .fleet-block { margin-bottom: 2rem; }
+      .fleet-header { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 0.75rem; }
+      .fleet-name { font-size: 18px; font-weight: 800; text-transform: uppercase; }
+      .start-time-box { font-size: 13px; font-weight: 600; }
+      .fill-line { display: inline-block; width: 140px; border-bottom: 1px solid #000; margin-left: 6px; }
+      table { width: 100%; border-collapse: collapse; }
+      th { background: #000; color: #fff; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; }
+      td { padding: 10px; border-bottom: 1px solid #ddd; }
+      tr.even td { background: #f9f9f9; }
+      .blank-cell { border-bottom: 1px solid #999; }
+      </style></head><body>
+      <div class="header"><div class="title">${seriesName}</div>
+      <div class="subtitle">Race ${selectedRace.race_number}${selectedRace.name ? ' — ' + selectedRace.name : ''} — Scoring Sheet</div>
+      <div class="meta">${selectedRace.race_date || ''} · Printed ${today}</div></div>
+      ${fleetBlocks}
+      <script>window.onload = function() { window.print(); }<\\/script></body></html>`);
+    printWindow.document.close();
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -349,6 +411,7 @@ const applyFleetStartTime = (fleetName, startTime) => {
                   </div>
                 </div>
                 <div className="race-entry-actions">
+                  <button className="btn-secondary" onClick={printScoringSheets}>🖨 Print Scoring Sheets</button>
                   <button className="btn-ghost-sm" onClick={() => openEditRace(selectedRace)}>Edit</button>
                   <button className="btn-ghost-sm danger" onClick={() => deleteRace(selectedRace.id)}>Delete</button>
                 </div>
