@@ -343,12 +343,22 @@ export default function Regatta() {
         {/* Contact */}
         <section id="contact" style={styles.section}>
           <SectionHeader emoji="✉️" title="Contact" color="#06D6A0" />
-          <div style={styles.contactCard}>
-            <div style={styles.contactAvatar}>AM</div>
-            <div style={styles.contactInfo}>
-              <div style={styles.contactName}>Alex McMillin</div>
-              <div style={styles.contactRole}>Event Organizer</div>
-              <a href="mailto:alex@mcmillin.ca" style={styles.contactEmail}>alex@mcmillin.ca</a>
+          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
+            <div style={styles.contactCard}>
+              <div style={styles.contactAvatar}>AM</div>
+              <div style={styles.contactInfo}>
+                <div style={styles.contactName}>Alex McMillin</div>
+                <div style={styles.contactRole}>Event Organizer</div>
+                <a href="mailto:alex@mcmillin.ca" style={styles.contactEmail}>alex@mcmillin.ca</a>
+              </div>
+            </div>
+            <div style={styles.contactCard}>
+              <div style={styles.contactAvatar}>PC</div>
+              <div style={styles.contactInfo}>
+                <div style={styles.contactName}>Paul Carter</div>
+                <div style={styles.contactRole}>OC Dockmaster</div>
+                <a href="mailto:pcarter@oakvilleclub.com" style={styles.contactEmail}>pcarter@oakvilleclub.com</a>
+              </div>
             </div>
           </div>
         </section>
