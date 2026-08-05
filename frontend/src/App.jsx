@@ -5,6 +5,7 @@ import Results from "./pages/Results";
 import Regatta from "./pages/Regatta";
 import NOR from "./pages/NOR";
 import Noticeboard from "./pages/Noticeboard";
+import FleetSplits from "./pages/FleetSplits";
 import Demo from "./pages/Demo";
 import Walkthrough from "./pages/Walkthrough";
 import "./pages/Results.css";
@@ -60,6 +61,7 @@ export default function App() {
   if (window.location.pathname.startsWith("/regatta")) return <Regatta />;
   if (window.location.pathname.startsWith("/nor")) return <NOR />;
   if (window.location.pathname.startsWith("/noticeboard")) return <Noticeboard />;
+  if (window.location.pathname.startsWith("/fleets")) return <FleetSplits />;
   if (window.location.pathname.startsWith("/demo")) return <Demo />;
   if (window.location.pathname.startsWith("/walkthrough")) return <Walkthrough />;
 
