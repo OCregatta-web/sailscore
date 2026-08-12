@@ -1,4 +1,6 @@
 import ocBurgee from "../assets/sponsor-oc.png";
+import appendixA from "../assets/appendix-a-course-layout.png";
+import appendixB from "../assets/appendix-b-distance-course.jpg";
 
 const sections = [
   {
@@ -211,22 +213,6 @@ const contacts = [
   { role: "OC Dock Manager", name: "Paul Carter — VHF Ch. 68 — 905-845-0231 ext. 221" },
 ];
 
-const distanceStarts = [
-  ["THAT'S IT", "Davidovic", "296", "203", "11:00:00"],
-  ["Flying Circus", "Moore", "216", "159", "11:07:33"],
-  ["RUFUS", "Miller", "4484", "150", "11:09:06"],
-  ["The Alchemist II", "Simmons", "TBA", "149", "11:09:16"],
-  ["Ching She", "Shore", "34709", "143", "11:10:18"],
-  ["Celtic Spirit", "Higginbottom", "34773", "134", "11:11:51"],
-  ["StraJedy", "Verkerk", "147", "122", "11:13:54"],
-  ["getting cyrious", "Cyr", "66", "120", "11:14:15"],
-  ["Rowboat Roo", "Dorrington", "8", "119", "11:14:25"],
-  ["Isley", "Bruce", "11", "96", "11:18:22"],
-  ["Viper", "Grigorof", "15038", "80", "11:21:07"],
-  ["Sula Sula", "Butt", "11565", "64", "11:23:52"],
-  ["Piperdoon", "Bruce", "52618", "55", "11:25:24"],
-];
-
 export default function SailingInstructions() {
   return (
     <div style={s.page}>
@@ -319,6 +305,18 @@ export default function SailingInstructions() {
           </ul>
         </div>
 
+        {/* Appendix A — Course Layout */}
+        <div style={s.section}>
+          <div style={s.sectionHeader}>
+            <span style={s.sectionNum}>A</span>
+            <h2 style={s.sectionTitle}>Appendix A — Course Layout</h2>
+          </div>
+          <p style={s.item}>
+            Windward-leeward course (all classes except Distance Race class).
+          </p>
+          <img src={appendixA} alt="Appendix A course layout diagram" style={s.diagramImg} />
+        </div>
+
         {/* Appendix B — Distance Race */}
         <div style={s.section}>
           <div style={s.sectionHeader}>
@@ -331,33 +329,7 @@ export default function SailingInstructions() {
           <p style={s.item}>
             Start/Finish line coordinates: 43.25937, -79.39812 and 43.25893, -79.39994.
           </p>
-          <p style={{ ...s.item, fontWeight: 700, marginTop: "1rem" }}>
-            Distance race start times — using PHRF-LO P2P rating system:
-          </p>
-          <div style={s.tableWrap}>
-            <table style={s.table}>
-              <thead>
-                <tr>
-                  <th style={s.th}>Boat Name</th>
-                  <th style={s.th}>Skipper</th>
-                  <th style={s.th}>Sail #</th>
-                  <th style={{ ...s.th, textAlign: "right" }}>PHRF</th>
-                  <th style={{ ...s.th, textAlign: "right" }}>Start Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                {distanceStarts.map((row, i) => (
-                  <tr key={i} style={{ background: i % 2 === 0 ? "#fff" : "#f7fafc" }}>
-                    <td style={{ ...s.td, fontWeight: 700 }}>{row[0]}</td>
-                    <td style={s.td}>{row[1]}</td>
-                    <td style={s.td}>{row[2]}</td>
-                    <td style={{ ...s.td, textAlign: "right" }}>{row[3]}</td>
-                    <td style={{ ...s.td, textAlign: "right" }}>{row[4]}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <img src={appendixB} alt="Appendix B distance race course map" style={s.diagramImg} />
         </div>
 
         <div style={s.footer}>
@@ -397,6 +369,7 @@ const s = {
   contactRow: { display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", padding: "0.5rem 0", borderBottom: "1px solid #edf2f7" },
   contactRoleLabel: { fontSize: "0.85rem", color: "#718096", fontWeight: 600 },
   contactNameLabel: { fontSize: "0.9rem", color: "#1a365d", fontWeight: 700 },
+  diagramImg: { display: "block", maxWidth: "100%", height: "auto", margin: "1rem auto 0", borderRadius: "8px", border: "1px solid #e2e8f0" },
   footer: { display: "flex", gap: "1rem", justifyContent: "center", marginTop: "2rem", paddingBottom: "2rem" },
   footerBtn: { padding: "0.75rem 1.5rem", borderRadius: "50px", border: "2px solid #cbd5e0", color: "#4a5568", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem" },
   footerBtnPrimary: { padding: "0.75rem 1.5rem", borderRadius: "50px", background: "#FF6B35", color: "white", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem" },
