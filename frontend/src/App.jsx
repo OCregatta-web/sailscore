@@ -4,6 +4,8 @@ import Register from "./pages/Register";
 import Results from "./pages/Results";
 import Regatta from "./pages/Regatta";
 import NOR from "./pages/NOR";
+import SailingInstructions from "./pages/SailingInstructions";
+import SkipperInstructions from "./pages/SkipperInstructions";
 import Noticeboard from "./pages/Noticeboard";
 import FleetSplits from "./pages/FleetSplits";
 import Demo from "./pages/Demo";
@@ -60,6 +62,8 @@ export default function App() {
   if (window.location.pathname.startsWith("/results")) return <Results />;
   if (window.location.pathname.startsWith("/regatta")) return <Regatta />;
   if (window.location.pathname.startsWith("/nor")) return <NOR />;
+  if (window.location.pathname.startsWith("/si")) return <SailingInstructions />;
+  if (window.location.pathname.startsWith("/skipper-instructions")) return <SkipperInstructions />;
   if (window.location.pathname.startsWith("/noticeboard")) return <Noticeboard />;
   if (window.location.pathname.startsWith("/fleets")) return <FleetSplits />;
   if (window.location.pathname.startsWith("/demo")) return <Demo />;
