@@ -8,6 +8,7 @@ import SailingInstructions from "./pages/SailingInstructions";
 import SkipperInstructions from "./pages/SkipperInstructions";
 import Noticeboard from "./pages/Noticeboard";
 import FleetSplits from "./pages/FleetSplits";
+import DistanceStarts from "./pages/DistanceStarts";
 import Demo from "./pages/Demo";
 import Walkthrough from "./pages/Walkthrough";
 import "./pages/Results.css";
@@ -66,6 +67,7 @@ export default function App() {
   if (window.location.pathname.startsWith("/skipper-instructions")) return <SkipperInstructions />;
   if (window.location.pathname.startsWith("/noticeboard")) return <Noticeboard />;
   if (window.location.pathname.startsWith("/fleets")) return <FleetSplits />;
+  if (window.location.pathname.startsWith("/distance-starts")) return <DistanceStarts />;
   if (window.location.pathname.startsWith("/demo")) return <Demo />;
   if (window.location.pathname.startsWith("/walkthrough")) return <Walkthrough />;
 
