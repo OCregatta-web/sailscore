@@ -33,8 +33,8 @@ class SeriesCreate(BaseModel):
     season: Optional[str] = None
     throwouts: int = 0
     registration_closed: bool = False
-    pursuit_start_time: str = "10:00:00"
-    pursuit_distance_nm: float = 90
+    pursuit_start_time: Optional[str] = "10:00:00"
+    pursuit_distance_nm: Optional[float] = 90
 
 class SeriesOut(BaseModel):
     id: int
@@ -42,8 +42,8 @@ class SeriesOut(BaseModel):
     season: Optional[str]
     throwouts: int
     registration_closed: bool = False
-    pursuit_start_time: str = "10:00:00"
-    pursuit_distance_nm: float = 90
+    pursuit_start_time: Optional[str] = "10:00:00"
+    pursuit_distance_nm: Optional[float] = 90
     owner_id: int
     class Config:
         from_attributes = True
