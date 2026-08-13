@@ -37,7 +37,7 @@ const REGATTA_SERIES_ID = 3;
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const updates = [
-  { date: "July 30", text: "🍗 Dinner tickets now available for purchase. See the Notice Board for details." },
+  { date: "Aug 12", text: "⛵ Fleet Splits and Distance Race Start Times have been posted and are available using the buttons in the navigation bar." },
   { date: "July 13", text: "🎉 THE 2026 OC REGATTA IS NOW FULL!", bold: true },
   { date: "July 2", text: "Introducing the OC Regatta SailScoring system. Getting results to you online faster. Live updates between races!" },
 ];
