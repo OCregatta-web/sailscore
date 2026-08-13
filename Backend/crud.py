@@ -60,6 +60,41 @@ def create_boat(db: Session, boat: schemas.BoatCreate, series_id: int):
 def get_boats(db: Session, series_id: int):
     return db.query(models.Boat).filter(models.Boat.series_id == series_id).all()
 
+def calc_distance_starts(db: Session, series_id: int):
+    """Compute pursuit start times for the Distance fleet, mirroring the
+    same formula used in the admin race-entry pursuit sheet: boats are
+    sorted slowest-PHRF-first, and each boat's start offset (in seconds)
+    is (slowest_PHRF - boat_PHRF) * course_distance_nm."""
+    series = get_series(db, series_id)
+    if not series:
+        return None
+    boats = [b for b in get_boats(db, series_id) if (b.fleet or "").lower().startswith("distance")]
+    if not boats or not series.pursuit_start_time or not series.pursuit_distance_nm:
+        return []
+
+    distance_nm = series.pursuit_distance_nm
+    slowest_phrf = max(b.phrf_rating for b in boats)
+    parts = (series.pursuit_start_time.split(":") + ["0", "0", "0"])[:3]
+    fh, fm, fs = (int(p) for p in parts)
+    first_start_secs = fh * 3600 + fm * 60 + fs
+
+    sorted_boats = sorted(boats, key=lambda b: -b.phrf_rating)
+    results = []
+    for b in sorted_boats:
+        offset_secs = round((slowest_phrf - b.phrf_rating) * distance_nm)
+        start_secs = first_start_secs + offset_secs
+        h = (start_secs // 3600) % 24
+        m = (start_secs % 3600) // 60
+        s = start_secs % 60
+        results.append({
+            "boat_name": b.boat_name,
+            "skipper": b.skipper,
+            "sail_number": b.sail_number,
+            "phrf_rating": b.phrf_rating,
+            "start_time": f"{h:02d}:{m:02d}:{s:02d}",
+        })
+    return results
+
 def get_boat(db: Session, boat_id: int):
     return db.query(models.Boat).filter(models.Boat.id == boat_id).first()
 

@@ -27,9 +27,12 @@ export default function RaceEntry({ seriesId, seriesName }) {
 
   const [scoringAll, setScoringAll] = useState(false);
   const [mode, setMode] = useState("buoy");
+  const [series, setSeries] = useState(null);
   const [pursuitFirstStart, setPursuitFirstStart] = useState("10:00:00");
   const [pursuitDuration, setPursuitDuration] = useState(90);
   const [showPursuitSheet, setShowPursuitSheet] = useState(false);
+  const [savingPursuit, setSavingPursuit] = useState(false);
+  const [pursuitSaved, setPursuitSaved] = useState(false);
 
   const scoreAllFleets = async () => {
     const fleetGroups = (typeof visibleBoats !== 'undefined' ? visibleBoats : boats).reduce((groups, boat) => {
@@ -86,7 +89,35 @@ export default function RaceEntry({ seriesId, seriesName }) {
   const loadBoats = () =>
     api.get(`/series/${seriesId}/boats`, user.token).then(setBoats);
 
-  useEffect(() => { loadRaces(); loadBoats(); }, [seriesId]);
+  useEffect(() => {
+    loadRaces();
+    loadBoats();
+    api.get(`/series/${seriesId}`, user.token).then(s => {
+      setSeries(s);
+      setPursuitFirstStart(s.pursuit_start_time || "10:00:00");
+      setPursuitDuration(s.pursuit_distance_nm || 90);
+    });
+  }, [seriesId]);
+
+  const savePursuitSettings = async () => {
+    if (!series) return;
+    setSavingPursuit(true);
+    try {
+      const updated = await api.put(`/series/${seriesId}`, {
+        name: series.name,
+        season: series.season,
+        throwouts: series.throwouts,
+        registration_closed: series.registration_closed,
+        pursuit_start_time: pursuitFirstStart,
+        pursuit_distance_nm: Number(pursuitDuration),
+      }, user.token);
+      setSeries(updated);
+      setPursuitSaved(true);
+      setTimeout(() => setPursuitSaved(false), 2000);
+    } finally {
+      setSavingPursuit(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedRace) return;
@@ -445,6 +476,12 @@ const applyFleetStartTime = (fleetName, startTime) => {
                         onChange={e => setPursuitDuration(Number(e.target.value))}
                         style={{ padding: "0.4rem 0.6rem", borderRadius: "6px", border: "1px solid #cbd5e0", fontSize: "0.9rem", width: "100px" }} />
                     </div>
+                    <button className="btn-secondary" onClick={savePursuitSettings} disabled={savingPursuit}>
+                      {savingPursuit ? "Saving..." : pursuitSaved ? "✓ Saved" : "💾 Save Settings"}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: "0.78rem", color: "#718096", marginTop: "0.5rem" }}>
+                    These settings are what power the public Distance Race Start Times page — save them here to publish current start times.
                   </div>
                   {showPursuitSheet && pursuitStarts.length > 0 && (
                     <div style={{ marginTop: "1rem" }}>

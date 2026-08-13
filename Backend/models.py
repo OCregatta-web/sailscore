@@ -25,6 +25,8 @@ class Series(Base):
     season = Column(String)
     throwouts = Column(Integer, default=0)
     registration_closed = Column(Boolean, default=False)
+    pursuit_start_time = Column(String, default="10:00:00")
+    pursuit_distance_nm = Column(Float, default=90)
     owner_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     owner = relationship("User", back_populates="series")

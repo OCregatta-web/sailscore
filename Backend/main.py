@@ -137,6 +137,18 @@ def public_list_fleets(series_id: int, db: Session = Depends(get_db)):
 def public_list_boats(series_id: int, db: Session = Depends(get_db)):
     return crud.get_boats(db, series_id)
 
+@app.get("/public/series/{series_id}/distance-starts")
+def public_distance_starts(series_id: int, db: Session = Depends(get_db)):
+    series = crud.get_series(db, series_id)
+    if not series:
+        raise HTTPException(404, "Series not found")
+    starts = crud.calc_distance_starts(db, series_id)
+    return {
+        "first_start": series.pursuit_start_time,
+        "distance_nm": series.pursuit_distance_nm,
+        "starts": starts,
+    }
+
 @app.post("/series/{series_id}/fleets")
 def create_fleet(series_id: int, body: dict, db: Session = Depends(get_db), current_user=Depends(auth.get_current_user)):
     name = body.get("name", "").strip()
