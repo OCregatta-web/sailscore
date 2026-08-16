@@ -3,8 +3,8 @@ import { useAuth } from "../App";
 import { api, formatElapsed, calcElapsed } from "../api";
 import Modal from "../components/Modal";
 
-const STATUS_OPTIONS = ["FIN", "DNF", "DNS", "DSQ", "DNC"];
-const STATUS_COLORS = { FIN: "green", DNF: "orange", DNS: "gray", DSQ: "red", DNC: "gray" };
+const STATUS_OPTIONS = ["FIN", "DNF", "DNS", "DSQ", "DNC", "ABD"];
+const STATUS_COLORS = { FIN: "green", DNF: "orange", DNS: "gray", DSQ: "red", DNC: "gray", ABD: "red" };
 
 export default function RaceEntry({ seriesId, seriesName }) {
   const { user, navigate } = useAuth();
