@@ -382,6 +382,23 @@ const applyFleetStartTime = (fleetName, startTime) => {
     printWindow.document.close();
   };
 
+  const markRaceAbandoned = async () => {
+    if (!selectedRace) return;
+    if (!confirm(`Mark Race ${selectedRace.race_number} as abandoned? Every boat entered in this race will be set to ABD. This cannot be undone.`)) return;
+    setSaving(true);
+    for (const boat of boats) {
+      await api.post(`/races/${selectedRace.id}/finishes`,
+        { boat_id: boat.id, elapsed_seconds: null, status: "ABD" },
+        user.token
+      );
+    }
+    setEntries({});
+    await loadFinishesAndResults();
+    setSaving(false);
+    setSubmitMsg("Race marked as abandoned ✓");
+    setTimeout(() => setSubmitMsg(""), 2500);
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -395,6 +412,15 @@ const applyFleetStartTime = (fleetName, startTime) => {
             <button onClick={() => setMode("buoy")} style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: !isDistance ? "#1a365d" : "transparent", color: !isDistance ? "white" : "#4a5568" }}>Buoy Races</button>
             <button onClick={() => setMode("distance")} style={{ padding: "0.4rem 1rem", borderRadius: "6px", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.85rem", background: isDistance ? "#1a365d" : "transparent", color: isDistance ? "white" : "#4a5568" }}>Distance Race</button>
           </div>
+          {selectedRace && (
+            <button
+              onClick={markRaceAbandoned}
+              disabled={saving}
+              style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1.5px solid #c53030", background: "#fff5f5", color: "#c53030", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}
+            >
+              🚫 Race Abandoned
+            </button>
+          )}
           <button className="btn-secondary" onClick={() => navigate("standings", { seriesId, seriesName })}>Standings →</button>
           <button className="btn-primary" onClick={openNewRace}>+ New Race</button>
         </div>
