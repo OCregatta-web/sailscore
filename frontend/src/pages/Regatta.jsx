@@ -113,9 +113,6 @@ export default function Regatta() {
           <a href="/si" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #FF6B35", color: "#FF6B35", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Sailing Instructions</a>
           <a href="/skipper-instructions" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #FF6B35", color: "#FF6B35", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Distance Race Instructions</a>
           <a href="/noticeboard" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #2b6cb0", color: "#2b6cb0", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Notice Board</a>
-          <a href={`/fleets?series=${REGATTA_SERIES_ID}`} style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #2b6cb0", color: "#2b6cb0", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Fleet Splits</a>
-          <a href={`/distance-starts?series=${REGATTA_SERIES_ID}`} style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #2b6cb0", color: "#2b6cb0", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Distance Start Times</a>
-          <a href="/slips" style={{ ...styles.navLink, textDecoration: "none", border: "1.5px solid #2b6cb0", color: "#2b6cb0", borderRadius: "20px", padding: "0.35rem 0.75rem" }}>Dock Slips</a>
         </div>
       </nav>
 
